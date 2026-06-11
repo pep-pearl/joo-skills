@@ -1,0 +1,283 @@
+#!/usr/bin/env node
+
+/**
+ * Lightweight repo indexing scanner.
+ *
+ * No external dependencies.
+ * Produces candidate files for AI review:
+ * - AI_INDEX.candidate.md
+ * - header-candidates.md
+ * - indexing-report.json
+ *
+ * This script does not modify source files.
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+
+const args = process.argv.slice(2);
+
+function getArg(name, fallback) {
+  const i = args.indexOf(name);
+  if (i >= 0 && args[i + 1]) return args[i + 1];
+  return fallback;
+}
+
+const target = path.resolve(getArg("--target", "."));
+const outDir = path.resolve(getArg("--out", path.join(target, ".ai", "indexing")));
+
+const IGNORE_DIRS = new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  ".next",
+  ".nuxt",
+  ".turbo",
+  "coverage",
+  ".cache",
+  ".vercel",
+  ".idea",
+  ".vscode",
+  "storybook-static",
+]);
+
+const IMPORTANT_FILE_PATTERNS = [
+  /(^|\/)package\.json$/,
+  /(^|\/)pnpm-workspace\.yaml$/,
+  /(^|\/)yarn\.lock$/,
+  /(^|\/)package-lock\.json$/,
+  /(^|\/)turbo\.json$/,
+  /(^|\/)nx\.json$/,
+  /(^|\/)vite\.config\./,
+  /(^|\/)next\.config\./,
+  /(^|\/)tsconfig\.json$/,
+  /(^|\/)AGENTS\.md$/,
+  /(^|\/)CLAUDE\.md$/,
+  /(^|\/)AI_INDEX\.md$/,
+];
+
+const ENTRY_CANDIDATE_PATTERNS = [
+  /(^|\/)main\.(tsx|ts|jsx|js)$/,
+  /(^|\/)App\.(tsx|ts|jsx|js)$/,
+  /(^|\/)appRoutes\.(tsx|ts|jsx|js)$/,
+  /(^|\/)routes\.(tsx|ts|jsx|js)$/,
+  /(^|\/)router\.(tsx|ts|jsx|js)$/,
+  /(^|\/)route-provider\.(tsx|ts|jsx|js)$/,
+  /(^|\/)provider(s)?\.(tsx|ts|jsx|js)$/,
+  /(^|\/)store\.(ts|tsx|js|jsx)$/,
+  /(^|\/).*store\.(ts|tsx|js|jsx)$/,
+  /(^|\/)client\.(ts|tsx|js|jsx)$/,
+  /(^|\/)api\.(ts|tsx|js|jsx)$/,
+  /(^|\/)query.*\.(ts|tsx|js|jsx)$/,
+];
+
+const HEADER_CANDIDATE_PATTERNS = [
+  /(^|\/)main\.(tsx|ts|jsx|js)$/,
+  /(^|\/).*routes?.(tsx|ts|jsx|js)$/,
+  /(^|\/).*provider.*\.(tsx|ts|jsx|js)$/,
+  /(^|\/).*store.*\.(tsx|ts|jsx|js)$/,
+  /(^|\/).*api.*\.(tsx|ts|jsx|js)$/,
+  /(^|\/).*client.*\.(tsx|ts|jsx|js)$/,
+  /(^|\/)pages\/[^/]+\/(index|ui|page)\.(tsx|ts|jsx|js)$/,
+  /(^|\/)app\/.*\.(tsx|ts|jsx|js)$/,
+];
+
+function walk(dir, acc = []) {
+  let entries = [];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return acc;
+  }
+
+  for (const entry of entries) {
+    const abs = path.join(dir, entry.name);
+    const rel = path.relative(target, abs).replaceAll(path.sep, "/");
+
+    if (entry.isDirectory()) {
+      if (!IGNORE_DIRS.has(entry.name)) walk(abs, acc);
+      continue;
+    }
+
+    acc.push(rel);
+  }
+
+  return acc;
+}
+
+function exists(rel) {
+  return fs.existsSync(path.join(target, rel));
+}
+
+function readJson(rel) {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(target, rel), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function firstExisting(candidates) {
+  return candidates.find(exists) ?? null;
+}
+
+function matchAny(file, patterns) {
+  return patterns.some((p) => p.test(file));
+}
+
+const files = walk(target);
+
+const packageJson = readJson("package.json");
+const packageManager =
+  exists("pnpm-lock.yaml") || exists("pnpm-workspace.yaml")
+    ? "pnpm"
+    : exists("yarn.lock")
+      ? "yarn"
+      : exists("package-lock.json")
+        ? "npm"
+        : packageJson?.packageManager ?? "unknown";
+
+const workspaceFiles = files.filter((f) =>
+  ["pnpm-workspace.yaml", "turbo.json", "nx.json", "package.json"].includes(f)
+);
+
+const topLevelDirs = fs
+  .readdirSync(target, { withFileTypes: true })
+  .filter((d) => d.isDirectory() && !IGNORE_DIRS.has(d.name))
+  .map((d) => d.name)
+  .sort();
+
+const importantFiles = files.filter((f) => matchAny(f, IMPORTANT_FILE_PATTERNS)).sort();
+const entryCandidates = files.filter((f) => matchAny(f, ENTRY_CANDIDATE_PATTERNS)).sort();
+const headerCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
+
+const routeCandidates = files
+  .filter((f) => /routes?|router|appRoutes/i.test(path.basename(f)))
+  .filter((f) => /\.(tsx|ts|jsx|js)$/.test(f))
+  .sort();
+
+const apiCandidates = files
+  .filter((f) => /api|client|openapi|swagger|query/i.test(f))
+  .filter((f) => /\.(tsx|ts|jsx|js|json|yaml|yml)$/.test(f))
+  .sort();
+
+const stateCandidates = files
+  .filter((f) => /store|zustand|redux|atom|jotai|recoil/i.test(f))
+  .filter((f) => /\.(tsx|ts|jsx|js)$/.test(f))
+  .sort();
+
+const pageDirs = files
+  .filter((f) => /(^|\/)(pages|app|routes)\//.test(f))
+  .map((f) => f.split("/").slice(0, 4).join("/"))
+  .filter(Boolean);
+const uniquePageDirs = [...new Set(pageDirs)].sort().slice(0, 80);
+
+const report = {
+  target,
+  packageManager,
+  packageName: packageJson?.name ?? null,
+  topLevelDirs,
+  workspaceFiles,
+  importantFiles,
+  entryCandidates,
+  routeCandidates,
+  apiCandidates: apiCandidates.slice(0, 120),
+  stateCandidates: stateCandidates.slice(0, 120),
+  headerCandidates: headerCandidates.slice(0, 160),
+  pageDirs: uniquePageDirs,
+};
+
+fs.mkdirSync(outDir, { recursive: true });
+
+const aiIndexCandidate = `# AI_INDEX.candidate.md
+
+Generated by \`joo-indexing-scan.mjs\`.
+
+Use this as input for an AI agent. Do not copy blindly.
+
+## Project
+
+- name: ${report.packageName ?? "TODO"}
+- package manager: ${report.packageManager}
+- top-level dirs: ${report.topLevelDirs.map((d) => `\`${d}\``).join(", ") || "TODO"}
+
+## Existing Navigation Files
+
+${importantFiles
+  .filter((f) => /AGENTS\.md|CLAUDE\.md|AI_INDEX\.md/.test(f))
+  .map((f) => `- \`${f}\``)
+  .join("\n") || "- none detected"}
+
+## Workspace / Config Candidates
+
+${workspaceFiles.map((f) => `- \`${f}\``).join("\n") || "- TODO"}
+
+## Entry Candidates
+
+${entryCandidates.slice(0, 80).map((f) => `- \`${f}\``).join("\n") || "- TODO"}
+
+## Route Candidates
+
+${routeCandidates.slice(0, 80).map((f) => `- \`${f}\``).join("\n") || "- TODO"}
+
+## API / Query Candidates
+
+${apiCandidates.slice(0, 80).map((f) => `- \`${f}\``).join("\n") || "- TODO"}
+
+## State Candidates
+
+${stateCandidates.slice(0, 80).map((f) => `- \`${f}\``).join("\n") || "- TODO"}
+
+## Page / App Area Candidates
+
+${uniquePageDirs.slice(0, 80).map((f) => `- \`${f}\``).join("\n") || "- TODO"}
+
+## Suggested Next AI Step
+
+Create or update \`AI_INDEX.md\` with:
+- project shape
+- read algorithm
+- main entries
+- domain map
+- task starts
+- maintenance triggers
+
+Keep it compact and project-specific.
+`;
+
+const headerCandidateMd = `# Header Candidates
+
+Generated by \`joo-indexing-scan.mjs\`.
+
+Review manually or with AI. Do not add headers to every file.
+
+## Candidates
+
+${headerCandidates
+  .slice(0, 160)
+  .map((f) => `- \`${f}\`: likely navigation-relevant`)
+  .join("\n") || "- none detected"}
+
+## Header Format
+
+\`\`\`ts
+/**
+ * @ai-purpose Short responsibility.
+ * @ai-entry true | false
+ * @ai-domain routing | api | state | page | feature | entity | shared | config | test
+ * @ai-depends Important internal dependencies.
+ * @ai-used-by Main callers or areas.
+ * @ai-keywords Searchable names.
+ */
+\`\`\`
+`;
+
+fs.writeFileSync(path.join(outDir, "indexing-report.json"), JSON.stringify(report, null, 2));
+fs.writeFileSync(path.join(outDir, "AI_INDEX.candidate.md"), aiIndexCandidate);
+fs.writeFileSync(path.join(outDir, "header-candidates.md"), headerCandidateMd);
+
+console.log(`Wrote indexing candidates to ${outDir}`);
+console.log(`- AI_INDEX.candidate.md`);
+console.log(`- header-candidates.md`);
+console.log(`- indexing-report.json`);

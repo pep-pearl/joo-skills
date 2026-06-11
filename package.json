@@ -1,0 +1,19 @@
+{
+  "name": "joo-skills",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Personal AI workflow, repo indexing, and agent skill archive.",
+  "type": "module",
+  "scripts": {
+    "scan": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing",
+    "install:target": "node scripts/joo-indexing-install.mjs"
+  },
+  "keywords": [
+    "ai-skills",
+    "agents",
+    "repo-indexing",
+    "AGENTS.md",
+    "AI_INDEX"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,36 @@
+---
+description: Use when creating or maintaining AI_INDEX, AGENTS, context navigation rules, or @ai-* headers.
+globs:
+  - "**/AI_INDEX.md"
+  - "**/AGENTS.md"
+  - "**/rules/*.md"
+alwaysApply: false
+---
+
+# Joo Repo Indexing
+
+Use sparse, factual AI navigation metadata.
+
+Do not add headers to every file.
+
+When indexing:
+
+1. Read existing AGENTS/rules.
+2. Read or create AI_INDEX.
+3. Identify entry points.
+4. Follow imports.
+5. Generate path-first summaries.
+6. Update metadata only when future agents need it.
+
+Header format:
+
+```ts
+/**
+ * @ai-purpose Short responsibility.
+ * @ai-entry true | false
+ * @ai-domain routing | api | state | page | feature | entity | shared | config | test
+ * @ai-depends Important internal dependencies.
+ * @ai-used-by Main callers or areas.
+ * @ai-keywords Searchable names.
+ */
+```
