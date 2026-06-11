@@ -1,5 +1,5 @@
 ---
-description: Use when creating or maintaining AI_INDEX, map shards, manifest, AGENTS, context navigation rules, or sidecar file hints.
+description: Use when creating or maintaining AI_INDEX, map shards, manifest, AGENTS, context navigation rules, sidecar file hints, stale metadata, or known failure patterns.
 globs:
   - "**/AI_INDEX.md"
   - "**/AGENTS.md"
@@ -26,6 +26,8 @@ When indexing:
 5. Follow imports.
 6. Generate path-first summaries.
 7. Update metadata only when future agents need it.
+8. If metadata is stale, update only affected router/shard/hint entries.
+9. Promote known failure patterns only by repeated or expensive root cause, not error code.
 
 Sidecar file hint shape:
 
@@ -43,3 +45,5 @@ Sidecar file hint shape:
 ```
 
 Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`. Source-level `@ai-*` headers are opt-in exceptions only and must not break max-lines lint. Hint content must be factual and must not command the agent to skip checks, ignore imports, or bypass tests.
+
+Known failure patterns are optional compact metadata. Do not persist one-off `[FAILURE_TRIAGE]` cards.

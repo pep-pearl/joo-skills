@@ -6,6 +6,8 @@ Minimize token use during normal development tasks.
 
 Use this rule to choose the smallest useful read set. Do not use it to create or update AI navigation metadata unless the user asked for indexing/maintenance.
 
+If the task starts from an error log, failing test, CI/build failure, stack trace, or type/lint/runtime error, use `rules/failure-triage.md` first. Error anchors beat normal index routing.
+
 ## Priority
 
 Project safety rules beat AI navigation rules.
@@ -16,10 +18,11 @@ Priority order:
 2. Nearest project/team `AGENTS.md` or equivalent rule file
 3. Security, test, generated-code, and ownership rules
 4. Exact files named by the user
-5. Existing source/imports/tests
-6. `/AI_INDEX.md`
-7. `.ai/indexing/maps/*`
-8. Targeted search
+5. Error anchors from logs/tests/stack frames/file lines/commands, when present
+6. Existing source/imports/tests
+7. `/AI_INDEX.md`
+8. `.ai/indexing/maps/*`
+9. Targeted search
 
 If a navigation rule conflicts with a safety or ownership rule, follow the safety/ownership rule and mention the conflict briefly.
 
@@ -45,20 +48,39 @@ Before reading many files, classify the request:
 - `config`: package, build, workspace, lint, test setup
 - `vague-product`: natural-language product/design/planning wording with no code term
 - `cross-cutting`: repo-wide audit, migration, naming, dependency change
+- `failure`: error log, stack trace, failing test, CI/build/type-check/lint/runtime failure
 
 ## Read Order
 
 1. User-provided exact files.
 2. Nearest project/team safety rules.
-3. `/AI_INDEX.md` as the router.
-4. Exact path/keyword lookup when the target is narrow.
-5. At most one relevant `.ai/indexing/maps/*` shard.
-6. Sidecar file hint for exact path when needed.
-7. Relevant source files.
-8. Imports from the first relevant source file.
-9. One companion shard only when a coupling signal exists.
-10. Relevant tests.
-11. Targeted search only when router/lookup/map/import navigation fails.
+3. Error log or failing command, when present. Create a temporary `[FAILURE_TRIAGE]` card before source reads.
+4. `/AI_INDEX.md` as the router.
+5. Exact path/keyword lookup when the target is narrow.
+6. At most one relevant `.ai/indexing/maps/*` shard.
+7. Sidecar file hint for exact path when needed.
+8. Relevant source files.
+9. Imports from the first relevant source file.
+10. One companion shard only when a coupling signal exists.
+11. Relevant tests.
+12. Targeted search only when router/lookup/map/import navigation fails.
+
+
+## Failure-First Navigation
+
+When a failure log exists, normal navigation is secondary.
+
+```txt
+error log / failing command
+-> exact file/line/test/stack anchor
+-> topmost userland frame
+-> source around the anchor
+-> direct import/props/caller/mapper/test setup
+-> AI_INDEX.md or one map shard only if anchors are missing or stale
+-> targeted search only when anchored paths fail
+```
+
+Do not start with broad or keyword search when a reliable failure anchor exists. Generated files are never first-read files; read the human-owned wrapper, mapper, hook, config, or test boundary first.
 
 ## Read Budget
 
@@ -117,6 +139,7 @@ Hard cap before edit:
 - Exact files beat index.
 - Safety and ownership rules beat index.
 - Source/imports/tests beat metadata.
+- Error anchors beat `AI_INDEX.md` when a failure is present.
 - `AI_INDEX.md` beats broad search.
 - Exact path/keyword lookup beats reading whole map shards.
 - One map shard beats directory browsing.
@@ -125,14 +148,26 @@ Hard cap before edit:
 - Tests are read when behavior or regression risk matters.
 - Never read generated, lock, snapshot, build, or huge files unless directly needed.
 
+## Stale Metadata Recovery
+
+When metadata points to a missing, renamed, moved, or semantically wrong file:
+
+1. Do not force source changes to match metadata.
+2. Mark the metadata entry as stale.
+3. Recover with the cheapest path: exact lookup, direct import source, nearest route/config/test source, or targeted symbol/path search.
+4. Continue using source/imports/tests as truth.
+5. At the end, report whether affected metadata should be updated.
+
+Do not regenerate unrelated shards during normal development.
+
 ## Missing / Stale Index
 
 If `/AI_INDEX.md` or map shards are missing or stale:
 
 1. Mention it briefly.
 2. Continue with the smallest targeted search possible.
-3. Do not create or update metadata unless the user asked for it.
-4. At the end, report whether AI navigation metadata appears stale.
+3. Do not create or update metadata unless the user asked for it or metadata maintenance is in scope.
+4. At the end, report whether AI navigation metadata appears stale and which affected shard/rule should be updated.
 
 ## Output Style
 

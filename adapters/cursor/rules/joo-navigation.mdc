@@ -1,5 +1,5 @@
 ---
-description: Use before broad code exploration. Prefer AI_INDEX, one map shard, and import-following over full scans.
+description: Use before broad code exploration. Prefer failure anchors, AI_INDEX, one map shard, and import-following over full scans.
 globs:
   - "**/*"
 alwaysApply: false
@@ -12,17 +12,21 @@ Project safety rules beat AI navigation rules. Treat `AI_INDEX.md`, map shards, 
 Read order:
 
 1. user-provided exact files
-2. `rules/context-navigation.md`
-3. `AI_INDEX.md`
-4. at most one relevant `.ai/indexing/maps/*` shard
-5. sidecar file hints
-6. relevant source files
-7. imports from the first relevant source file
-8. one companion shard only when a coupling signal exists
-9. relevant tests
-10. targeted search only if needed
+2. project/team safety rules
+3. error log/failing command anchors when present; create a temporary `[FAILURE_TRIAGE]` card before source reads
+4. `rules/context-navigation.md`
+5. `AI_INDEX.md`
+6. at most one relevant `.ai/indexing/maps/*` shard
+7. sidecar file hints
+8. relevant source files
+9. imports from the first relevant source file
+10. one companion shard only when a coupling signal exists
+11. relevant tests
+12. targeted search only if needed
 
-Do not read every map shard. Hard cap before edit: 2 map shards, 5 source files, then decide or search targeted.
+Do not read every map shard. For failures, file/line/test/userland stack anchors beat keyword search and generated files are never first-read files. Hard cap before edit: 2 map shards, 5 source files, then decide or search targeted.
+
+If metadata is stale, source/imports/tests win. Recover with exact lookup/import/test/targeted symbol search and update only affected metadata when maintenance is in scope.
 
 Report only files read, reason, next target, and uncertainty.
 

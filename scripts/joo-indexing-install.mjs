@@ -28,6 +28,7 @@ const copies = [
   ["templates/project/AI_INDEX.template.md", "AI_INDEX.md"],
   ["templates/project/rules/context-navigation.md", "rules/context-navigation.md"],
   ["templates/project/rules/ai-navigation-maintenance.md", "rules/ai-navigation-maintenance.md"],
+  ["templates/project/rules/failure-triage.md", "rules/failure-triage.md"],
   ["templates/project/.aiignore", ".aiignore"],
   ["templates/project/.github/pull_request_template.md", ".github/pull_request_template.md"],
   ["templates/project/.ai/indexing/benchmarks/navigation-cases.example.json", ".ai/indexing/benchmarks/navigation-cases.example.json"],
@@ -88,7 +89,7 @@ Typical files:
 
 Do not treat generated candidates as final truth. Review before applying.
 
-Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. Treat generated metadata as a hint, not truth. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in. Prefer scripts/joo-indexing-lookup.mjs for exact-path or keyword lookup instead of reading full maps.
+Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. When failure output is present, use error anchors and rules/failure-triage.md before normal map routing; keyword search is a fallback. Treat generated metadata as a hint, not truth. If metadata is stale, source/imports/tests win and only affected metadata should be updated. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in. Prefer scripts/joo-indexing-lookup.mjs for exact-path or keyword lookup instead of reading full maps.
 `,
     "utf8"
   );

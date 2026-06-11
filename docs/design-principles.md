@@ -38,15 +38,24 @@ Every task should start from the smallest likely file set:
 
 1. exact files from user
 2. project/team safety rules
-3. project router: `AI_INDEX.md`
-4. at most one map shard
-5. entry point
-6. imported files
-7. one companion shard only when a coupling signal exists
-8. tests
-9. broader search only when blocked
+3. failure anchors when an error log/failing command exists
+4. project router: `AI_INDEX.md`
+5. at most one map shard
+6. entry point
+7. imported files
+8. one companion shard only when a coupling signal exists
+9. tests
+10. broader search only when blocked
 
-## 3. Cheap Escalation, Not Broad Reading
+## 3. Failure Anchors Beat Normal Routing
+
+When a task starts from an error log, failing test, CI/build/type/lint/runtime failure, or stack trace, produce a temporary `[FAILURE_TRIAGE]` card before repo exploration.
+
+Use file/line/test/userland stack anchors before keyword search or map shards. Generated files are never first-read files; read the human-owned wrapper, mapper, hook, config, or test boundary first.
+
+Persist known failure patterns only when a root cause repeats or wastes enough navigation cost to save future agents from broad reading. Do not promote based on error code alone.
+
+## 4. Cheap Escalation, Not Broad Reading
 
 The default remains one map shard.
 
@@ -65,7 +74,7 @@ Hard cap before edit:
 
 This keeps token use bounded while avoiding confidently wrong edits from under-reading.
 
-## 4. Metadata Is A Hint, Not Truth
+## 5. Metadata Is A Hint, Not Truth
 
 Trust order:
 
@@ -76,9 +85,9 @@ Trust order:
 5. map shards
 6. generated candidates
 
-When source/imports contradict metadata, source wins and the metadata should be reported as stale.
+When source/imports contradict metadata, source wins and the metadata should be reported as stale. Do not force source changes to match stale metadata. Recover with exact lookup/import/test/targeted symbol or path search, then update only affected metadata.
 
-## 5. Map Shards Are Optional Detail
+## 6. Map Shards Are Optional Detail
 
 Detailed navigation belongs in `.ai/indexing/maps/*`, not in `AI_INDEX.md`.
 
@@ -100,7 +109,7 @@ Rules:
 - include natural-language aliases only when useful
 - once source entry is found, follow imports
 
-## 6. Source Headers Are Disabled By Default
+## 7. Source Headers Are Disabled By Default
 
 Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`. Use source-level `@ai-*` headers only when the project explicitly opts in and max-lines lint will not fail.
 
@@ -141,7 +150,7 @@ Prefer minimal sidecar entries:
 Use source headers only as explicit exceptions. Hint content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
 
 
-## 7. Index Maintenance Is Part Of Done
+## 8. Index Maintenance Is Part Of Done
 
 After code changes, decide whether metadata changed.
 
@@ -157,14 +166,16 @@ Update only affected metadata:
 - store/cache changed -> `maps/state.md`
 - package/build changed -> `maps/packages.md`
 - domain ownership changed -> related `maps/domains/*.md`
+- stale metadata discovered -> smallest affected router/shard/hint
+- known failure pattern promoted -> chosen compact failure pattern note
 
-## 8. Measure Navigation Quality
+## 9. Measure Navigation Quality
 
 Good AI navigation metadata should be benchmarked, not only reviewed by eye. Keep a small set of representative navigation cases under `.ai/indexing/benchmarks/navigation-cases.json` and run `joo-navigation-benchmark.mjs` after large indexing changes.
 
 Use diff-based metadata checks in PRs so route/API/state/package changes do not silently stale the router or map shards.
 
-## 9. Borrow Patterns, Do Not Clone Systems
+## 10. Borrow Patterns, Do Not Clone Systems
 
 This repo borrows ideas from workflow/agent ecosystems:
 

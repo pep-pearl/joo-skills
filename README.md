@@ -24,6 +24,9 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 - 자연어/기획/디자인식 요청이 모호할 때만 `maps/root.md`에서 시작합니다.
 - scripts는 후보를 만들고, AI는 필요한 조각만 판단해서 사용합니다.
 - index와 map은 truth가 아니라 disposable navigation hint입니다. source/import/test가 더 우선합니다.
+- 에러 로그가 있으면 index보다 에러 anchor(file/line/test/userland stack)를 먼저 라우터로 씁니다.
+- 반복 에러는 error code가 아니라 root cause 기준으로만 known failure pattern으로 승격합니다.
+- metadata가 stale이면 source를 metadata에 맞추지 않고, source 기준으로 작업한 뒤 affected metadata만 고칩니다.
 
 ## Repository Structure
 
@@ -32,6 +35,7 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 ├─ skills/
 │  ├─ repo-indexing/                 # /indexing 계열 핵심 스킬
 │  ├─ repo-navigation/               # 최소 파일 읽기 / intent classification / import-following
+│  ├─ failure-triage/                # 에러 로그 기반 임시 라우팅 / known failure 승격 기준
 │  ├─ ai-metadata-maintenance/       # AI_INDEX, map shards, sidecar file hints 유지보수
 │  ├─ frontend-fsd-navigation/       # FE/FSD/React Router 탐색
 │  ├─ frontend-next-app-navigation/  # Next.js App Router 탐색
@@ -86,6 +90,7 @@ AI_INDEX.md
 AGENTS.md
 rules/context-navigation.md
 rules/ai-navigation-maintenance.md
+rules/failure-triage.md
 .ai/indexing/README.md
 .github/pull_request_template.md
 .ai/indexing/benchmarks/navigation-cases.example.json
@@ -197,6 +202,8 @@ Do not full-scan the repo. Follow the joo-skills repo-indexing skill.
 exact files from user
 -> project/team safety rules
 -> rules/context-navigation.md
+-> error log / failing command, when present
+-> exact error anchor: file/line/test/userland stack
 -> AI_INDEX.md
 -> at most one .ai/indexing/maps/* shard
 -> source file
@@ -238,6 +245,44 @@ Hard cap before edit:
 - broad search: exact file, index, import-following이 모두 막힌 뒤에만
 
 
+
+## Failure-First Navigation
+
+에러 메시지, failing test, CI/build/type-check/lint/runtime failure가 있으면 평상시 index routing보다 에러 anchor를 먼저 씁니다.
+
+```txt
+error log / failing command
+-> exact file/line/test/userland stack frame
+-> source around the anchor
+-> direct import/props/caller/mapper/test setup
+-> AI_INDEX.md or one map shard only if anchors are missing/stale
+-> targeted search only when anchored paths fail
+```
+
+AI는 작업 전에 임시 `[FAILURE_TRIAGE]` 카드를 만들고, 기본적으로 이 카드는 저장하지 않습니다. 반복 패턴은 다음 기준 중 하나를 만족할 때만 known failure pattern으로 승격합니다.
+
+- 같은 root cause가 30일 안에 3회 이상 발생
+- 같은 sprint 안에 2회 이상 발생
+- 한 번이라도 generated client, Swagger dump, route tree 등 고비용 탐색을 유발
+- 한 번이라도 deploy-blocking CI, 반복 production crash, 데이터 손상 위험, 보안 회귀처럼 high severity
+- fix path가 비직관적이고 재발 가능성이 높음
+
+Error code만 같다고 승격하지 않습니다. 반드시 root cause와 first-read path가 같아야 합니다.
+
+## Stale Metadata Recovery
+
+`AI_INDEX.md`나 map shard가 실제 source/import/test와 충돌하면 source가 이깁니다.
+
+```txt
+stale metadata 발견
+-> source/import/test를 truth로 계속 작업
+-> exact lookup/import/test/targeted symbol search로 복구
+-> 작업 완료 후 affected metadata만 갱신
+-> unrelated shard는 재생성하지 않음
+```
+
+즉, AI가 stale metadata를 따라 source를 억지로 바꾸는 것이 아니라, source를 기준으로 작업하고 metadata를 고칩니다.
+
 ## Sidecar File Hints
 
 소스 파일에는 기본적으로 `@ai-*` 주석을 넣지 않습니다. `max-lines` lint, 리뷰 노이즈, stale comment 문제를 피하기 위해 파일 단위 AI metadata는 sidecar map에 둡니다.
@@ -273,7 +318,7 @@ Trust order:
 5. map shards
 6. generated candidates
 
-source/import/test가 metadata와 충돌하면 source가 이깁니다. 이 경우 metadata를 억지로 따르지 말고 stale로 보고합니다.
+source/import/test가 metadata와 충돌하면 source가 이깁니다. 이 경우 metadata를 억지로 따르지 말고 stale로 보고합니다. 작업 중 stale metadata를 만나면 exact lookup, import, failing test, targeted symbol/path search로 복구하고 affected metadata만 갱신합니다.
 
 ## When Not To Use This Workflow
 

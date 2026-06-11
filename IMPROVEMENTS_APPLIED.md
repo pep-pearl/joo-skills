@@ -61,3 +61,40 @@ npm run benchmark:navigation
 - `node --check` passed for the new scripts.
 - `joo-indexing-install.mjs` was smoke-tested in a temporary target directory.
 - `joo-indexing-lookup.mjs`, `joo-indexing-diff-check.mjs`, and `joo-navigation-benchmark.mjs` were smoke-tested.
+
+## Additional improvements applied in this revision
+
+### Added failure-first navigation
+
+- `skills/failure-triage/SKILL.md`
+  - Converts error logs, failing tests, CI/build/type/lint/runtime failures, and stack traces into a temporary `[FAILURE_TRIAGE]` routing card.
+  - Uses exact file/line/test/userland stack anchors before maps or keyword search.
+  - Defines generated/large-file boundaries so agents read human-owned wrappers, mappers, hooks, configs, or tests before generated output.
+
+- `templates/project/rules/failure-triage.md`
+  - Installs the failure-first rule into target projects.
+  - Keeps failure cards temporary by default.
+
+### Added known failure pattern promotion criteria
+
+Known failure patterns should be promoted by root cause, not error code, when any of these apply:
+
+- same root cause appears 3+ times within 30 days
+- same root cause appears 2+ times in the same sprint
+- one occurrence caused significant navigation cost
+- one occurrence is high severity
+- the fix path is non-obvious and likely to recur
+
+### Added stale metadata recovery
+
+- `repo-navigation`, `context-navigation`, `AI_INDEX.template`, and metadata maintenance rules now explicitly say that source/imports/tests beat stale AI metadata.
+- Agents should recover via exact lookup, import source, failing test, or targeted symbol/path search.
+- Agents should update only affected metadata and avoid regenerating unrelated shards.
+
+### Updated adapters/templates/docs
+
+- README, skill map, design principles, indexing-shards docs
+- common/Codex/Claude/OpenCode adapter fragments
+- project AGENTS and AI_INDEX templates
+- install script now copies `rules/failure-triage.md`
+- PR template now includes stale metadata recovery and known failure pattern promotion checkboxes

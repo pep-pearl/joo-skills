@@ -18,8 +18,11 @@ AI navigation metadata includes:
 - `rules/ai-navigation-maintenance.md`
 - rule-loading guidance in `AGENTS.md`
 - harness-specific rules such as Cursor `.mdc` or Claude/Codex fragments
+- optional known failure pattern notes such as `.ai/indexing/maps/failures.md` or `rules/known-failure-patterns.md`
 
 Do not use this rule for normal feature work, bug fixes, styling, or refactors unless repo navigation is affected.
+
+Temporary `[FAILURE_TRIAGE]` cards are not metadata. Persist only repeated or expensive root-cause patterns.
 
 ## Update Targets
 
@@ -56,6 +59,47 @@ Map shards must be compact and include `Confidence` plus `Last Verified` when pr
 - the file becomes important for navigation
 - existing metadata becomes inaccurate
 
+### Update known failure patterns when:
+
+- the same root cause appears 3+ times within 30 days
+- the same root cause appears 2+ times in the same sprint
+- one occurrence caused significant navigation cost
+- one occurrence is high severity, such as deploy-blocking CI failure, repeated production crash, data-loss risk, or security-sensitive regression
+- the fix path is non-obvious and likely to recur
+
+Do not promote based on error code alone. Promote only when the root cause and preferred first-read path are clear.
+
+Recommended compact shape:
+
+```txt
+[KNOWN_FAILURE_PATTERN]
+Pattern:
+- ...
+
+Symptoms:
+- ...
+
+Fingerprint:
+- error class:
+- affected boundary:
+- root cause:
+
+First read:
+1. ...
+
+Do not first-read:
+- ...
+
+Preferred fix:
+- ...
+
+Last observed:
+- YYYY-MM-DD
+
+Confidence:
+- candidate | confirmed
+```
+
 ### Update `AGENTS.md` only when:
 
 - global workflow changes
@@ -64,6 +108,39 @@ Map shards must be compact and include `Confidence` plus `Last Verified` when pr
 - repository-wide agent behavior changes
 
 Do not update `AGENTS.md` for ordinary feature implementation.
+
+
+## Stale Metadata Recovery
+
+When metadata points to a missing, renamed, moved, or semantically wrong file:
+
+1. Trust source/imports/tests over metadata.
+2. Do not force source code to match stale metadata.
+3. Recover with the cheapest path: exact lookup, direct import source, nearest route/config/test source, or targeted symbol/path search.
+4. Continue the user task from the real source.
+5. Update only the affected metadata after the task fix.
+6. Do not regenerate unrelated shards.
+
+Recommended note:
+
+```txt
+[STALE_METADATA_RECOVERY]
+Stale source:
+- ...
+
+Contradiction:
+- metadata: ...
+- source/import/test: ...
+
+Recovered via:
+- exact lookup | import | test | targeted search
+
+Updated:
+- ...
+
+Skipped:
+- unrelated shards
+```
 
 ## Sidecar File Hint Policy
 
@@ -140,6 +217,14 @@ AGENTS.md:
 
 Future-agent impact:
 - ...
+
+Stale recovery:
+- stale detected: yes/no
+- recovered via:
+
+Known failure patterns:
+- unchanged | candidate | promoted | removed
+- reason:
 
 Skipped:
 - ...

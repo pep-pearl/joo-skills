@@ -8,13 +8,14 @@ Project safety rules beat AI navigation rules. Treat AI metadata as hints, not t
 
 Read these first when navigating unfamiliar code:
 
-1. `rules/context-navigation.md`
-2. `AI_INDEX.md`
+1. `rules/failure-triage.md` when the task starts from an error log, failing test, CI/build/type/lint/runtime failure, or stack trace
+2. `rules/context-navigation.md`
+3. `AI_INDEX.md`
 
 Use these conditionally:
 
 - one relevant `.ai/indexing/maps/*` shard when `AI_INDEX.md` points to it
-- `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, or sidecar file hints / optional `@ai-*` metadata
+- `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, sidecar file hints / optional `@ai-*` metadata, stale metadata, or promoted known failure patterns
 - screen spec rules when official screen specs are referenced
 - API integration rules when connecting UI to backend/OpenAPI
 
@@ -29,7 +30,10 @@ Treat these as user-invoked skill commands:
 - `/indexing audit`
 - `/indexing refresh`
 - `/indexing explain`
+- `/failure triage`
 
 ## Output
 
 Prefer compact path-first summaries.
+
+For failures, create a temporary `[FAILURE_TRIAGE]` card before repo exploration. Error anchors beat keyword search. Source/imports/tests beat stale metadata; update only affected metadata after the task when maintenance is in scope.

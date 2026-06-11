@@ -85,6 +85,7 @@ Create only for domains that save future reads.
 ```txt
 exact file from user
 -> project/team safety rules
+-> error log / failing command anchors, when present
 -> AI_INDEX.md
 -> one map shard
 -> source file
@@ -100,7 +101,21 @@ Do not read every shard.
 
 Map shards are disposable navigation hints.
 
-Source/imports/tests beat map metadata. If a map points to missing or misleading files, report it as stale and continue with the smallest targeted search possible.
+Source/imports/tests beat map metadata. If a map points to missing or misleading files, report it as stale, recover with exact lookup/import/test/targeted symbol or path search, and update only the affected metadata when maintenance is in scope.
+
+## Failure Anchors
+
+Failure output is a temporary runtime router, not a map shard.
+
+```txt
+error log / failing command
+-> exact file/line/test/userland stack frame
+-> source around the anchor
+-> direct import/props/caller/mapper/test setup
+-> one map shard only if anchors are missing or stale
+```
+
+Do not create permanent error maps for one-off failures. Promote only repeated or expensive root-cause patterns.
 
 ## Cheap Escalation
 

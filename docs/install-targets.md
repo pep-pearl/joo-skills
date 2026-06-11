@@ -9,6 +9,7 @@ AI_INDEX.md
 AGENTS.md
 rules/context-navigation.md
 rules/ai-navigation-maintenance.md
+rules/failure-triage.md
 .ai/indexing/README.md
 .github/pull_request_template.md
 .ai/indexing/benchmarks/navigation-cases.example.json
@@ -63,6 +64,7 @@ Suggested command style:
 /indexing init
 /indexing audit
 /indexing refresh
+/failure triage
 ```
 
 If using oh-my-codex, call this before large planning flows:
@@ -70,6 +72,7 @@ If using oh-my-codex, call this before large planning flows:
 ```txt
 $best-practice-research if external docs are needed
 /indexing init or /indexing refresh
+/failure triage
 $ralplan
 $ultragoal
 ```
@@ -95,8 +98,8 @@ CLAUDE.md
 Use:
 
 ```txt
+adapters/cursor/rules/joo-navigation.mdc
 adapters/cursor/rules/joo-repo-indexing.mdc
-adapters/cursor/rules/joo-metadata-maintenance.mdc
 ```
 
 ## OpenCode / Gemini CLI / Other Agents

@@ -17,19 +17,20 @@ Use this file to choose the smallest next context file. Do not turn it into an a
 ## Navigation Order
 
 1. If the user names exact files, start there and skip broad navigation.
-2. Otherwise use this file as the router.
-3. If the target is exact or narrow, use exact path/keyword lookup before reading a whole shard.
-4. Read at most one `.ai/indexing/maps/*` shard before source files.
-5. Once a likely source file is found, prefer import-following over more map reading.
-6. Read one companion shard only when a coupling signal exists.
-7. Read relevant tests when behavior matters.
-8. Use targeted search only when router, lookup, map shard, and imports are insufficient.
+2. If the task starts from an error log, failing test, CI/build/type/lint/runtime failure, or stack trace, use `rules/failure-triage.md` and error anchors before this router.
+3. Otherwise use this file as the router.
+4. If the target is exact or narrow, use exact path/keyword lookup before reading a whole shard.
+5. Read at most one `.ai/indexing/maps/*` shard before source files.
+6. Once a likely source file is found, prefer import-following over more map reading.
+7. Read one companion shard only when a coupling signal exists.
+8. Read relevant tests when behavior matters.
+9. Use targeted search only when router, lookup, map shard, and imports are insufficient.
 
 ## Metadata Trust
 
 This file and map shards are navigation hints, not source of truth.
 
-Trust source/imports/tests over metadata. If source contradicts the index, source wins and the metadata should be reported as stale.
+Trust source/imports/tests over metadata. If source contradicts the index, source wins and the metadata should be reported as stale. Do not force source changes to match stale metadata; recover with exact lookup/import/test/targeted search and update only affected metadata when maintenance is in scope.
 
 ## Task Router
 
@@ -59,6 +60,21 @@ Read one companion shard only when a coupling signal exists.
 - generated client/schema mismatch -> exact operation/type boundary
 
 Hard cap before edit: 2 map shards and 5 source files.
+
+## Failure Routing
+
+When failure output exists, create a temporary `[FAILURE_TRIAGE]` card before normal navigation.
+
+```txt
+error log / failing command
+-> exact file/line/test/userland stack frame
+-> source around the anchor
+-> direct import/props/caller/mapper/test setup
+-> this router or one map shard only if anchors are missing/stale
+-> targeted search only when anchored paths fail
+```
+
+Do not persist every failure. Promote known failure patterns only by repeated or expensive root cause, not error code.
 
 ## Read Budget
 
@@ -127,6 +143,8 @@ Update this router or map shards only when future agents would otherwise start f
 - state/store architecture changed
 - monorepo package or entry point changed
 - first-read files changed
+- stale metadata discovered during work
+- known failure pattern promoted by root cause
 
 Do not update for tiny implementation details, copy changes, formatting, generated files, or local refactors that do not change navigation.
 

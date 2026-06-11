@@ -10,6 +10,8 @@ This skill prevents token waste by using `AI_INDEX.md` as a small router, readin
 
 Use before editing code in an unfamiliar or medium/large repository.
 
+If the task starts from an error message, failing test, stack trace, CI log, type-check failure, or build failure, use `failure-triage` first. Error anchors beat normal repo navigation.
+
 ## Priority
 
 Project safety rules beat AI navigation rules.
@@ -20,10 +22,11 @@ Priority order:
 2. Nearest project/team `AGENTS.md` or equivalent rule file
 3. Security, test, generated-code, and ownership rules
 4. Exact files named by the user
-5. Existing source/imports/tests
-6. `AI_INDEX.md`
-7. Map shards
-8. Targeted search
+5. Error anchors from logs/tests/stack frames/file lines/commands, when present
+6. Existing source/imports/tests
+7. `AI_INDEX.md`
+8. Map shards
+9. Targeted search
 
 If a navigation rule conflicts with a safety or ownership rule, follow the safety/ownership rule and mention the conflict briefly.
 
@@ -57,34 +60,56 @@ Classify the request before opening many files:
 - `config`: package, build, workspace, lint, test setup
 - `vague-product`: natural-language product/design/planning wording with no code term
 - `cross-cutting`: repo-wide audit, migration, naming, dependency change
+- `failure`: error log, stack trace, failing test, CI/build/type-check/lint/runtime failure
 
 ## Read Algorithm
 
-1. If user provides exact files, start there.
-2. Otherwise read nearest project/team rules if present.
-3. Read `rules/context-navigation.md` if present.
-4. Read `AI_INDEX.md` if present.
-5. Pick one likely map shard only when needed:
+1. If user provides exact files, record them as first anchors.
+2. Read nearest project/team rules if present.
+3. If the user provides error output or a failing command, create a temporary `[FAILURE_TRIAGE]` card before source reads and read from error anchors. Do not start with keyword search.
+4. Read `rules/context-navigation.md` if present.
+5. Read `AI_INDEX.md` if present.
+6. Pick one likely map shard only when needed:
    - route/page/screen: `.ai/indexing/maps/routes.md`
    - vague natural language: `.ai/indexing/maps/root.md`
    - API/backend/query: `.ai/indexing/maps/api.md`
    - state/store/cache: `.ai/indexing/maps/state.md`
    - package/build/config: `.ai/indexing/maps/packages.md`
    - domain-specific: `.ai/indexing/maps/domains/<domain>.md`
-6. Identify:
+7. Identify:
    - domain
    - entry point
    - likely route/page
    - state/API dependencies
    - relevant tests
-7. Read the first likely source file.
-8. Follow imports downward.
-9. Prefer targeted search over directory scans.
-10. Broader search only if:
+8. Read the first likely source file.
+9. Follow imports downward.
+10. Prefer targeted search over directory scans.
+11. Broader search only if:
    - index is missing
    - index is stale
    - import-following is blocked
    - task truly requires cross-repo audit
+
+## Failure Navigation
+
+When an error log exists, normal index routing is secondary.
+
+Use this order:
+
+```txt
+error log / failing command
+-> exact file/line/test/stack anchor
+-> topmost userland frame
+-> source around the anchor
+-> direct import/props/caller/mapper/test setup
+-> AI_INDEX.md or one map shard only if anchors are missing or stale
+-> targeted search only when anchored paths fail
+```
+
+Before reading repo files, produce a temporary `[FAILURE_TRIAGE]` card with failure type, anchors, primary read, follow-only-if-needed files, files not to read yet, likely cause, and verification command.
+
+Do not persist every failure. Promote only repeated or expensive root-cause patterns, not error codes. Suggested promotion threshold: same root cause 3+ times within 30 days, 2+ times in the same sprint, one high-navigation-cost occurrence, or one high-severity occurrence.
 
 ## Read Budget
 
@@ -143,6 +168,34 @@ Skipped:
 - broad search: imports provided enough context
 ```
 
+
+## Stale Metadata Recovery
+
+When metadata points to a missing, renamed, moved, or semantically wrong file:
+
+1. Do not force the source to match metadata.
+2. Mark the metadata entry as stale.
+3. Recover with the cheapest path:
+   - exact path lookup
+   - direct import source
+   - nearest route/config/test source
+   - targeted search by exported symbol
+   - targeted search by route/path/domain alias
+4. Continue the user task using source/imports/tests as truth.
+5. After the code task, update only the affected metadata when metadata maintenance is in scope.
+6. Do not regenerate unrelated map shards.
+
+Recommended final note:
+
+```txt
+AI navigation metadata:
+- stale detected: yes/no
+- stale source: ...
+- contradiction: ...
+- updated: ...
+- skipped: unrelated shards
+```
+
 ## Stop Rule
 
 After one map and three source files, decide one of:
@@ -178,12 +231,14 @@ Uncertain:
 - Exact files beat index.
 - Safety and ownership rules beat index.
 - Source/imports/tests beat metadata.
+- Error anchors beat index when a failure is present.
 - Index beats search.
 - One map shard beats directory browsing.
 - One companion shard is allowed only for coupling signals.
 - Imports beat reading more maps after a source file is found.
 - Tests are read when behavior matters.
 - Never read generated or huge files unless needed.
+- Do not force code to match stale metadata.
 
 
 ## Exact Path Lookup Rule
