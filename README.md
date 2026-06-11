@@ -7,7 +7,7 @@
 이 repo는 두 가지 방식으로 쓸 수 있습니다.
 
 1. **AI agent에게 skill처럼 사용하게 하기**: `/indexing init`, `/indexing audit` 같은 명령을 AI에게 주고, AI가 필요한 파일만 읽으며 metadata를 생성/갱신합니다.
-2. **사용자가 직접 CLI로 실행하기**: `scripts/*.mjs`를 터미널에서 실행해 scan, lookup, validate, diff-check, benchmark를 직접 돌립니다.
+2. **사용자가 직접 CLI로 실행하기**: `scripts/*.mjs`를 터미널에서 실행해 scan, lookup, validate, diff impact, diff-check, benchmark를 직접 돌립니다.
 
 ## Core Idea
 
@@ -18,6 +18,9 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 /indexing annotate  -> source 수정 없이 sidecar file hint 후보 생성
 /indexing audit     -> AI_INDEX / manifest / maps / file hints 불일치 점검
 /indexing refresh   -> routes/domains/api/state/packages 등 변경 영역만 갱신
+/diff impact        -> 이미 변경된 diff에서 read next / skip / metadata shard 판정
+/diff review        -> changed files + direct imports + matching tests 중심 리뷰
+/diff fix-plan      -> 기존 diff를 고치기 위한 최소 수정 계획
 ```
 
 `AI_INDEX.md`와 `.ai/indexing/maps/*`는 architecture 문서가 아니라 **AI가 다음에 읽을 파일을 고르는 disposable navigation hint**입니다. 실제 truth는 항상 source, import, test, runtime behavior입니다.
@@ -28,6 +31,7 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 
 - 새 프로젝트에 AI를 투입하기 전에 “어디부터 읽어야 하는지” router를 만들고 싶을 때
 - repo가 커서 AI가 매번 full scan하거나, 엉뚱한 파일부터 읽는 비용을 줄이고 싶을 때
+- 이미 변경된 PR/staged diff에서 영향 범위, 읽을 파일, metadata 갱신 shard를 작게 판정하고 싶을 때
 - route/API/state/package/domain 구조가 바뀐 PR에서 AI navigation metadata도 같이 갱신해야 하는지 확인하고 싶을 때
 - “주문 상세 화면 고쳐줘”처럼 자연어 요청이 들어왔을 때, 가장 작은 first-read 파일 후보를 빠르게 찾고 싶을 때
 - 반복되는 failure triage나 screen/API 작업에서 agent가 같은 실수를 반복하지 않게 하고 싶을 때
@@ -46,6 +50,7 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 ├─ skills/
 │  ├─ repo-indexing/                 # /indexing 계열 핵심 스킬
 │  ├─ repo-navigation/               # 최소 파일 읽기 / intent classification / import-following
+│  ├─ pr-diff-impact/                # PR/diff/staged 변경 기반 영향 범위 / review / fix-plan
 │  ├─ failure-triage/                # 에러 로그 기반 임시 라우팅 / known failure 승격 기준
 │  ├─ ai-metadata-maintenance/       # AI_INDEX, map shards, sidecar file hints 유지보수
 │  ├─ frontend-fsd-navigation/       # FE/FSD/React Router 탐색
@@ -68,7 +73,9 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 │  ├─ joo-indexing-scan.mjs          # repo 구조 scan + candidate/map shard 생성
 │  ├─ joo-indexing-validate.mjs      # stale path/source header/security-looking path 검증
 │  ├─ joo-indexing-lookup.mjs        # exact path/keyword/intent lookup
+│  ├─ joo-diff-impact.mjs            # PR/diff/staged 기반 영향 범위와 read plan
 │  ├─ joo-indexing-diff-check.mjs    # PR diff 기반 metadata 갱신 필요성 점검
+│  ├─ lib/joo-path-classifier.mjs    # diff/check 공통 path classifier
 │  └─ joo-navigation-benchmark.mjs   # navigation benchmark case 측정
 ├─ docs/
 │  ├─ skill-map.md
@@ -229,6 +236,9 @@ Only use AI_INDEX.md if the error anchor is not enough.
 | `/indexing explain` | 현재 navigation metadata의 사용법을 사람에게 설명합니다. | 팀원에게 이 repo의 AI_INDEX 운영 방식을 공유할 때 | router, map shard, fallback, first-read 규칙 설명 |
 | `/lookup path` | 특정 파일 경로가 metadata에서 어떻게 잡히는지 찾습니다. | 파일 하나를 기준으로 관련 shard나 related file을 빠르게 확인할 때 | 가장 작은 next-read 후보 목록 |
 | `/lookup keyword` | keyword, intent, domain으로 metadata를 검색합니다. | “주문 상세”, “auth guard”, “API client”처럼 자연어 힌트만 있을 때 | score가 높은 후보 파일과 관련 shard |
+| `/diff impact` | changed files, staged files, PR diff를 기준으로 영향 범위와 읽을 파일을 고릅니다. | 이미 변경된 코드 리뷰/수정 전에 full scan을 막고 싶을 때 | `[DIFF_IMPACT]`, read next, skip, AI metadata required/maybe |
+| `/diff review` | 변경 파일과 직접 import/matching test 중심으로 리뷰합니다. | PR 리뷰에서 unrelated shard를 읽지 않고 싶을 때 | review focus, targeted tests, stale metadata risk |
+| `/diff fix-plan` | 기존 diff를 고치기 위한 최소 수정 계획을 만듭니다. | 이미 변경된 코드에서 무엇만 고칠지 정리할 때 | patch targets, verification, metadata decision |
 | `/diff-check` | 변경된 source가 metadata 갱신을 요구하는지 확인합니다. | PR에서 `AI_INDEX.md`/maps 갱신 누락을 잡고 싶을 때 | routes/api/state/packages/domain별 갱신 필요 경고 |
 | `/benchmark navigation` | 저장된 navigation case로 lookup 품질을 측정합니다. | index 구조를 바꾼 뒤 회귀가 생겼는지 보고 싶을 때 | pass/warn/fail, first hit position, average score |
 
@@ -356,6 +366,39 @@ node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --keyword "o
 | `--file-map <file>` | sidecar file map 지정 |
 | `--json` | machine-readable JSON만 출력 |
 
+### `joo-diff-impact.mjs`
+
+git diff, staged files, or explicit changed files를 기준으로 영향 범위와 최소 read plan을 만듭니다.
+
+```bash
+node /path/to/joo-skills/scripts/joo-diff-impact.mjs --target . --base main
+node /path/to/joo-skills/scripts/joo-diff-impact.mjs --target . --staged
+node /path/to/joo-skills/scripts/joo-diff-impact.mjs --target . --base main --review --include-imports
+node /path/to/joo-skills/scripts/joo-diff-impact.mjs --target . --base main --fix-plan --include-imports
+```
+
+좋은 사용 시점:
+
+- 이미 변경된 PR/staged diff의 영향 범위를 먼저 좁히고 싶을 때
+- 변경 파일 주변, direct imports, matching tests만 읽고 리뷰하고 싶을 때
+- `ai-metadata-maintenance` 전에 required/maybe/skip shard를 판정하고 싶을 때
+- route/API/state/package/domain 변경이 섞인 PR에서 full shard refresh를 막고 싶을 때
+
+자주 쓰는 옵션:
+
+| Option | 의미 |
+| --- | --- |
+| `--target <dir>` | 점검 대상 repo |
+| `--base <ref>` | 비교 기준 branch/ref. 기본 `main` |
+| `--staged` | staged files 기준 |
+| `--working` | working tree diff 기준 |
+| `--changed-files <csv>` | git diff 대신 직접 파일 목록 전달 |
+| `--review` | `[DIFF_REVIEW]` 출력 |
+| `--fix-plan` | `[DIFF_FIX_PLAN]` 출력 |
+| `--include-imports` | 변경 파일의 direct relative imports 후보 포함 |
+| `--no-tests` | matching test 후보 생성을 끔 |
+| `--json` | machine-readable JSON만 출력 |
+
 ### `joo-indexing-diff-check.mjs`
 
 git diff나 명시한 변경 파일을 기준으로, source 변경에 비해 metadata 갱신이 누락됐는지 점검합니다.
@@ -421,6 +464,10 @@ npm run validate:index
 npm run validate:index:strict
 npm run refresh:changed
 npm run lookup -- --keyword "order detail"
+npm run diff:impact
+npm run diff:impact:staged
+npm run diff:review
+npm run diff:fix-plan
 npm run diff-check
 npm run diff-check:strict
 npm run benchmark:navigation
@@ -459,19 +506,28 @@ Create a compact AI_INDEX.md router.
 Keep detailed maps under .ai/indexing/maps/*.
 ```
 
-### 2. PR에서 metadata 갱신 누락 확인하기
+### 2. PR에서 영향 범위와 metadata 갱신 후보 확인하기
+
+먼저 변경 파일 중심으로 읽을 범위를 좁힙니다.
+
+```bash
+node /path/to/joo-skills/scripts/joo-diff-impact.mjs --target . --base main
+```
+
+그 다음 metadata 갱신 누락 guard를 봅니다.
 
 ```bash
 node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only
 ```
 
-경고가 나오면 AI에게:
+`diff impact` 또는 `diff-check`에서 경고가 나오면 AI에게:
 
 ```txt
 /indexing refresh
 
-Use the diff-check output.
-Update only the affected AI_INDEX.md section and map shards.
+Use the diff impact and diff-check output.
+Update only required/maybe AI_INDEX.md sections and affected map shards.
+Skip shards marked skip by /diff impact.
 ```
 
 ### 3. 자연어 요청의 entry file만 빠르게 찾기

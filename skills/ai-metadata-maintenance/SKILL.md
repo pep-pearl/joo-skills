@@ -54,6 +54,35 @@ node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai
 ```
 
 
+
+## Diff-Based Maintenance Gate
+
+When source changes already exist, use `/diff impact` before deciding metadata updates.
+
+Preferred script:
+
+```bash
+node scripts/joo-diff-impact.mjs --target . --base main
+```
+
+Rules:
+
+1. Treat changed files as anchors.
+2. Update only metadata targets marked `required`.
+3. Inspect changed source/imports/tests before touching targets marked `maybe`.
+4. Do not read or regenerate shards marked `skip`.
+5. Keep `AI_INDEX.md` changes for first-read, router, or domain ownership changes only.
+6. Preserve unrelated shards even when `joo-indexing-diff-check.mjs` warns broadly.
+
+Typical mapping:
+
+- route/page changes -> `maps/routes.md`, `AI_INDEX.md` only when router/first-read changed
+- API/query/client changes -> `maps/api.md`
+- state/cache/session changes -> `maps/state.md`
+- package/build/test config changes -> `maps/packages.md`
+- domain ownership or moved domain entry -> `maps/domains/<domain>.md`
+- tiny UI/copy/local refactor -> no metadata update
+
 ## Stale Metadata Recovery
 
 Use this when normal navigation or failure triage discovers that metadata is wrong.
@@ -207,6 +236,7 @@ node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai
 If source structure changed, prefer the diff guard:
 
 ```bash
+node scripts/joo-diff-impact.mjs --target . --base main
 node scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only
 ```
 

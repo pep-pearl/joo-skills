@@ -7,17 +7,19 @@ Project safety rules beat AI navigation rules. Treat AI metadata as hints, not t
 Default order:
 
 1. If user names exact files, start there.
-2. If an error log/failing test/CI/build/type/lint/runtime failure is present, use `rules/failure-triage.md` when present and create a temporary failure card.
-3. Read `rules/context-navigation.md` if present.
-4. Read `AI_INDEX.md` if present.
-5. Read at most one relevant `.ai/indexing/maps/*` shard if needed.
-6. Follow imports downward after finding a likely source file.
-7. Read one companion shard only when a coupling signal exists.
-8. Search broadly only when targeted navigation fails.
+2. If changed code already exists, use `/diff impact` or `npm run diff:impact` before normal `AI_INDEX.md` routing.
+3. If an error log/failing test/CI/build/type/lint/runtime failure is present, use `rules/failure-triage.md` when present and create a temporary failure card.
+4. Read `rules/context-navigation.md` if present.
+5. Read `AI_INDEX.md` if present.
+6. Read at most one relevant `.ai/indexing/maps/*` shard if needed.
+7. Follow imports downward after finding a likely source file.
+8. Read one companion shard only when a coupling signal exists.
+9. Search broadly only when targeted navigation fails.
 
 Conditional skills:
 
 - Use repo indexing when asked to create, audit, refresh, or maintain AI navigation metadata.
+- Use pr-diff-impact when reviewing or planning fixes for already-changed code, PR files, staged files, or `git diff`.
 - Use failure triage when work starts from an error log, failing test, CI/build/type/lint/runtime failure, or stack trace. Error anchors beat keyword search.
 - Use metadata maintenance after changes that affect routes, page structure, domain ownership, API/data flow, state, map/GIS, packages, first-read files, map shards, stale metadata, or promoted known failure patterns.
 - Use screen-spec alignment when official screen specs, PDFs, prototypes, or screenshots are referenced.

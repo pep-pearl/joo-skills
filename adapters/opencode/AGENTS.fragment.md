@@ -11,6 +11,9 @@ Supported commands:
 /indexing refresh
 /indexing explain
 /failure triage
+/diff impact
+/diff review
+/diff fix-plan
 ```
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
@@ -19,6 +22,7 @@ General behavior:
 
 - path-first
 - targeted reads
+- when code is already changed, use `/diff impact` before normal `AI_INDEX.md` routing
 - when failure output is present, create a temporary failure card and use file/line/test/userland stack anchors before maps or keyword search
 - read at most one `.ai/indexing/maps/*` shard before source files; use one companion shard only for coupling signals
 - follow imports after the first relevant source file

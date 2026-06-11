@@ -12,6 +12,7 @@
 - Do not load `docs/prompts/*` unless the user explicitly references one.
 - Prefer small, targeted edits.
 - If user names files, start there.
+- If code is already changed, use `/diff impact` before normal `AI_INDEX.md` routing.
 
 ## Priority
 
@@ -23,11 +24,12 @@ Priority order:
 2. Nearest project/team `AGENTS.md` or equivalent rule file
 3. Security, test, generated-code, and ownership rules
 4. Exact files named by the user
-5. Error anchors from logs/tests/stack frames/file lines/commands, when present
-6. Existing source/imports/tests
-7. `AI_INDEX.md`
-8. Map shards
-9. Targeted search
+5. Changed files from diff/PR/staged, when present
+6. Error anchors from logs/tests/stack frames/file lines/commands, when present
+7. Existing source/imports/tests
+8. `AI_INDEX.md`
+9. Map shards
+10. Targeted search
 
 If a navigation rule conflicts with a safety or ownership rule, follow the safety/ownership rule and mention the conflict briefly.
 
@@ -49,7 +51,11 @@ Read only when relevant:
 - `/indexing refresh`: update changed metadata sections only.
 - `/indexing explain`: explain how future agents should navigate this repo.
 - `/failure triage`: create a temporary failure routing card from error output.
+- `/diff impact`: classify changed files and choose read-next/skip/metadata targets.
+- `/diff review`: review changed files, direct imports, and matching tests only.
+- `/diff fix-plan`: plan the smallest fix path for an existing diff.
 - `npm run lookup -- --keyword <term>`: lookup exact path/keyword/intent without reading whole maps.
+- `npm run diff:impact`: inspect changed files before normal router navigation.
 - `npm run diff-check`: check whether source changes likely require metadata updates.
 - `npm run benchmark:navigation`: measure representative navigation cases.
 
@@ -58,17 +64,18 @@ Read only when relevant:
 Default order:
 
 1. Exact files from the user.
-2. Nearest project/team safety rules.
-3. Error log or failing command, when present; use `rules/failure-triage.md`.
-4. `rules/context-navigation.md`.
-5. `AI_INDEX.md`.
-6. Exact path/keyword lookup when the target is narrow.
-7. One relevant `.ai/indexing/maps/*` shard if needed.
-8. Relevant source files.
-9. Imports from the first relevant source file.
-10. One companion shard only when a coupling signal exists.
-11. Relevant tests.
-12. Targeted search only when blocked.
+2. Changed files from PR/diff/staged files, using `/diff impact` when available.
+3. Nearest project/team safety rules.
+4. Error log or failing command, when present; use `rules/failure-triage.md`.
+5. `rules/context-navigation.md`.
+6. `AI_INDEX.md`.
+7. Exact path/keyword lookup when the target is narrow.
+8. One relevant `.ai/indexing/maps/*` shard if needed.
+9. Relevant source files.
+10. Imports from the first relevant source file.
+11. One companion shard only when a coupling signal exists.
+12. Relevant tests.
+13. Targeted search only when blocked.
 
 ## Write Safety Contract
 
@@ -103,7 +110,7 @@ Avoid these failure modes:
 
 ## After Code Changes
 
-Check whether AI navigation metadata must change.
+Check whether AI navigation metadata must change. If a diff exists, use `/diff impact` first and update only required/maybe metadata targets.
 
 Update metadata when changes affect:
 

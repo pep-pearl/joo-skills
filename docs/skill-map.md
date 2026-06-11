@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | `repo-indexing` | 새 프로젝트를 AI 친화적으로 인덱싱할 때 | `AI_INDEX.md` router, `.ai/indexing/maps/*`, rules, file hint candidates |
 | `repo-navigation` | 작업 시작 전 최소 파일을 고를 때 | intent classification, read plan, one-shard read list, uncertainty |
+| `pr-diff-impact` | 이미 변경된 코드/PR/staged diff를 리뷰하거나 수정 계획을 세울 때 | `[DIFF_IMPACT]`, read-next/skip, affected shard candidates |
 | `failure-triage` | 에러 로그, failing test, CI/build/type/lint/runtime failure에서 시작할 때 | temporary failure routing card, anchor-first read plan, known-pattern promotion decision |
 | `ai-metadata-maintenance` | route/domain/API/state/package 변경 후 metadata 갱신 판단 | maintenance summary for router/maps/file hints |
 | `agent-operating-loop` | 큰 작업을 계획→실행→검증 loop로 진행할 때 | task ledger, verification gates |
@@ -33,6 +34,9 @@
 /metadata audit
 /metadata refresh
 /lookup path
+/diff impact
+/diff review
+/diff fix-plan
 /diff-check
 /benchmark navigation
 ```
@@ -41,6 +45,11 @@
 ## Failure / Metadata Recovery Flow
 
 ```txt
+changed files / PR diff / staged files
+-> pr-diff-impact
+-> exact changed files, direct imports, matching tests
+-> ai-metadata-maintenance only for affected shards
+
 error log or failing command
 -> failure-triage
 -> exact anchor first

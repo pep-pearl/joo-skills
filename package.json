@@ -11,6 +11,11 @@
     "validate:index:strict": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps",
     "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --changed-since main --max-map-tokens 1600",
     "lookup": "node scripts/joo-indexing-lookup.mjs --target .",
+    "diff:impact": "node scripts/joo-diff-impact.mjs --target . --base main",
+    "diff:impact:staged": "node scripts/joo-diff-impact.mjs --target . --staged",
+    "diff:impact:json": "node scripts/joo-diff-impact.mjs --target . --base main --json",
+    "diff:review": "node scripts/joo-diff-impact.mjs --target . --base main --review --include-imports",
+    "diff:fix-plan": "node scripts/joo-diff-impact.mjs --target . --base main --fix-plan --include-imports",
     "diff-check": "node scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only",
     "diff-check:strict": "node scripts/joo-indexing-diff-check.mjs --target . --base main",
     "benchmark:navigation": "node scripts/joo-navigation-benchmark.mjs --target ."
@@ -23,7 +28,9 @@
     "AI_INDEX",
     "ai-navigation",
     "next-app-router",
-    "benchmark"
+    "benchmark",
+    "diff-impact",
+    "pr-review"
   ],
   "license": "MIT"
 }

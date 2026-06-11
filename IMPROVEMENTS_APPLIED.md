@@ -117,3 +117,34 @@ Known failure patterns should be promoted by root cause, not error code, when an
 ### Anti-pattern guardrails
 
 - Added explicit bad examples for dumb agents: no full-tree `AI_INDEX.md`, no mass `@ai-*` headers, no source edits to satisfy stale metadata, no repo-wide grep when error anchors exist, no all-shard reads, and no full OpenAPI/generated-client inspection when a narrow boundary is enough.
+
+## Additional diff-impact workflow applied in this patch
+
+### Added PR/diff impact skill
+
+- `skills/pr-diff-impact/SKILL.md`
+  - Starts from changed files, staged files, PR files, or explicit changed-file lists.
+  - Produces `[DIFF_IMPACT]`, `[DIFF_REVIEW]`, and `[DIFF_FIX_PLAN]` flows.
+  - Keeps review scope to exact changed files, direct imports, matching tests, and affected metadata shards.
+
+- `skills/pr-diff-impact/commands.md`
+  - Documents `/diff impact`, `/diff review`, and `/diff fix-plan` command behavior.
+
+### Added diff impact script and shared classifier
+
+- `scripts/lib/joo-path-classifier.mjs`
+  - Shared route/API/state/package/domain/test/generated/metadata classification helpers.
+  - Used by diff tooling to keep path classification consistent.
+
+- `scripts/joo-diff-impact.mjs`
+  - Supports `--base`, `--staged`, `--working`, `--changed-files`, `--review`, `--fix-plan`, `--include-imports`, `--no-tests`, and `--json`.
+  - Reports changed file roles, map impact, coupling signals, read-next files, skipped shards, and required/maybe/skipped AI metadata targets.
+
+- `scripts/joo-indexing-diff-check.mjs`
+  - Refactored to use the shared path classifier while preserving metadata guard behavior.
+
+### Connected diff impact to existing workflows
+
+- Added npm scripts: `diff:impact`, `diff:impact:staged`, `diff:impact:json`, `diff:review`, and `diff:fix-plan`.
+- Updated `repo-navigation`, `context-navigation`, `agent-operating-loop`, AGENTS templates, adapter fragments, README, install docs, skill map, and PR templates to use diff impact before normal router navigation when code is already changed.
+- Updated metadata maintenance rules so `/diff impact` gates which shards are required, maybe, or skipped before any refresh.

@@ -16,14 +16,24 @@ Give coding agents a durable loop for non-trivial tasks.
 ## Loop
 
 1. Clarify only if required.
-2. Read minimal files.
-3. State assumptions.
-4. Make small plan.
-5. Execute in slices.
-6. Verify each slice.
-7. Review changed files.
-8. Decide AI metadata maintenance.
-9. Summarize changed/skipped/uncertain.
+2. If code is already changed, run or mentally apply `/diff impact` before normal repo navigation.
+3. Read minimal files.
+4. State assumptions.
+5. Make small plan.
+6. Execute in slices.
+7. Verify each slice.
+8. Review changed files.
+9. Decide AI metadata maintenance.
+10. Summarize changed/skipped/uncertain.
+
+## Diff-Aware Review
+
+When a task starts from an existing PR, staged files, or working-tree changes:
+
+- Start from changed files instead of `AI_INDEX.md`.
+- Use `/diff impact` to decide read-next, skip, and metadata targets.
+- Review direct imports and matching tests before unrelated shards.
+- Use `ai-metadata-maintenance` only for required/maybe targets.
 
 ## Write Safety Contract
 

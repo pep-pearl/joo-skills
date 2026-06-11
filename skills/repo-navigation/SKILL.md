@@ -22,11 +22,12 @@ Priority order:
 2. Nearest project/team `AGENTS.md` or equivalent rule file
 3. Security, test, generated-code, and ownership rules
 4. Exact files named by the user
-5. Error anchors from logs/tests/stack frames/file lines/commands, when present
-6. Existing source/imports/tests
-7. `AI_INDEX.md`
-8. Map shards
-9. Targeted search
+5. Changed files from diff/PR/staged, when present
+6. Error anchors from logs/tests/stack frames/file lines/commands, when present
+7. Existing source/imports/tests
+8. `AI_INDEX.md`
+9. Map shards
+10. Targeted search
 
 If a navigation rule conflicts with a safety or ownership rule, follow the safety/ownership rule and mention the conflict briefly.
 
@@ -65,31 +66,60 @@ Classify the request before opening many files:
 ## Read Algorithm
 
 1. If user provides exact files, record them as first anchors.
-2. Read nearest project/team rules if present.
-3. If the user provides error output or a failing command, create a temporary `[FAILURE_TRIAGE]` card before source reads and read from error anchors. Do not start with keyword search.
-4. Read `rules/context-navigation.md` if present.
-5. Read `AI_INDEX.md` if present.
-6. Pick one likely map shard only when needed:
+2. If changed files, staged files, or PR file lists are available, run or mentally apply `/diff impact` and use changed files as first anchors.
+3. Read nearest project/team rules if present.
+4. If the user provides error output or a failing command, create a temporary `[FAILURE_TRIAGE]` card before source reads and read from error anchors. Do not start with keyword search.
+5. Read `rules/context-navigation.md` if present.
+6. Read `AI_INDEX.md` if present.
+7. Pick one likely map shard only when needed:
    - route/page/screen: `.ai/indexing/maps/routes.md`
    - vague natural language: `.ai/indexing/maps/root.md`
    - API/backend/query: `.ai/indexing/maps/api.md`
    - state/store/cache: `.ai/indexing/maps/state.md`
    - package/build/config: `.ai/indexing/maps/packages.md`
    - domain-specific: `.ai/indexing/maps/domains/<domain>.md`
-7. Identify:
+8. Identify:
    - domain
    - entry point
    - likely route/page
    - state/API dependencies
    - relevant tests
-8. Read the first likely source file.
-9. Follow imports downward.
-10. Prefer targeted search over directory scans.
-11. Broader search only if:
+9. Read the first likely source file.
+10. Follow imports downward.
+11. Prefer targeted search over directory scans.
+12. Broader search only if:
    - index is missing
    - index is stale
    - import-following is blocked
    - task truly requires cross-repo audit
+
+
+## Diff Navigation
+
+When code is already changed, use `pr-diff-impact` before normal router navigation. Diff anchors beat `AI_INDEX.md` routing.
+
+Use this order:
+
+```txt
+changed files / staged files / PR files
+-> exact changed files
+-> changed hunks or local source around the changes
+-> direct imports only when the changed code crosses a boundary
+-> matching tests only when behavior/regression risk matters
+-> one affected map shard only if metadata impact must be decided
+-> targeted search only when changed anchors fail
+```
+
+Recommended commands:
+
+```bash
+node scripts/joo-diff-impact.mjs --target . --base main
+node scripts/joo-diff-impact.mjs --target . --staged
+node scripts/joo-diff-impact.mjs --target . --base main --review --include-imports
+node scripts/joo-diff-impact.mjs --target . --base main --fix-plan --include-imports
+```
+
+Do not read full root/routes/API/domain shards just because a PR exists. Use the diff result to mark AI metadata as required, maybe, or skipped.
 
 ## Failure Navigation
 

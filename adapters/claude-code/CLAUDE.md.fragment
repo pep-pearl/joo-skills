@@ -14,6 +14,7 @@ Read these first when navigating unfamiliar code:
 
 Use these conditionally:
 
+- `pr-diff-impact` when code is already changed; diff anchors beat normal `AI_INDEX.md` routing
 - one relevant `.ai/indexing/maps/*` shard when `AI_INDEX.md` points to it
 - `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, sidecar file hints / optional `@ai-*` metadata, stale metadata, or promoted known failure patterns
 - screen spec rules when official screen specs are referenced
@@ -31,6 +32,9 @@ Treat these as user-invoked skill commands:
 - `/indexing refresh`
 - `/indexing explain`
 - `/failure triage`
+- `/diff impact`
+- `/diff review`
+- `/diff fix-plan`
 
 ## Write Safety
 

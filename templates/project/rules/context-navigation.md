@@ -18,11 +18,12 @@ Priority order:
 2. Nearest project/team `AGENTS.md` or equivalent rule file
 3. Security, test, generated-code, and ownership rules
 4. Exact files named by the user
-5. Error anchors from logs/tests/stack frames/file lines/commands, when present
-6. Existing source/imports/tests
-7. `/AI_INDEX.md`
-8. `.ai/indexing/maps/*`
-9. Targeted search
+5. Changed files from diff/PR/staged, when present
+6. Error anchors from logs/tests/stack frames/file lines/commands, when present
+7. Existing source/imports/tests
+8. `/AI_INDEX.md`
+9. `.ai/indexing/maps/*`
+10. Targeted search
 
 If a navigation rule conflicts with a safety or ownership rule, follow the safety/ownership rule and mention the conflict briefly.
 
@@ -53,18 +54,47 @@ Before reading many files, classify the request:
 ## Read Order
 
 1. User-provided exact files.
-2. Nearest project/team safety rules.
-3. Error log or failing command, when present. Create a temporary `[FAILURE_TRIAGE]` card before source reads.
-4. `/AI_INDEX.md` as the router.
-5. Exact path/keyword lookup when the target is narrow.
-6. At most one relevant `.ai/indexing/maps/*` shard.
-7. Sidecar file hint for exact path when needed.
-8. Relevant source files.
-9. Imports from the first relevant source file.
-10. One companion shard only when a coupling signal exists.
-11. Relevant tests.
-12. Targeted search only when router/lookup/map/import navigation fails.
+2. Changed files, staged files, or PR file lists. Use `/diff impact` before normal router navigation.
+3. Nearest project/team safety rules.
+4. Error log or failing command, when present. Create a temporary `[FAILURE_TRIAGE]` card before source reads.
+5. `/AI_INDEX.md` as the router.
+6. Exact path/keyword lookup when the target is narrow.
+7. At most one relevant `.ai/indexing/maps/*` shard.
+8. Sidecar file hint for exact path when needed.
+9. Relevant source files.
+10. Imports from the first relevant source file.
+11. One companion shard only when a coupling signal exists.
+12. Relevant tests.
+13. Targeted search only when router/lookup/map/import navigation fails.
 
+
+
+## Diff Navigation
+
+When code is already changed, use `pr-diff-impact` before normal router navigation. Diff anchors beat `AI_INDEX.md` routing.
+
+Use this order:
+
+```txt
+changed files / staged files / PR files
+-> exact changed files
+-> changed hunks or local source around the changes
+-> direct imports only when the changed code crosses a boundary
+-> matching tests only when behavior/regression risk matters
+-> one affected map shard only if metadata impact must be decided
+-> targeted search only when changed anchors fail
+```
+
+Recommended commands:
+
+```bash
+node scripts/joo-diff-impact.mjs --target . --base main
+node scripts/joo-diff-impact.mjs --target . --staged
+node scripts/joo-diff-impact.mjs --target . --base main --review --include-imports
+node scripts/joo-diff-impact.mjs --target . --base main --fix-plan --include-imports
+```
+
+Do not read full root/routes/API/domain shards just because a PR exists. Use the diff result to mark AI metadata as required, maybe, or skipped.
 
 ## Failure-First Navigation
 

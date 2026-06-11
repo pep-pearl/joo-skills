@@ -41,10 +41,11 @@ node /path/to/joo-skills/scripts/joo-indexing-validate.mjs \
   --maps .ai/indexing/maps
 ```
 
-Small lookup, PR diff guard, and benchmark:
+Small lookup, PR diff impact, PR metadata guard, and benchmark:
 
 ```bash
 node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --keyword "order detail"
+node /path/to/joo-skills/scripts/joo-diff-impact.mjs --target . --base main
 node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only
 node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs --target .
 ```
@@ -56,6 +57,7 @@ Use:
 ```txt
 adapters/codex/AGENTS.fragment.md
 skills/repo-indexing/commands.md
+skills/pr-diff-impact/commands.md
 ```
 
 Suggested command style:
@@ -64,6 +66,9 @@ Suggested command style:
 /indexing init
 /indexing audit
 /indexing refresh
+/diff impact
+/diff review
+/diff fix-plan
 /failure triage
 ```
 
@@ -72,6 +77,9 @@ If using oh-my-codex, call this before large planning flows:
 ```txt
 $best-practice-research if external docs are needed
 /indexing init or /indexing refresh
+/diff impact
+/diff review
+/diff fix-plan
 /failure triage
 $ralplan
 $ultragoal

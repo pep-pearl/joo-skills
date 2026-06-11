@@ -66,6 +66,19 @@ Expected behavior:
 3. Do not treat lookup metadata as truth; verify source before editing.
 4. If no match is found, use targeted search instead of reading every shard.
 
+## `/diff impact` / `/diff review` / `/diff fix-plan`
+
+Use `pr-diff-impact` for already-changed code before normal repo navigation.
+
+Expected behavior:
+
+1. Prefer `scripts/joo-diff-impact.mjs` when available.
+2. Start from changed files, staged files, or `main...HEAD`.
+3. Read exact changed files before `AI_INDEX.md` routing.
+4. Follow direct imports and matching tests only when needed.
+5. Return required/maybe/skipped metadata shards.
+6. Do not auto-refresh metadata unless the user asked.
+
 ## `/diff-check`
 
 Check whether changed source files likely require AI navigation metadata updates.
