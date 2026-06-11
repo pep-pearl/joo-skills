@@ -44,6 +44,9 @@ Read only when relevant:
 - `/indexing audit`: report stale/missing AI navigation metadata.
 - `/indexing refresh`: update changed metadata sections only.
 - `/indexing explain`: explain how future agents should navigate this repo.
+- `npm run lookup -- --keyword <term>`: lookup exact path/keyword/intent without reading whole maps.
+- `npm run diff-check`: check whether source changes likely require metadata updates.
+- `npm run benchmark:navigation`: measure representative navigation cases.
 
 ## Normal Navigation
 
@@ -53,12 +56,13 @@ Default order:
 2. Nearest project/team safety rules.
 3. `rules/context-navigation.md`.
 4. `AI_INDEX.md`.
-5. One relevant `.ai/indexing/maps/*` shard if needed.
-6. Relevant source files.
-7. Imports from the first relevant source file.
-8. One companion shard only when a coupling signal exists.
-9. Relevant tests.
-10. Targeted search only when blocked.
+5. Exact path/keyword lookup when the target is narrow.
+6. One relevant `.ai/indexing/maps/*` shard if needed.
+7. Relevant source files.
+8. Imports from the first relevant source file.
+9. One companion shard only when a coupling signal exists.
+10. Relevant tests.
+11. Targeted search only when blocked.
 
 ## After Code Changes
 

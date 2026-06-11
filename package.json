@@ -9,14 +9,21 @@
     "install:target": "node scripts/joo-indexing-install.mjs",
     "validate:index": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps --warn-only",
     "validate:index:strict": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps",
-    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths --changed-since main --max-map-tokens 1600"
+    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths --changed-since main --max-map-tokens 1600",
+    "lookup": "node scripts/joo-indexing-lookup.mjs --target .",
+    "diff-check": "node scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only",
+    "diff-check:strict": "node scripts/joo-indexing-diff-check.mjs --target . --base main",
+    "benchmark:navigation": "node scripts/joo-navigation-benchmark.mjs --target ."
   },
   "keywords": [
     "ai-skills",
     "agents",
     "repo-indexing",
     "AGENTS.md",
-    "AI_INDEX"
+    "AI_INDEX",
+    "ai-navigation",
+    "next-app-router",
+    "benchmark"
   ],
   "license": "MIT"
 }

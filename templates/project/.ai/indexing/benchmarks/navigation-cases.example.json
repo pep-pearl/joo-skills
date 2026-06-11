@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "id": "route-page-api-example",
+      "prompt": "주문 상세 화면의 API 에러 처리를 확인해줘",
+      "intent": "route-page",
+      "domain": "order",
+      "keywords": [
+        "order",
+        "detail",
+        "error"
+      ],
+      "expectedEntryFiles": [
+        "src/pages/orders/detail/OrderDetailPage.tsx"
+      ],
+      "allowedShards": [
+        ".ai/indexing/maps/routes.md",
+        ".ai/indexing/maps/api.md"
+      ],
+      "forbiddenStarts": [
+        "src/shared/ui",
+        "src/generated"
+      ]
+    }
+  ]
+}

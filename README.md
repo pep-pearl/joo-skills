@@ -34,6 +34,7 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 │  ├─ repo-navigation/               # 최소 파일 읽기 / intent classification / import-following
 │  ├─ ai-metadata-maintenance/       # AI_INDEX, map shards, sidecar file hints 유지보수
 │  ├─ frontend-fsd-navigation/       # FE/FSD/React Router 탐색
+│  ├─ frontend-next-app-navigation/  # Next.js App Router 탐색
 │  ├─ screen-spec-alignment/         # 화면설계서 기반 구현/감사
 │  ├─ api-integration-planning/      # Swagger/OpenAPI ↔ FE 연결 계획
 │  └─ agent-operating-loop/          # 계획-실행-검증 loop
@@ -50,6 +51,9 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 ├─ scripts/
 │  ├─ joo-indexing-scan.mjs          # dependency 없는 repo 구조 scan + map shard/file-map 생성
 │  ├─ joo-indexing-validate.mjs      # stale path/source header/security-looking path 검증
+│  ├─ joo-indexing-lookup.mjs        # exact path/keyword/intent lookup
+│  ├─ joo-indexing-diff-check.mjs    # PR diff 기반 metadata 갱신 필요성 점검
+│  ├─ joo-navigation-benchmark.mjs   # navigation benchmark case 측정
 │  └─ joo-indexing-install.mjs       # project bootstrap 파일 복사
 ├─ docs/
 │  ├─ skill-map.md
@@ -83,6 +87,8 @@ AGENTS.md
 rules/context-navigation.md
 rules/ai-navigation-maintenance.md
 .ai/indexing/README.md
+.github/pull_request_template.md
+.ai/indexing/benchmarks/navigation-cases.example.json
 ```
 
 ### 3. 대상 프로젝트에서 scan
@@ -150,6 +156,27 @@ node /path/to/joo-skills/scripts/joo-indexing-validate.mjs \
 ```
 
 CI에서 실패시키고 싶으면 기본 모드를 쓰고, 로컬에서 경고만 보고 싶으면 `--warn-only`를 붙입니다.
+
+### 3-2. 작은 lookup / diff guard / benchmark
+
+Exact path나 keyword만 확인할 때는 map shard 전체를 읽지 말고 lookup을 먼저 사용합니다.
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --keyword "order detail"
+node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --path src/pages/orders/detail.tsx
+```
+
+PR에서 source 구조가 바뀌었는데 metadata를 갱신하지 않았는지 확인합니다.
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only
+```
+
+대표 navigation case를 저장해두면 index 품질 회귀를 수치로 확인할 수 있습니다.
+
+```bash
+node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs --target . --cases .ai/indexing/benchmarks/navigation-cases.json
+```
 
 ### 4. AI에게 명령
 
@@ -297,7 +324,7 @@ Index the human-owned boundary around generated code instead.
 
 ### 5. Projects that do not match the selected navigation skill
 
-Do not apply FSD navigation rules to non-FSD projects.
+Do not apply FSD navigation rules to non-FSD projects. Use `skills/frontend-next-app-navigation/SKILL.md` for Next.js App Router projects.
 
 For example, do not force the `app -> pages -> widgets -> features -> entities -> shared` reading order onto:
 

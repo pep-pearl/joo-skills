@@ -154,3 +154,14 @@ Uncertain:
 - changed/skipped/uncertain only
 - no full inventories unless requested
 - path + summary instead of large pasted sections
+
+
+## PR / CI Guard
+
+When source structure changes, prefer a cheap diff guard before relying on agent reasoning:
+
+```bash
+node scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only
+```
+
+Use strict mode only after the team agrees that metadata updates are part of done.

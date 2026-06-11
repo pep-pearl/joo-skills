@@ -10,6 +10,8 @@ AGENTS.md
 rules/context-navigation.md
 rules/ai-navigation-maintenance.md
 .ai/indexing/README.md
+.github/pull_request_template.md
+.ai/indexing/benchmarks/navigation-cases.example.json
 ```
 
 Then run:
@@ -36,6 +38,14 @@ node /path/to/joo-skills/scripts/joo-indexing-validate.mjs \
   --target . \
   --index AI_INDEX.md \
   --maps .ai/indexing/maps
+```
+
+Small lookup, PR diff guard, and benchmark:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --keyword "order detail"
+node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only
+node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs --target .
 ```
 
 ## Codex / oh-my-codex

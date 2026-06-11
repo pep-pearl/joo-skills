@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/joo-skills/navigation-benchmark-case.schema.json",
+  "title": "Joo Skills Navigation Benchmark Cases",
+  "type": "object",
+  "properties": {
+    "cases": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    }
+  },
+  "required": [
+    "cases"
+  ],
+  "$defs": {
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "prompt",
+        "expectedEntryFiles"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "query": {
+          "type": "object"
+        },
+        "expectedEntryFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowedShards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forbiddenStarts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

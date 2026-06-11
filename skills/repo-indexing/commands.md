@@ -54,3 +54,34 @@ Prefer affected shard patches over full rewrites.
 Explain current project navigation metadata to the user.
 
 Mention router, map shards, first-read files, and fallback behavior.
+
+## `/lookup path` / `/lookup keyword`
+
+Lookup exact path, keyword, intent, or domain in sidecar metadata without reading whole map shards.
+
+Expected behavior:
+
+1. Prefer `scripts/joo-indexing-lookup.mjs` when available.
+2. Return the smallest likely next-read files.
+3. Do not treat lookup metadata as truth; verify source before editing.
+4. If no match is found, use targeted search instead of reading every shard.
+
+## `/diff-check`
+
+Check whether changed source files likely require AI navigation metadata updates.
+
+Expected behavior:
+
+1. Prefer `scripts/joo-indexing-diff-check.mjs --warn-only` in local/PR review.
+2. Report affected map shards such as routes, API, state, packages, or domains.
+3. Do not auto-refresh unless the user asked.
+
+## `/benchmark navigation`
+
+Measure representative navigation cases against current metadata.
+
+Expected behavior:
+
+1. Read `.ai/indexing/benchmarks/navigation-cases.json` if present.
+2. Use lookup to surface expected entry files.
+3. Report pass/warn/fail, first hit position, forbidden starts, and average score.

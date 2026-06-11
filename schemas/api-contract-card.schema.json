@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Joo Skills API Contract Card",
+  "type": "object",
+  "required": [
+    "endpoint",
+    "status",
+    "screen",
+    "caller",
+    "domainBoundary"
+  ],
+  "properties": {
+    "endpoint": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "real-api",
+        "dummy-wired",
+        "backend-pending",
+        "deferred",
+        "spec-conflict"
+      ]
+    },
+    "screen": {
+      "type": "string"
+    },
+    "caller": {
+      "type": "string"
+    },
+    "domainBoundary": {
+      "type": "string"
+    },
+    "queryKey": {
+      "type": "string"
+    },
+    "requestShape": {
+      "type": "string"
+    },
+    "responseRisk": {
+      "type": "string"
+    },
+    "errorMapping": {
+      "type": "string"
+    },
+    "fallback": {
+      "type": "string"
+    },
+    "testTarget": {
+      "type": "string"
+    }
+  }
+}

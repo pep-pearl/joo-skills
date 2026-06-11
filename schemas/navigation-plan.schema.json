@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Joo Skills Navigation Plan",
+  "type": "object",
+  "required": [
+    "intent",
+    "read",
+    "next",
+    "skipped",
+    "uncertain"
+  ],
+  "properties": {
+    "intent": {
+      "type": "string"
+    },
+    "read": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pathReason"
+      }
+    },
+    "escalated": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pathReason"
+      }
+    },
+    "next": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pathReason"
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "uncertain": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadataMaintenance": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "pathReason": {
+      "type": "object",
+      "required": [
+        "path",
+        "reason"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

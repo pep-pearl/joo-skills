@@ -18,11 +18,12 @@ Use this file to choose the smallest next context file. Do not turn it into an a
 
 1. If the user names exact files, start there and skip broad navigation.
 2. Otherwise use this file as the router.
-3. Read at most one `.ai/indexing/maps/*` shard before source files.
-4. Once a likely source file is found, prefer import-following over more map reading.
-5. Read one companion shard only when a coupling signal exists.
-6. Read relevant tests when behavior matters.
-7. Use targeted search only when router, map shard, and imports are insufficient.
+3. If the target is exact or narrow, use exact path/keyword lookup before reading a whole shard.
+4. Read at most one `.ai/indexing/maps/*` shard before source files.
+5. Once a likely source file is found, prefer import-following over more map reading.
+6. Read one companion shard only when a coupling signal exists.
+7. Read relevant tests when behavior matters.
+8. Use targeted search only when router, lookup, map shard, and imports are insufficient.
 
 ## Metadata Trust
 
@@ -80,6 +81,16 @@ For vague natural-language requests:
 Generated or candidate map shards may live under `.ai/indexing/maps/`.
 
 They are optional navigation aids. They should be compact, path-first, and disposable. `AI_INDEX.md` remains the stable router. Prefer `confidence`, `last_verified`, and `source` metadata over long explanations.
+
+## Lookup / Benchmark
+
+Prefer exact path or keyword lookup over reading a whole map when the target is narrow:
+
+```bash
+node scripts/joo-indexing-lookup.mjs --target . --keyword "domain term"
+```
+
+Representative cases may live in `.ai/indexing/benchmarks/navigation-cases.json` and can be checked with `joo-navigation-benchmark.mjs`.
 
 ## File-Level AI Hints
 

@@ -82,3 +82,51 @@ Skipped:
 Uncertain:
 - ...
 ```
+
+## Lookup Summary
+
+```txt
+[AI_INDEX_LOOKUP]
+
+Query:
+- path/intent/domain/keywords
+
+Matches:
+- path: score, source, exists, reason
+
+Suggested next read:
+- path
+
+Skipped:
+- whole map read: reason
+```
+
+## Diff Check Summary
+
+```txt
+[AI_METADATA_DIFF_CHECK]
+
+Changed:
+- path: classes
+
+Expected metadata touch:
+- path: reason
+
+Warnings:
+- metadata path / source change / action
+```
+
+## Navigation Benchmark Summary
+
+```txt
+[AI_NAVIGATION_BENCHMARK]
+
+Cases:
+- total/pass/warn/fail
+
+Results:
+- case id: score, first_hit_at, forbidden_hit
+
+Average score:
+- 0-100
+```

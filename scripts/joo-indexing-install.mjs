@@ -29,6 +29,8 @@ const copies = [
   ["templates/project/rules/context-navigation.md", "rules/context-navigation.md"],
   ["templates/project/rules/ai-navigation-maintenance.md", "rules/ai-navigation-maintenance.md"],
   ["templates/project/.aiignore", ".aiignore"],
+  ["templates/project/.github/pull_request_template.md", ".github/pull_request_template.md"],
+  ["templates/project/.ai/indexing/benchmarks/navigation-cases.example.json", ".ai/indexing/benchmarks/navigation-cases.example.json"],
 ];
 
 function copyFile(srcRel, destRel) {
@@ -81,11 +83,12 @@ Typical files:
 - maps/state.md
 - maps/packages.md
 - maps/domains/*.md
+- benchmarks/navigation-cases.example.json
 - audit reports
 
 Do not treat generated candidates as final truth. Review before applying.
 
-Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. Treat generated metadata as a hint, not truth. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in.
+Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. Treat generated metadata as a hint, not truth. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in. Prefer scripts/joo-indexing-lookup.mjs for exact-path or keyword lookup instead of reading full maps.
 `,
     "utf8"
   );
@@ -95,3 +98,5 @@ Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before
 
 console.log("\nNext:");
 console.log("node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths");
+console.log("node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --keyword <term>");
+console.log("node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only");

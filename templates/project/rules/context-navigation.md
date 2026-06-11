@@ -51,13 +51,14 @@ Before reading many files, classify the request:
 1. User-provided exact files.
 2. Nearest project/team safety rules.
 3. `/AI_INDEX.md` as the router.
-4. At most one relevant `.ai/indexing/maps/*` shard.
-5. Sidecar file hint for exact path when needed.
-6. Relevant source files.
-7. Imports from the first relevant source file.
-8. One companion shard only when a coupling signal exists.
-9. Relevant tests.
-10. Targeted search only when router/map/import navigation fails.
+4. Exact path/keyword lookup when the target is narrow.
+5. At most one relevant `.ai/indexing/maps/*` shard.
+6. Sidecar file hint for exact path when needed.
+7. Relevant source files.
+8. Imports from the first relevant source file.
+9. One companion shard only when a coupling signal exists.
+10. Relevant tests.
+11. Targeted search only when router/lookup/map/import navigation fails.
 
 ## Read Budget
 
@@ -117,6 +118,7 @@ Hard cap before edit:
 - Safety and ownership rules beat index.
 - Source/imports/tests beat metadata.
 - `AI_INDEX.md` beats broad search.
+- Exact path/keyword lookup beats reading whole map shards.
 - One map shard beats directory browsing.
 - One companion shard is allowed only for coupling signals.
 - Imports beat reading more maps after a source entry is found.

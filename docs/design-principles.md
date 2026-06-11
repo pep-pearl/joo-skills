@@ -94,6 +94,7 @@ Recommended shards:
 Rules:
 
 - read one shard first, not all shards
+- use exact path / keyword lookup before opening a whole shard when the target is narrow
 - keep each shard path-first and capped
 - one-line purpose per file
 - include natural-language aliases only when useful
@@ -157,7 +158,13 @@ Update only affected metadata:
 - package/build changed -> `maps/packages.md`
 - domain ownership changed -> related `maps/domains/*.md`
 
-## 8. Borrow Patterns, Do Not Clone Systems
+## 8. Measure Navigation Quality
+
+Good AI navigation metadata should be benchmarked, not only reviewed by eye. Keep a small set of representative navigation cases under `.ai/indexing/benchmarks/navigation-cases.json` and run `joo-navigation-benchmark.mjs` after large indexing changes.
+
+Use diff-based metadata checks in PRs so route/API/state/package changes do not silently stale the router or map shards.
+
+## 9. Borrow Patterns, Do Not Clone Systems
 
 This repo borrows ideas from workflow/agent ecosystems:
 

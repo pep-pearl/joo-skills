@@ -14,6 +14,7 @@
 | Skill | Use when | Main output |
 | --- | --- | --- |
 | `frontend-fsd-navigation` | FSD-like frontend repo 탐색 | layer-aware read path |
+| `frontend-next-app-navigation` | Next.js App Router repo 탐색 | route segment aware read path |
 | `screen-spec-alignment` | 화면설계서/PDF/HTML 기준 FE 구현/감사 | page alignment report |
 | `api-integration-planning` | Swagger/OpenAPI와 FE domain API 연결 | API connection plan |
 
@@ -29,4 +30,7 @@
 /navigation trace
 /metadata audit
 /metadata refresh
+/lookup path
+/diff-check
+/benchmark navigation
 ```
