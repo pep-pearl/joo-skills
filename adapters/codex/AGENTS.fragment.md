@@ -11,13 +11,15 @@ Command aliases:
 Before large code work:
 
 1. Run repo navigation mentally.
-2. Read `AI_INDEX.md`.
-3. Read only relevant files.
-4. Keep a compact task ledger.
-5. After code changes, check AI metadata maintenance.
+2. Read `rules/context-navigation.md` when present.
+3. Read `AI_INDEX.md` as the router.
+4. Read at most one relevant `.ai/indexing/maps/*` shard before source files.
+5. Follow imports after finding a likely source file.
+6. Keep a compact task ledger.
+7. After code changes, check AI metadata maintenance.
 
 If using oh-my-codex-style flows:
 
 - use `/indexing init` before planning on a new repo
-- use `/indexing refresh` after route/domain/API/state changes
+- use `/indexing refresh` after route/domain/API/state/package changes
 - use external best-practice research only when current official docs affect correctness

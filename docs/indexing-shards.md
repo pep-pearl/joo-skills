@@ -1,0 +1,134 @@
+# Indexing Shards
+
+## Goal
+
+Avoid two failure modes:
+
+1. AI reads the full repository.
+2. AI reads a giant index that is almost as expensive as the repository.
+
+The solution is a small router plus optional sharded maps.
+
+```txt
+AI_INDEX.md
+  -> choose one map shard
+.ai/indexing/maps/root.md
+.ai/indexing/maps/routes.md
+.ai/indexing/maps/api.md
+.ai/indexing/maps/state.md
+.ai/indexing/maps/packages.md
+.ai/indexing/maps/domains/*.md
+```
+
+## Roles
+
+### `AI_INDEX.md`
+
+Stable router.
+
+Should answer:
+
+- what kind of project is this?
+- what task type is this?
+- which one shard should be read next?
+- what are the most stable first-read files?
+
+Should not contain:
+
+- full file tree
+- long architecture explanation
+- generated inventories
+- every domain detail
+
+### `manifest.json`
+
+Machine-readable catalog.
+
+Used by scripts/audits. AI does not need to read it during every normal task.
+
+### `maps/root.md`
+
+Fallback for vague natural-language requests.
+
+Use when the user says things like:
+
+- "이 화면 흐름 이상해"
+- "지도 선택 쪽 고쳐줘"
+- "회원 관련 부분 봐줘"
+- "어디부터 봐야 할지 모르겠어"
+
+### `maps/routes.md`
+
+Routes, pages, screens, layouts, route guards.
+
+### `maps/api.md`
+
+API clients, query/mutation hooks, OpenAPI/Swagger, backend endpoint mapping.
+
+### `maps/state.md`
+
+Global state, stores, atoms, cache, session, persistence.
+
+### `maps/packages.md`
+
+Package manager, workspace layout, build/test/lint config.
+
+### `maps/domains/*.md`
+
+Domain-specific entry points and relations.
+
+Create only for domains that save future reads.
+
+## Runtime Rule
+
+```txt
+exact file from user
+-> AI_INDEX.md
+-> one map shard
+-> source file
+-> imports
+-> tests
+-> targeted search
+```
+
+Do not read every shard.
+
+## Shard Format
+
+Recommended sections:
+
+```md
+# Domain Map: auth
+
+## Scope
+login, logout, session, permission
+
+## First Read
+- `src/pages/login/LoginPage.tsx`: login route entry
+- `src/features/auth/login/useLoginForm.ts`: login behavior
+
+## File Map
+- `path`: one-line purpose; keywords: ...
+
+## Relations
+- LoginPage -> useLoginForm -> authApi.login -> sessionStore
+
+## Do Not Start Here
+- `src/shared/ui/Button.tsx`: generic UI only
+
+## Staleness Triggers
+- login route moved
+- session store changed
+```
+
+## Size Caps
+
+Recommended caps:
+
+- `AI_INDEX.md`: 80-140 lines
+- `root.md`: about 120 lines
+- route/API/state/package maps: about 160-220 lines
+- domain map: about 160 lines
+- each file entry: one line
+
+When a cap is exceeded, truncate and point to targeted search.

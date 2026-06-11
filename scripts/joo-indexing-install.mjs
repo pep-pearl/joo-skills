@@ -71,9 +71,18 @@ Typical files:
 - AI_INDEX.candidate.md
 - header-candidates.md
 - indexing-report.json
+- manifest.json
+- maps/root.md
+- maps/routes.md
+- maps/api.md
+- maps/state.md
+- maps/packages.md
+- maps/domains/*.md
 - audit reports
 
 Do not treat generated candidates as final truth. Review before applying.
+
+Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports.
 `,
     "utf8"
   );

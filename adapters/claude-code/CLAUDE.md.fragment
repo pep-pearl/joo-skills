@@ -4,16 +4,19 @@ When working in this repository, use the Joo Skills navigation rules.
 
 ## Auto-load
 
-Read these first when navigating code:
+Read these first when navigating unfamiliar code:
 
 1. `rules/context-navigation.md`
 2. `AI_INDEX.md`
 
 Use these conditionally:
 
-- `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md` or `@ai-*` metadata
+- one relevant `.ai/indexing/maps/*` shard when `AI_INDEX.md` points to it
+- `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, or `@ai-*` metadata
 - screen spec rules when official screen specs are referenced
 - API integration rules when connecting UI to backend/OpenAPI
+
+After a likely source file is found, prefer import-following over reading more maps.
 
 ## Commands
 

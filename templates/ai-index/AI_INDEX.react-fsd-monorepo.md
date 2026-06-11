@@ -2,30 +2,38 @@
 
 ## Purpose
 
-AI repo navigation map for a React/FSD-like monorepo.
+Small router for a React/FSD-like monorepo.
 
-Keep short, factual, path-first.
+Keep short, factual, path-first. Put detailed maps in `.ai/indexing/maps/*`.
 
-## Project
+## Project Shape
 
 - stack: React / TypeScript
 - package manager: pnpm or yarn workspace
 - architecture: app -> pages -> widgets -> features -> entities -> shared
 - routing: React Router or framework route files
+- main app: `TODO`
 
-## Read Algorithm
+## Navigation Order
 
 1. Exact files first.
-2. Route/page task:
-   - start at route config
-   - follow route module
-   - open page entry
-3. Follow imports downward:
+2. Read this router.
+3. Read at most one map shard.
+4. Follow imports downward:
    - pages -> widgets -> features -> entities -> shared
-4. Do not scan all `src`.
-5. Check `@ai-*` headers before full file reads.
+5. Read tests when behavior matters.
+6. Search broadly only when blocked.
 
-## Main Entries
+## Task Router
+
+- route/page/screen: `.ai/indexing/maps/routes.md`
+- vague product wording: `.ai/indexing/maps/root.md`
+- API/query/backend: `.ai/indexing/maps/api.md`
+- state/store/cache: `.ai/indexing/maps/state.md`
+- package/build/config: `.ai/indexing/maps/packages.md`
+- domain-specific: `.ai/indexing/maps/domains/<domain>.md` when present
+
+## First-Read Defaults
 
 - app bootstrap: `TODO`
 - route root: `TODO`
@@ -45,6 +53,13 @@ Keep short, factual, path-first.
 
 Respect dependency direction.
 
+## Read Budget
+
+- maps: 0-1
+- source files: 1-3 before deciding next
+- tests: when behavior matters
+- broad search: only after targeted navigation fails
+
 ## Maintenance Triggers
 
-Update when routes, page mapping, domain ownership, API/state/map architecture, or first-read files change.
+Update router or affected shards when routes, page mapping, domain ownership, API/state/map architecture, packages, or first-read files change.

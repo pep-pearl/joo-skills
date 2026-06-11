@@ -1,9 +1,11 @@
 ---
-description: Use when creating or maintaining AI_INDEX, AGENTS, context navigation rules, or @ai-* headers.
+description: Use when creating or maintaining AI_INDEX, map shards, manifest, AGENTS, context navigation rules, or @ai-* headers.
 globs:
   - "**/AI_INDEX.md"
   - "**/AGENTS.md"
   - "**/rules/*.md"
+  - "**/.ai/indexing/**/*.md"
+  - "**/.ai/indexing/**/*.json"
 alwaysApply: false
 ---
 
@@ -11,26 +13,28 @@ alwaysApply: false
 
 Use sparse, factual AI navigation metadata.
 
+`AI_INDEX.md` is a small router. Put inventories and file maps in `.ai/indexing/maps/*`.
+
 Do not add headers to every file.
 
 When indexing:
 
 1. Read existing AGENTS/rules.
-2. Read or create AI_INDEX.
+2. Read or create AI_INDEX router.
 3. Identify entry points.
-4. Follow imports.
-5. Generate path-first summaries.
-6. Update metadata only when future agents need it.
+4. Generate compact map shards when useful.
+5. Follow imports.
+6. Generate path-first summaries.
+7. Update metadata only when future agents need it.
 
-Header format:
+Minimal header format:
 
 ```ts
 /**
  * @ai-purpose Short responsibility.
- * @ai-entry true | false
  * @ai-domain routing | api | state | page | feature | entity | shared | config | test
- * @ai-depends Important internal dependencies.
- * @ai-used-by Main callers or areas.
- * @ai-keywords Searchable names.
+ * @ai-keywords Searchable names and user-facing aliases.
  */
 ```
+
+Extended fields are optional: `@ai-entry`, `@ai-depends`, `@ai-used-by`, `@ai-notes`.

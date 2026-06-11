@@ -2,147 +2,98 @@
 
 ## Purpose
 
-AI repo navigation map.
+Small router for AI repo navigation.
 
-Use this to choose minimum files to read before opening large repo areas.
+Use this file to choose the smallest next context file. Do not turn it into an architecture document, file inventory, changelog, or task prompt.
 
-Not architecture doc. Not task prompt. Keep short, factual, path-first.
-
-## Project
+## Project Shape
 
 - name:
 - stack:
 - package manager:
 - architecture:
 - main app:
-- shared packages:
 
-## Read Algorithm
+## Navigation Order
 
-1. If user gives exact files, start there.
-2. For route/page tasks, start at:
-   - `TODO`
-3. Map route -> page:
-   - `TODO`
-4. Follow imports downward.
-5. Do not scan the whole repo by default.
-6. Check file-level `@ai-*` headers before full file read.
+1. If the user names exact files, start there and skip broad navigation.
+2. Otherwise use this file as the router.
+3. Read at most one `.ai/indexing/maps/*` shard before source files.
+4. Once a likely source file is found, prefer import-following over more map reading.
+5. Read relevant tests when behavior matters.
+6. Use targeted search only when router, map shard, and imports are insufficient.
 
-## Workspace
+## Task Router
 
-- `TODO`: purpose / entry
+- route/page/screen work: `.ai/indexing/maps/routes.md`
+- vague product wording: `.ai/indexing/maps/root.md`
+- API/backend/query/OpenAPI work: `.ai/indexing/maps/api.md`
+- state/store/cache work: `.ai/indexing/maps/state.md`
+- package/build/config work: `.ai/indexing/maps/packages.md`
+- domain work: `.ai/indexing/maps/domains/<domain>.md` when present
 
-## Main Entries
+## First-Read Defaults
 
-- `TODO`: app bootstrap
-- `TODO`: routing
-- `TODO`: state
-- `TODO`: API client
-- `TODO`: test setup
+- app bootstrap: `TODO`
+- route root: `TODO`
+- API client/query root: `TODO`
+- global state root: `TODO`
+- test setup: `TODO`
 
-## App Map
+## Read Budget
 
-- `app`: bootstrap, providers, routes
-- `pages`: route-level screens
-- `widgets`: reusable large UI blocks
-- `features`: user actions/forms/interactions
-- `entities`: domain model/pure logic
-- `shared`: reusable UI/utils/hooks/store/API
+Default budget before editing:
 
-## Domain Map
+- maps: 0-1 files
+- source files: 1-3 files
+- tests: only when behavior or regression risk matters
+- broad search: only after targeted navigation fails
 
-- `TODO domain`: routes/pages/features/entities/API
+For vague natural-language requests:
 
-## Flows
+1. Read `.ai/indexing/maps/root.md`.
+2. Pick one likely task/domain map.
+3. Do not read all maps.
+4. If the first source file is found, follow imports.
 
-### Route -> Page
+## Map Shards
 
-`TODO`
+Generated or candidate map shards may live under `.ai/indexing/maps/`.
 
-### API Data Flow
+They are optional navigation aids. They should be compact, path-first, and disposable. `AI_INDEX.md` remains the stable router.
 
-`TODO`
+## File-Level AI Headers
 
-### State Flow
-
-`TODO`
-
-## Task Starts
-
-### Route/page task
-
-- start:
-- then:
-
-### State task
-
-- start:
-- then:
-
-### API task
-
-- start:
-- then:
-
-### Styling/UI task
-
-- start:
-- then:
-
-## Naming / Conventions
-
-- folders:
-- components:
-- hooks:
-- types:
-- tests:
-
-## File-Level AI Header
-
-Important files may include:
+Important files may include sparse headers:
 
 ```ts
 /**
  * @ai-purpose Short file responsibility.
- * @ai-entry true | false
- * @ai-domain routing | api | state | page | feature | entity | shared | config | test
+ * @ai-domain auth/page | api | state | routing | feature | entity | shared | config | test
+ * @ai-keywords Searchable aliases, route names, user-facing terms.
  */
 ```
 
-Read header first. Open full file only if relevant.
-
-## External Rules
-
-- `rules/context-navigation.md`: minimal file navigation.
-- `rules/ai-navigation-maintenance.md`: index/header maintenance.
-
-## Future-Agent Defaults
-
-- Do not full-scan repo.
-- Use `AI_INDEX.md` first.
-- Prefer import-following over directory browsing.
-- Preserve dependency direction.
-- Read tests when behavior matters.
+Extended fields such as `@ai-entry`, `@ai-depends`, `@ai-used-by`, and `@ai-notes` are optional and should be used only when they save future reads.
 
 ## Maintenance Triggers
 
-Update this file when changes affect:
+Update this router or map shards only when future agents would otherwise start from wrong files:
 
 - new/removed/renamed routes or page folders
-- route/page mapping
-- major feature/domain ownership
-- global store shape
-- API client/data-fetching architecture
-- map/GIS architecture
-- monorepo package list
-- first-read files for future agents
+- route/page mapping changed
+- major domain ownership changed
+- API/data-fetching architecture changed
+- state/store architecture changed
+- monorepo package or entry point changed
+- first-read files changed
 
-Do not update for tiny internal implementation changes.
+Do not update for tiny implementation details, copy changes, formatting, generated files, or local refactors that do not change navigation.
 
-## AI Output Compression
+## Output Compression
 
 - path-first
 - decision-first
-- bullets over prose
+- changed/skipped/uncertain only
+- no full inventories unless requested
 - omit unchanged sections
-- report changed / skipped / uncertain

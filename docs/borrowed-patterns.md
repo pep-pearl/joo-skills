@@ -73,3 +73,17 @@ This repo should keep borrowed material at the level of:
 - workflow patterns
 - compatibility notes
 - optional integration guidance
+
+## Sharded Navigation Map
+
+Useful idea:
+
+- a single repo map can become too large to read by default
+- a small router plus focused shards keeps normal tasks cheap
+- vague natural-language tasks need a different fallback than exact code tasks
+
+Local adaptation:
+
+- `AI_INDEX.md` stays router-only
+- `.ai/indexing/maps/*` holds optional detail
+- agents should read at most one shard before source files

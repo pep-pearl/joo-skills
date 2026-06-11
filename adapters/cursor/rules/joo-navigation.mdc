@@ -1,5 +1,5 @@
 ---
-description: Use before broad code exploration. Prefer AI_INDEX and import-following over full scans.
+description: Use before broad code exploration. Prefer AI_INDEX, one map shard, and import-following over full scans.
 globs:
   - "**/*"
 alwaysApply: false
@@ -12,9 +12,13 @@ Read order:
 1. user-provided exact files
 2. `rules/context-navigation.md`
 3. `AI_INDEX.md`
-4. file-level `@ai-*` headers
-5. relevant source files
-6. relevant tests
-7. broader search only if needed
+4. at most one relevant `.ai/indexing/maps/*` shard
+5. file-level `@ai-*` headers
+6. relevant source files
+7. imports from the first relevant source file
+8. relevant tests
+9. targeted search only if needed
+
+Do not read every map shard.
 
 Report only files read, reason, next target, and uncertainty.

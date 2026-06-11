@@ -6,12 +6,29 @@ Create and maintain a compact project navigation system for AI agents.
 
 This skill turns an unknown repository into a repo with:
 
-- `AI_INDEX.md`
+- `AI_INDEX.md` router
+- `.ai/indexing/manifest.json`
+- `.ai/indexing/maps/*` compact map shards
 - `AGENTS.md` loading guidance
 - `rules/context-navigation.md`
 - `rules/ai-navigation-maintenance.md`
 - sparse file-level `@ai-*` headers
 - optional `.ai/indexing/*` scan outputs
+
+## Core Direction
+
+`AI_INDEX.md` should stay small. It routes future agents to the right shard or source file.
+
+Map shards hold optional detail:
+
+- `.ai/indexing/maps/root.md`: top-level repo areas and ambiguous-request fallback
+- `.ai/indexing/maps/routes.md`: route/page/screen starting points
+- `.ai/indexing/maps/api.md`: API/query/client/OpenAPI starting points
+- `.ai/indexing/maps/state.md`: store/cache/session starting points
+- `.ai/indexing/maps/packages.md`: package/workspace/build/config starting points
+- `.ai/indexing/maps/domains/*.md`: domain-specific maps when useful
+
+Do not create a giant file tree. Shards should be compact, path-first, and disposable.
 
 ## Trigger Phrases
 
@@ -35,6 +52,7 @@ Do not rewrite runtime logic while indexing.
 Do not add headers to every file.
 
 Do not full-scan the repository unless:
+
 - the user explicitly asks
 - no index exists and targeted discovery failed
 - existing index is stale or misleading
@@ -48,10 +66,12 @@ Generated metadata should be path-first, factual, and compact.
 Goal:
 
 - discover project shape
-- create or update `AI_INDEX.md`
+- create or update `AI_INDEX.md` as a router
+- create or update compact map shards under `.ai/indexing/maps/*`
+- create or update `.ai/indexing/manifest.json`
 - create or update navigation rules
 - prepare `AGENTS.md` loading guidance
-- identify candidate files for `@ai-*` headers
+- identify candidate files for sparse `@ai-*` headers
 
 Read order:
 
@@ -71,6 +91,9 @@ Created:
 - ...
 
 Updated:
+- ...
+
+Map shards:
 - ...
 
 Header candidates:
@@ -112,16 +135,23 @@ Skip:
 - assets
 - barrels unless they are real public API boundaries
 
-Header format:
+Minimal header format:
 
 ```ts
 /**
  * @ai-purpose Short responsibility.
- * @ai-entry true | false
  * @ai-domain routing | auth | map | gis | ui | api | state | feature | page | entity | shared | test | config
+ * @ai-keywords Searchable names, routes, hooks, APIs, user-facing aliases.
+ */
+```
+
+Extended header fields are optional and should be used only when they save future reads:
+
+```ts
+/**
+ * @ai-entry true | false
  * @ai-depends Important internal dependencies.
  * @ai-used-by Main callers or areas.
- * @ai-keywords Searchable names, routes, hooks, APIs.
  * @ai-notes Important modification notes. Omit if unnecessary.
  */
 ```
@@ -130,7 +160,7 @@ Header format:
 
 Goal:
 
-- compare current repo with `AI_INDEX.md`
+- compare current repo with `AI_INDEX.md`, manifest, map shards, and headers
 - report stale, missing, or misleading navigation metadata
 
 Check:
@@ -139,8 +169,9 @@ Check:
 - page/domain paths still exist
 - package list still matches workspace
 - API/state/map entries still match likely files
-- important new folders are not missing
+- important new folders are not missing from map shards
 - AGENTS/rules loading still makes sense
+- `AI_INDEX.md` is still router-sized, not an inventory
 
 Output:
 
@@ -167,17 +198,19 @@ Do not update:
 
 Goal:
 
-- update only changed index sections
+- update only changed index sections and affected shards
 - avoid rewriting stable sections
 
 Refresh targets:
 
-- routes
-- page/domain map
+- router in `AI_INDEX.md`
+- manifest map list
+- routes map
+- page/domain maps
 - package/workspace map
-- API/data flow
-- state management
-- map/GIS flow
+- API/data flow map
+- state management map
+- map/GIS/domain flow maps
 - first-read files
 - maintenance triggers
 
@@ -188,28 +221,55 @@ Output should mention only changed, skipped, and uncertain items.
 Goal:
 
 - explain how current repo indexing works
-- list first-read files and rules
+- list first-read files and map shards
 - do not modify files
 
 ## AI_INDEX Contract
 
-`AI_INDEX.md` is a project adapter.
+`AI_INDEX.md` is a project router.
 
 It should answer:
 
 - What kind of project is this?
-- Where should agents start reading?
-- Which routes/pages/domains exist?
-- Where are API/state/map/test entry points?
-- What should future agents avoid scanning?
-- When should this index be updated?
+- What is the minimum navigation order?
+- Which task type maps to which shard?
+- Which first-read files are stable enough to list?
+- When should this router or map shards be updated?
 
 It should not:
 
 - duplicate README
 - document every folder
+- contain a full file tree
 - become a historical changelog
 - contain long implementation details
+- include generated scan inventories
+
+Suggested size:
+
+- 80-140 lines
+- 800-1,500 tokens
+- one-line bullets over prose
+
+## Map Shard Contract
+
+Map shards are optional detail files used only when the router points to them.
+
+Each shard should include:
+
+- `Scope`: what kind of task it helps
+- `First Read`: highest-value files only
+- `File Map`: one-line purpose and keywords
+- `Relations`: only high-value flow/import relations
+- `Do Not Start Here`: known token traps
+- `Staleness Triggers`: when to refresh
+
+Do not exceed practical caps:
+
+- root map: about 120 lines
+- route/API/state/package map: about 160-220 lines
+- domain map: about 160 lines
+- one file entry: one short line plus optional keywords
 
 ## File Header Contract
 
@@ -231,8 +291,9 @@ Prefer:
 
 ```txt
 Updated:
-- AI_INDEX.md: route/page map
-- rules/context-navigation.md: added missing read order
+- AI_INDEX.md: router now points to route/API/state shards
+- .ai/indexing/maps/routes.md: refreshed route/page starts
+- rules/context-navigation.md: added read budget
 
 Skipped:
 - trivial UI components

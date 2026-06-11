@@ -6,29 +6,46 @@ Use this rule only when explicitly asked to create, update, audit, or improve AI
 
 Also use it after code changes when the change may affect how future AI agents navigate the repository.
 
+## Metadata Scope
+
 AI navigation metadata includes:
 
-- `/AI_INDEX.md`
+- `/AI_INDEX.md` router
+- `.ai/indexing/manifest.json`
+- `.ai/indexing/maps/*` map shards
 - file-level `@ai-*` comments
-- domain/flow maps
-- entry point docs
+- `rules/context-navigation.md`
+- `rules/ai-navigation-maintenance.md`
 - rule-loading guidance in `AGENTS.md`
+- harness-specific rules such as Cursor `.mdc` or Claude/Codex fragments
 
 Do not use this rule for normal feature work, bug fixes, styling, or refactors unless repo navigation is affected.
 
 ## Update Targets
 
-### Update `AI_INDEX.md` when changes affect:
+### Update `AI_INDEX.md` when:
 
-- routes, pages, or route-to-page mapping
-- major feature folders
-- domain responsibility
-- important flows
-- state management
-- API/data fetching
-- map/GIS architecture
-- entry points or first-read files
-- files future agents need to understand the project
+- the task router points to wrong or missing map shards
+- first-read files changed
+- global navigation order changed
+- route/API/state/package/domain entry points changed
+- future agents would start from wrong files
+
+Keep `AI_INDEX.md` router-only. Move inventories and long maps into `.ai/indexing/maps/*`.
+
+### Update map shards when:
+
+- routes, pages, API clients, stores, package entries, or major domains changed
+- a map shard is stale, missing, or misleading
+- vague natural-language requests would no longer find the correct starting area
+
+Map shards must be compact:
+
+- path-first
+- one-line purpose per file
+- keyword aliases for natural-language discovery
+- no full source summaries
+- no exhaustive tree dumps
 
 ### Update file-level `@ai-*` comments when:
 
@@ -50,16 +67,26 @@ Do not update `AGENTS.md` for ordinary feature implementation.
 
 ## File Header Format
 
-Use for TypeScript, JavaScript, and React files:
+Minimal preferred form:
+
+```ts
+/**
+ * @ai-purpose Short file responsibility.
+ * @ai-domain auth/page | routing | api | state | feature | entity | shared | config | test
+ * @ai-keywords Searchable aliases, route names, user-facing terms.
+ */
+```
+
+Extended form for high-value entry files only:
 
 ```ts
 /**
  * @ai-purpose Short responsibility.
- * @ai-entry true | false
+ * @ai-entry true
  * @ai-domain routing | auth | map | gis | ui | api | state | feature | page | entity | shared | config | test
  * @ai-depends Important internal dependencies.
  * @ai-used-by Main callers or areas.
- * @ai-keywords Searchable names: components, hooks, APIs, routes.
+ * @ai-keywords Searchable names: components, hooks, APIs, routes, user terms.
  * @ai-notes Important modification notes. Omit if unnecessary.
  */
 ```
@@ -77,13 +104,17 @@ Use for TypeScript, JavaScript, and React files:
 
 ## Post-Change Check
 
-After code work, briefly decide whether AI navigation metadata needs updates.
+After significant code work, briefly decide whether AI navigation metadata needs updates.
 
 ```txt
 [AI_NAVIGATION_MAINTENANCE_SUMMARY]
 
 Updated:
 - ...
+
+Map shards:
+- updated:
+- unchanged because:
 
 AI headers:
 - added:

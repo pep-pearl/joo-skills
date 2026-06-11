@@ -14,6 +14,9 @@ Updated:
 Read:
 - path: reason
 
+Map shards:
+- path: purpose
+
 Header candidates:
 - path: reason
 
@@ -52,6 +55,10 @@ No-op:
 
 Updated:
 - ...
+
+Map shards:
+- updated:
+- unchanged because:
 
 AI headers:
 - added:

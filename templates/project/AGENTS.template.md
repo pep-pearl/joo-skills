@@ -4,8 +4,10 @@
 
 - Follow the nearest applicable `AGENTS.md`.
 - Read only rules needed for the task.
-- Always read `rules/context-navigation.md` before repo navigation.
+- Always read `rules/context-navigation.md` before unfamiliar repo navigation.
 - Read `AI_INDEX.md` before broad search.
+- Treat `AI_INDEX.md` as a small router, not a full architecture document.
+- Read at most one `.ai/indexing/maps/*` shard before source files unless the task is explicitly repo-wide.
 - Do not load `docs/prompts/*` unless the user explicitly references one.
 - Prefer small, targeted edits.
 - If user names files, start there.
@@ -15,8 +17,8 @@
 Read only when relevant:
 
 - `rules/ai-navigation-maintenance.md`
-  - Use for creating, updating, auditing, or maintaining `AI_INDEX.md` or `@ai-*` metadata.
-  - Also use after code changes that affect routes, page structure, feature boundaries, API/data flow, state, map/GIS, or first-read files.
+  - Use for creating, updating, auditing, or maintaining `AI_INDEX.md`, `.ai/indexing/maps/*`, `manifest.json`, or `@ai-*` metadata.
+  - Also use after code changes that affect routes, page structure, feature boundaries, API/data flow, state, map/GIS, packages, or first-read files.
 
 ## Commands
 
@@ -25,6 +27,19 @@ Read only when relevant:
 - `/indexing audit`: report stale/missing AI navigation metadata.
 - `/indexing refresh`: update changed metadata sections only.
 - `/indexing explain`: explain how future agents should navigate this repo.
+
+## Normal Navigation
+
+Default order:
+
+1. Exact files from the user.
+2. `rules/context-navigation.md`.
+3. `AI_INDEX.md`.
+4. One relevant `.ai/indexing/maps/*` shard if needed.
+5. Relevant source files.
+6. Imports from the first relevant source file.
+7. Relevant tests.
+8. Targeted search only when blocked.
 
 ## After Code Changes
 
@@ -38,7 +53,8 @@ Update metadata when changes affect:
 - state management
 - API/data fetching
 - map/GIS architecture
-- files future agents should read first
+- packages or first-read files
+- map shards future agents rely on
 
 Do not update metadata for small internal changes that do not affect repo navigation.
 

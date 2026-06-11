@@ -2,9 +2,11 @@
 
 ## Purpose
 
-AI repo navigation map for a React/FSD-like monorepo.
+Small router for a React/FSD-like monorepo.
 
-## Project
+Detailed file maps live in `.ai/indexing/maps/*`.
+
+## Project Shape
 
 - stack: React, TypeScript
 - package manager: pnpm
@@ -12,36 +14,54 @@ AI repo navigation map for a React/FSD-like monorepo.
 - routing: React Router
 - main app: `apps/web`
 
-## Read Algorithm
+## Navigation Order
 
 1. Exact files first.
-2. For route/page tasks, start at `apps/web/src/app/routes.tsx`.
-3. Map route to `apps/web/src/pages/<domain>`.
+2. Read this router.
+3. Read at most one relevant map shard.
 4. Follow imports downward.
-5. Do not scan all `apps/web/src`.
-6. Check file-level `@ai-*` headers before full file read.
+5. Read tests when behavior matters.
+6. Use targeted search only when blocked.
 
-## Main Entries
+## Task Router
 
-- `apps/web/src/main.tsx`: app bootstrap
-- `apps/web/src/app/routes.tsx`: route root
-- `apps/web/src/shared/api/client.ts`: API client
-- `apps/web/src/shared/store/app-store.ts`: global state
-- `apps/web/src/shared/query/query-provider.tsx`: query setup
+- route/page/screen: `.ai/indexing/maps/routes.md`
+- vague product wording: `.ai/indexing/maps/root.md`
+- API/query/backend: `.ai/indexing/maps/api.md`
+- state/store/cache: `.ai/indexing/maps/state.md`
+- package/build/config: `.ai/indexing/maps/packages.md`
+- auth domain: `.ai/indexing/maps/domains/auth.md`
+- dashboard domain: `.ai/indexing/maps/domains/dashboard.md`
 
-## Domain Map
+## First-Read Defaults
 
-- auth:
-  - routes: `apps/web/src/app/auth-routes.tsx`
-  - pages: `apps/web/src/pages/login`, `apps/web/src/pages/signup`
-  - API: `packages/domains/auth`
-- dashboard:
-  - routes: `apps/web/src/app/service-routes.tsx`
-  - pages: `apps/web/src/pages/dashboard`
+- app bootstrap: `apps/web/src/main.tsx`
+- route root: `apps/web/src/app/routes.tsx`
+- API client: `apps/web/src/shared/api/client.ts`
+- global state: `apps/web/src/shared/store/app-store.ts`
+- query provider: `apps/web/src/shared/query/query-provider.tsx`
+
+## FSD Rules
+
+- `app`: routing/providers/global setup only
+- `pages`: route-level UI flow
+- `widgets`: large reusable blocks
+- `features`: user actions/forms/interactions
+- `entities`: domain model/pure logic
+- `shared`: reusable UI/utils/hooks/API
+
+Respect dependency direction.
+
+## Read Budget
+
+- maps: 0-1
+- source files: 1-3 before deciding next
+- tests: when behavior matters
+- broad search: only after targeted navigation fails
 
 ## Future-Agent Defaults
 
-- Use route root first.
-- Follow imports.
+- Use route root first for route/page work.
+- Use one map shard, then source imports.
 - Avoid broad scans.
-- Update index when route/page/API/state ownership changes.
+- Update affected map shards when route/page/API/state ownership changes.
