@@ -20,7 +20,7 @@
 
 - ...
 
-## Header Candidates
+## File Hint Candidates
 
 | File | Reason | Suggested domain | Entry |
 | --- | --- | --- | --- |

@@ -3,7 +3,7 @@
 Command aliases:
 
 - `/indexing init`: initialize AI navigation metadata
-- `/indexing annotate`: add sparse `@ai-*` headers
+- `/indexing annotate`: add sidecar file hints without modifying source files by default
 - `/indexing audit`: check stale metadata
 - `/indexing refresh`: update changed index sections only
 - `/indexing explain`: explain current navigation map

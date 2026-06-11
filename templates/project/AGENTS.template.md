@@ -34,13 +34,13 @@ If a navigation rule conflicts with a safety or ownership rule, follow the safet
 Read only when relevant:
 
 - `rules/ai-navigation-maintenance.md`
-  - Use for creating, updating, auditing, or maintaining `AI_INDEX.md`, `.ai/indexing/maps/*`, `manifest.json`, or `@ai-*` metadata.
+  - Use for creating, updating, auditing, or maintaining `AI_INDEX.md`, `.ai/indexing/maps/*`, `manifest.json`, or sidecar file hints / optional `@ai-*` metadata.
   - Also use after code changes that affect routes, page structure, feature boundaries, API/data flow, state, map/GIS, packages, or first-read files.
 
 ## Commands
 
 - `/indexing init`: create or update project AI navigation metadata.
-- `/indexing annotate`: add sparse `@ai-*` headers to important files.
+- `/indexing annotate`: add sidecar file hints for important files; do not modify source files by default.
 - `/indexing audit`: report stale/missing AI navigation metadata.
 - `/indexing refresh`: update changed metadata sections only.
 - `/indexing explain`: explain how future agents should navigate this repo.

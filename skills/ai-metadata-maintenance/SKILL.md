@@ -9,7 +9,7 @@ Metadata includes:
 - `AI_INDEX.md` router
 - `.ai/indexing/manifest.json`
 - `.ai/indexing/maps/*` map shards
-- file-level `@ai-*` headers
+- sidecar file hints and optional source-header exceptions
 - `rules/context-navigation.md`
 - `rules/ai-navigation-maintenance.md`
 - `AGENTS.md`
@@ -40,7 +40,7 @@ Metadata includes:
 
 AI navigation metadata is a hint, not truth. Source/imports/tests beat metadata.
 
-If source/imports contradict `AI_INDEX.md`, map shards, or `@ai-*` headers, report the metadata as stale and update only the affected metadata.
+If source/imports contradict `AI_INDEX.md`, map shards, sidecar file hints, or optional source-header exceptions, report the metadata as stale and update only the affected metadata.
 
 Prefer script validation before agent reasoning when possible:
 
@@ -76,15 +76,15 @@ Each maintained shard should include compact metadata when practical:
 - `Last Verified`: date or `unknown`
 - `Source`: path-heuristic | human-maintained | mixed
 
-### File Hints And Headers
+### Sidecar File Hints
 
-Prefer sidecar metadata in `.ai/indexing/file-hints.md`.
+Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`.
 
-Update source-level headers only when file purpose, domain, entry status, dependencies, keywords, or main callers changed and the file is a stable high-value entry.
+Update sidecar entries when file purpose, domain, role, keywords, related files, or confidence changed.
 
-Do not add source-level headers to generated code, trivial UI atoms, snapshots, constants-only files, or high-churn local files.
+Do not add source-level headers by default. Source headers are allowed only when the project explicitly opts in and they do not violate max-lines lint rules.
 
-Header content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
+Hint content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
 
 ### AGENTS.md
 
@@ -113,7 +113,7 @@ Map shards:
 - updated:
 - unchanged because:
 
-AI headers:
+File hints:
 - added:
 - updated:
 - unchanged:

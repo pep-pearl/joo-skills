@@ -14,7 +14,7 @@ Read these first when navigating unfamiliar code:
 Use these conditionally:
 
 - one relevant `.ai/indexing/maps/*` shard when `AI_INDEX.md` points to it
-- `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, or `@ai-*` metadata
+- `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, or sidecar file hints / optional `@ai-*` metadata
 - screen spec rules when official screen specs are referenced
 - API integration rules when connecting UI to backend/OpenAPI
 

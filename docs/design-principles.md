@@ -99,9 +99,9 @@ Rules:
 - include natural-language aliases only when useful
 - once source entry is found, follow imports
 
-## 6. Headers Are Sparse
+## 6. Source Headers Are Disabled By Default
 
-Prefer sidecar metadata in `.ai/indexing/file-hints.md`. Use source-level `@ai-*` headers only for stable files that help navigation.
+Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`. Use source-level `@ai-*` headers only when the project explicitly opts in and max-lines lint will not fail.
 
 Good targets:
 
@@ -122,17 +122,23 @@ Bad targets:
 - snapshots
 - barrels with no meaning
 
-Prefer minimal headers:
+Prefer minimal sidecar entries:
 
-```ts
-/**
- * @ai-purpose Short responsibility.
- * @ai-domain auth/page
- * @ai-keywords login, signin, 로그인
- */
+```json
+{
+  "path": "src/pages/login.tsx",
+  "role": "route-or-page",
+  "scope": "login page",
+  "domain": "auth",
+  "keywords": ["login", "signin", "로그인"],
+  "related": [],
+  "confidence": "manual-reviewed",
+  "lastVerified": "YYYY-MM-DD"
+}
 ```
 
-Use extended fields only when they save future reads. Header content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
+Use source headers only as explicit exceptions. Hint content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
+
 
 ## 7. Index Maintenance Is Part Of Done
 

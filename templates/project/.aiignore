@@ -1,0 +1,21 @@
+# AI indexing ignore file
+# These paths are excluded from joo-indexing-scan when --respect-ai-ignore is used.
+
+# generated / build output
+dist/
+build/
+.next/
+coverage/
+**/__generated__/
+**/*.generated.*
+**/*.gen.*
+
+# large fixtures / snapshots
+**/__snapshots__/
+**/fixtures/large/
+
+# secrets / private metadata
+.env*
+secrets/
+credentials/
+private/

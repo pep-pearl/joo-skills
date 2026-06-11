@@ -1,5 +1,5 @@
 ---
-description: Use when creating or maintaining AI_INDEX, map shards, manifest, AGENTS, context navigation rules, or @ai-* headers.
+description: Use when creating or maintaining AI_INDEX, map shards, manifest, AGENTS, context navigation rules, or sidecar file hints.
 globs:
   - "**/AI_INDEX.md"
   - "**/AGENTS.md"
@@ -15,7 +15,7 @@ Use sparse, factual AI navigation metadata.
 
 `AI_INDEX.md` is a small router. Put inventories and file maps in `.ai/indexing/maps/*`.
 
-Do not add headers to every file.
+Do not add source-level @ai-* headers by default.
 
 When indexing:
 
@@ -27,17 +27,19 @@ When indexing:
 6. Generate path-first summaries.
 7. Update metadata only when future agents need it.
 
-Minimal header format:
+Sidecar file hint shape:
 
-```ts
-/**
- * @ai-purpose Short responsibility.
- * @ai-domain routing | api | state | page | feature | entity | shared | config | test
- * @ai-keywords Searchable names and user-facing aliases.
- */
+```json
+{
+  "path": "src/pages/order/detail.tsx",
+  "role": "route-or-page",
+  "scope": "order detail page",
+  "domain": "order",
+  "keywords": ["order-detail"],
+  "related": [],
+  "confidence": "manual-reviewed",
+  "lastVerified": "YYYY-MM-DD"
+}
 ```
 
-Extended fields are optional: `@ai-entry`, `@ai-depends`, `@ai-used-by`, `@ai-notes`.
-
-
-Prefer sidecar metadata in `.ai/indexing/file-hints.md`. Add source-level `@ai-*` headers only to stable entry files. Header content must be factual and must not command the agent to skip checks, ignore imports, or bypass tests.
+Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`. Source-level `@ai-*` headers are opt-in exceptions only and must not break max-lines lint. Hint content must be factual and must not command the agent to skip checks, ignore imports, or bypass tests.

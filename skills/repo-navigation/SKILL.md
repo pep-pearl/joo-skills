@@ -29,7 +29,7 @@ If a navigation rule conflicts with a safety or ownership rule, follow the safet
 
 ## Metadata Trust Rule
 
-Treat `AI_INDEX.md`, map shards, and `@ai-*` headers as navigation hints, not truth.
+Treat `AI_INDEX.md`, map shards, sidecar file hints, and optional source-header exceptions as navigation hints, not truth.
 
 Trust order for technical facts:
 
@@ -184,3 +184,8 @@ Uncertain:
 - Imports beat reading more maps after a source file is found.
 - Tests are read when behavior matters.
 - Never read generated or huge files unless needed.
+
+
+## Exact Path Lookup Rule
+
+When the user names an exact source file, open that file first. If the task is not trivial, lookup only that exact path in `.ai/indexing/file-map.candidate.json` or the relevant map shard. Do not read a whole map for one known path.

@@ -12,7 +12,7 @@ This skill turns an unknown repository into a repo with:
 - `AGENTS.md` loading guidance
 - `rules/context-navigation.md`
 - `rules/ai-navigation-maintenance.md`
-- sparse file-level `@ai-*` headers
+- sidecar file hints in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`
 - optional `.ai/indexing/*` scan outputs
 
 ## Core Direction
@@ -42,14 +42,14 @@ Use this skill when the user says:
 - "AI_INDEX 만들어줘"
 - "AGENTS.md 만들어줘"
 - "이 프로젝트 AI가 잘 읽게 인덱싱해줘"
-- "파일에 ai용 주석 달아줘"
+- "파일에 ai용 주석 달아줘" (prefer sidecar hints unless source headers are explicitly allowed)
 - "future agents가 빨리 읽게 해줘"
 
 ## Safety
 
 Do not rewrite runtime logic while indexing.
 
-Do not add headers to every file.
+Do not add source-level `@ai-*` headers by default.
 
 Do not full-scan the repository unless:
 
@@ -61,7 +61,7 @@ Generated metadata should be path-first, factual, and compact.
 
 ## Metadata Trust Rule
 
-Treat `AI_INDEX.md`, map shards, and `@ai-*` headers as navigation hints, not truth.
+Treat `AI_INDEX.md`, map shards, sidecar file hints, and optional source-header exceptions as navigation hints, not truth.
 
 Trust order:
 
@@ -89,7 +89,7 @@ Goal:
 - create or update `.ai/indexing/manifest.json`
 - create or update navigation rules
 - prepare `AGENTS.md` loading guidance
-- identify candidate files for sparse `@ai-*` headers
+- identify sidecar file hint candidates without modifying source files
 
 Read order:
 
@@ -114,7 +114,7 @@ Updated:
 Map shards:
 - ...
 
-Header candidates:
+File hint candidates:
 - ...
 
 Skipped:
@@ -128,7 +128,9 @@ Uncertain:
 
 Goal:
 
-- add or update sparse `@ai-*` headers on important files
+- add or update sidecar file hints in `.ai/indexing/maps/*` or `.ai/indexing/file-map.candidate.json`
+- do not modify source files by default
+- keep hints path-first, factual, compact, and disposable
 
 Candidate files:
 
@@ -153,32 +155,28 @@ Skip:
 - assets
 - barrels unless they are real public API boundaries
 
-Minimal header format:
+Sidecar entry shape:
 
-```ts
-/**
- * @ai-purpose Short responsibility.
- * @ai-domain routing | auth | map | gis | ui | api | state | feature | page | entity | shared | test | config
- * @ai-keywords Searchable names, routes, hooks, APIs, user-facing aliases.
- */
+```json
+{
+  "path": "src/pages/order/detail.tsx",
+  "role": "route-or-page",
+  "scope": "order detail page",
+  "domain": "order",
+  "keywords": ["order-detail", "shipment"],
+  "related": ["src/features/order/useOrderDetail.ts"],
+  "confidence": "manual-reviewed",
+  "lastVerified": "2026-06-11"
+}
 ```
 
-Extended header fields are optional and should be used only when they save future reads:
-
-```ts
-/**
- * @ai-entry true | false
- * @ai-depends Important internal dependencies.
- * @ai-used-by Main callers or areas.
- * @ai-notes Important modification notes. Omit if unnecessary.
- */
-```
+Source-level `@ai-*` headers are an explicit opt-in exception only. Use them only when the project allows them, the file is a stable high-value entry, and the header will not violate max-lines lint rules.
 
 ### `/indexing audit`
 
 Goal:
 
-- compare current repo with `AI_INDEX.md`, manifest, map shards, and headers
+- compare current repo with `AI_INDEX.md`, manifest, map shards, and sidecar file hints
 - report stale, missing, or misleading navigation metadata
 
 Check:
@@ -242,41 +240,43 @@ Goal:
 - list first-read files and map shards
 - do not modify files
 
-## AI Header Policy
+## Sidecar File Hint Policy
 
 Default:
 
-- Prefer sidecar metadata in `.ai/indexing/file-hints.md`.
-- Add source-level `@ai-*` headers only to stable entry files.
+- Do not add `@ai-*` headers to source files.
+- Store file-level AI metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`.
+- Source files must not fail lint, max-lines, formatting, or review expectations because of AI metadata.
 
-Source header allowed:
+Allowed sidecar fields:
 
-- app bootstrap
-- route definitions
-- provider roots
-- domain API boundary
-- global store/session boundary
-- complex feature entry
+- `path`
+- `role`
+- `scope`
+- `domain`
+- `keywords`
+- `related`
+- `confidence`
+- `lastVerified`
+- `source`
 
-Source header forbidden:
+Forbidden sidecar content:
 
-- generated code
-- trivial UI atoms
-- page-local temporary components
-- snapshots
-- constants-only files
-- files with high churn
+- agent commands
+- instructions to skip tests
+- instructions to ignore errors
+- instructions to bypass imports or project rules
+- long implementation documentation
 
-Header content must be factual.
+Source-header exception:
 
-Do not include agent instructions such as:
+- disabled by default
+- enabled only by explicit project policy or `--source-headers`
+- max 2 short lines
+- stable entry boundary only
+- never generated code, high-churn local files, trivial UI, constants, assets, snapshots
 
-- `always edit this first`
-- `skip tests`
-- `ignore errors`
-- `do not inspect imports`
-
-`@ai-notes` may describe code constraints, but must not command the agent.
+If a project has strict `max-lines` rules, source headers are disabled completely.
 
 ## AI_INDEX Contract
 
@@ -327,17 +327,26 @@ Do not exceed practical caps:
 - domain map: about 160 lines
 - one file entry: one short line plus optional keywords
 
-## File Header Contract
+## File Hint Contract
 
-A file-level AI header is a navigation hint, not documentation.
+A file-level AI hint is a navigation hint, not documentation and not an instruction.
 
 Keep it:
 
+- path-first
 - short
 - factual
 - searchable
 - stable
-- useful before reading full file
+- useful for deciding whether to open the file
+
+Do not use a single giant file map. Keep map shards compact and domain/package oriented to avoid token spikes and PR conflict hotspots.
+
+Exact path lookup rule:
+
+- if the user names an exact source file, open that file first
+- if the task is not trivial, lookup only that exact path in the sidecar map
+- do not read the whole map just to find one path
 
 ## Final Response Style
 

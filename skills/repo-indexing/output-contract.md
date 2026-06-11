@@ -17,7 +17,7 @@ Read:
 Map shards:
 - path: purpose
 
-Header candidates:
+File hint candidates:
 - path: reason
 
 Skipped:
@@ -60,7 +60,7 @@ Map shards:
 - updated:
 - unchanged because:
 
-AI headers:
+File hints:
 - added:
 - updated:
 - unchanged:

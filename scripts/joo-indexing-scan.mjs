@@ -6,7 +6,9 @@
  * No external dependencies.
  * Produces candidate files for AI review:
  * - AI_INDEX.candidate.md
- * - header-candidates.md
+ * - file-map.candidate.json
+ * - file-hints.candidate.md
+ * - source-header-exceptions.md (only when --source-headers is used)
  * - indexing-report.json
  * - manifest.json
  * - maps/root.md
@@ -16,7 +18,7 @@
  * - maps/packages.md
  * - maps/domains/*.md
  *
- * This script does not modify source files.
+ * This script does not modify source files. Source-level @ai-* headers are disabled by default.
  */
 
 import fs from "node:fs";
@@ -50,7 +52,10 @@ const respectGitignore = hasFlag("--respect-gitignore");
 const denySensitivePaths = hasFlag("--deny-sensitive-paths");
 const includeGenerated = hasFlag("--include-generated");
 const candidateOnly = hasFlag("--candidate-only");
+const allowSourceHeaders = hasFlag("--source-headers");
+const respectAiIgnore = hasFlag("--respect-ai-ignore");
 const maxFilesPerMap = Number(getArg("--max-files-per-map", "80"));
+const maxMapTokens = Number(getArg("--max-map-tokens", "1600"));
 const maxDomainMaps = Number(getArg("--max-domain-maps", "16"));
 const maxTotalFiles = Number(getArg("--max-total-files", "0"));
 const maxDepth = Number(getArg("--max-depth", "0"));
@@ -157,9 +162,8 @@ function globToRegex(pattern) {
   return new RegExp(`(^|/)${regex}($|/)`);
 }
 
-function loadGitignoreRules() {
-  if (!respectGitignore) return [];
-  const file = path.join(target, ".gitignore");
+function loadIgnoreRulesFrom(fileName, label) {
+  const file = path.join(target, fileName);
   if (!fs.existsSync(file)) return [];
   const rules = fs
     .readFileSync(file, "utf8")
@@ -167,11 +171,14 @@ function loadGitignoreRules() {
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith("#") && !line.startsWith("!"))
     .map(globToRegex);
-  if (rules.length) scanWarnings.push(`Loaded ${rules.length} basic .gitignore rules. Negation rules are not supported.`);
+  if (rules.length) scanWarnings.push(`Loaded ${rules.length} basic ${label} rules. Negation rules are not supported.`);
   return rules;
 }
 
-const gitignoreRules = loadGitignoreRules();
+const gitignoreRules = respectGitignore ? loadIgnoreRulesFrom(".gitignore", ".gitignore") : [];
+const aiIgnoreRules = respectAiIgnore
+  ? [".aiignore", ".ignore", ".repomixignore"].flatMap((fileName) => loadIgnoreRulesFrom(fileName, fileName))
+  : [];
 const cliExcludeRules = excludePatterns.map(globToRegex);
 
 function isIgnoredByRules(rel, rules) {
@@ -208,7 +215,7 @@ function walk(dir, acc = []) {
     const rel = path.relative(target, abs).replaceAll(path.sep, "/");
 
     if (IGNORE_DIRS.has(entry.name)) continue;
-    if (isIgnoredByRules(rel, gitignoreRules) || isIgnoredByRules(rel, cliExcludeRules)) continue;
+    if (isIgnoredByRules(rel, gitignoreRules) || isIgnoredByRules(rel, aiIgnoreRules) || isIgnoredByRules(rel, cliExcludeRules)) continue;
     if (isTooDeep(rel)) continue;
     if (denySensitivePaths && isSensitivePath(rel)) {
       scanWarnings.push(`Sensitive-looking path excluded: ${rel}`);
@@ -243,6 +250,66 @@ function matchAny(file, patterns) {
   return patterns.some((p) => p.test(file));
 }
 
+
+function estimateTokens(value) {
+  return Math.ceil(String(value ?? "").length / 4);
+}
+
+function truncateByTokenBudget(lines, tokenBudget) {
+  if (!tokenBudget) return { lines, truncated: 0, estimatedTokens: estimateTokens(lines.join("\n")) };
+  const kept = [];
+  let used = 0;
+  for (const line of lines) {
+    const next = estimateTokens(`${line}\n`);
+    if (kept.length && used + next > tokenBudget) break;
+    kept.push(line);
+    used += next;
+  }
+  return {
+    lines: kept,
+    truncated: Math.max(0, lines.length - kept.length),
+    estimatedTokens: used,
+  };
+}
+
+function keywordsFor(file, kind = "file") {
+  const pieces = new Set([kind]);
+  for (const part of file.split(/[\/_.-]+/)) {
+    const cleaned = part.trim().toLowerCase();
+    if (cleaned && cleaned.length >= 2 && !/^(src|app|index|tsx|jsx|ts|js|md|json)$/.test(cleaned)) pieces.add(cleaned);
+  }
+  if (/query|mutation/i.test(file)) pieces.add("query");
+  if (/routes?|router/i.test(file)) pieces.add("route");
+  if (/store|session|cache/i.test(file)) pieces.add("state");
+  return [...pieces].slice(0, 8);
+}
+
+function roleFor(file, kind = "file") {
+  if (/routes?|router|appRoutes/i.test(path.basename(file))) return "route-map";
+  if (/(page|screen|view|layout)\.(tsx|ts|jsx|js)$/i.test(file) || /(^|\/)(pages|app|routes)\//.test(file)) return "route-or-page";
+  if (/query|mutation/i.test(file)) return "query-or-mutation";
+  if (/api|client|openapi|swagger|endpoint/i.test(file)) return "api-boundary";
+  if (/store|zustand|redux|atom|jotai|recoil|session|cache/i.test(file)) return "state-boundary";
+  if (/provider/i.test(file)) return "provider";
+  if (/package\.json|workspace|turbo|nx|vite|next\.config|tsconfig/i.test(file)) return "package-or-config";
+  if (/main\.(tsx|ts|jsx|js)$|App\.(tsx|ts|jsx|js)$/i.test(file)) return "app-bootstrap";
+  return kind;
+}
+
+function toFileHint(file, kind = "file") {
+  return {
+    path: file,
+    role: roleFor(file, kind),
+    scope: describeFile(file, kind),
+    domain: extractDomain(file),
+    keywords: keywordsFor(file, kind),
+    related: [],
+    confidence: confidenceFor(file),
+    lastVerified: null,
+    source: "path-heuristic",
+  };
+}
+
 function asList(items, limit = maxFilesPerMap) {
   const shown = items.slice(0, limit);
   const lines = shown.map((f) => `- \`${f}\``);
@@ -256,10 +323,17 @@ function confidenceFor(file) {
   return "low path-heuristic";
 }
 
-function asFileMap(items, kind, limit = maxFilesPerMap) {
-  const shown = items.slice(0, limit);
-  const lines = shown.map((f) => `- \`${f}\`: ${describeFile(f, kind)}; confidence: ${confidenceFor(f)}`);
-  if (items.length > limit) lines.push(`- ... truncated ${items.length - limit} more; use targeted search`);
+function asFileMap(items, kind, limit = maxFilesPerMap, tokenBudget = maxMapTokens) {
+  const rawLines = items.slice(0, limit).map((f) => {
+    const hint = toFileHint(f, kind);
+    const domain = hint.domain ? `; domain: ${hint.domain}` : "";
+    const keywords = hint.keywords.length ? `; keywords: ${hint.keywords.join(", ")}` : "";
+    return `- \`${f}\`: role: ${hint.role}; scope: ${hint.scope}${domain}${keywords}; confidence: ${hint.confidence}`;
+  });
+  const packed = truncateByTokenBudget(rawLines, tokenBudget);
+  const lines = packed.lines;
+  const remaining = Math.max(0, items.length - lines.length);
+  if (remaining) lines.push(`- ... truncated ${remaining} more; estimated_tokens: ${packed.estimatedTokens}; use targeted search or exact path lookup`);
   return lines.join("\n") || "- none detected";
 }
 
@@ -357,7 +431,8 @@ const topLevelDirs = fs
 
 const importantFiles = allFiles.filter((f) => matchAny(f, IMPORTANT_FILE_PATTERNS)).sort();
 const entryCandidates = files.filter((f) => matchAny(f, ENTRY_CANDIDATE_PATTERNS)).sort();
-const headerCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
+const fileHintCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
+const sourceHeaderExceptionCandidates = allowSourceHeaders ? fileHintCandidates : [];
 
 const routeCandidates = files
   .filter((f) => /routes?|router|appRoutes/i.test(path.basename(f)) || /(^|\/)(pages|app|routes)\//.test(f))
@@ -463,8 +538,11 @@ const report = {
   scan: {
     mode: candidateOnly ? "candidate-only" : changedSince ? "changed-since" : "default",
     respectGitignore,
+    respectAiIgnore,
     denySensitivePaths,
     includeGenerated,
+    allowSourceHeaders,
+    maxMapTokens,
     changedSince,
     maxFilesPerMap,
     maxDomainMaps,
@@ -485,7 +563,8 @@ const report = {
   apiCandidates: apiCandidates.slice(0, 160),
   stateCandidates: stateCandidates.slice(0, 160),
   packageCandidates: packageCandidates.slice(0, 160),
-  headerCandidates: headerCandidates.slice(0, 160),
+  fileHintCandidates: fileHintCandidates.slice(0, 160),
+  sourceHeaderExceptionCandidates: sourceHeaderExceptionCandidates.slice(0, 80),
   pageDirs: uniquePageDirs,
   domainSummaries,
   maps,
@@ -516,6 +595,8 @@ Use this as input for an AI agent. Do not copy blindly.
 - files seen: ${report.scan.filesSeen}
 - files indexed: ${report.scan.filesIndexed}
 - generated-looking files excluded: ${report.scan.generatedFilesExcluded}
+- source headers: ${report.scan.allowSourceHeaders ? "explicitly enabled" : "disabled by default"}
+- max map tokens: ${report.scan.maxMapTokens}
 - truncated: ${report.scan.truncated ? "yes" : "no"}
 
 ## Scan Warnings
@@ -542,7 +623,9 @@ Keep \`AI_INDEX.md\` short. It should route tasks to one shard, then source file
 
 ## Trust Rule
 
-This candidate is a disposable navigation hint. Source/imports/tests beat generated metadata.
+This candidate and all sidecar maps are disposable navigation hints. Source/imports/tests beat generated metadata.
+
+File-level hints live in map shards and \`.ai/indexing/file-map.candidate.json\`, not in source headers by default.
 
 If source contradicts this candidate, report stale metadata instead of forcing the index to fit.
 
@@ -581,39 +664,95 @@ Create or update \`AI_INDEX.md\` as a router, then keep detailed maps in \`.ai/i
 Do not full-scan the repo. Do not paste full inventories into \`AI_INDEX.md\`.
 `;
 
-const headerCandidateMd = `# Header Candidates
+const fileMapCandidate = {
+  schemaVersion: 1,
+  kind: "file-map-candidate",
+  generatedAt,
+  source: "joo-indexing-scan.mjs",
+  policy: {
+    sourceHeadersDefault: false,
+    sidecarMapsDefault: true,
+    metadataIsHintNotTruth: true,
+    exactPathLookupBeforeBroadMapRead: true,
+    maxMapTokens,
+  },
+  maps: {
+    root: entryCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "entry")),
+    routes: routeCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "route/page")),
+    api: apiCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "API/query")),
+    state: stateCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "state")),
+    packages: packageCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "package/config")),
+    domains: Object.fromEntries(domainSummaries.map(({ domain, files: domainFiles }) => [
+      domain,
+      domainFiles.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "domain")),
+    ])),
+  },
+};
+
+const fileHintsCandidateMd = `# File Hints Candidate
 
 Generated by \`joo-indexing-scan.mjs\`.
 
-Review manually or with AI. Do not add headers to every file.
+Source-level \`@ai-*\` headers are disabled by default. Store file hints in sidecar maps instead:
 
-Prefer sidecar metadata in \`.ai/indexing/file-hints.md\`. Add source-level headers only to stable entry files.
+- \`.ai/indexing/maps/*\`
+- \`.ai/indexing/file-map.candidate.json\`
 
-## Candidates
+Use this file as review input. Do not copy blindly.
 
-${headerCandidates
+## Policy
+
+- Source files must not fail lint or max-lines rules because of AI metadata.
+- File hints are navigation hints, not documentation and not instructions.
+- Prefer exact path lookup in the sidecar map when the user names a file.
+- Keep map entries compact: path, role, scope, domain, keywords, related, confidence, lastVerified.
+- Do not put agent commands inside map entries.
+
+## Candidate Entries
+
+${fileHintCandidates
   .slice(0, 160)
-  .map((f) => `- \`${f}\`: likely navigation-relevant; confidence: ${confidenceFor(f)}`)
+  .map((f) => {
+    const hint = toFileHint(f, "file");
+    const domain = hint.domain ? `; domain: ${hint.domain}` : "";
+    return `- \`${f}\`: role: ${hint.role}; scope: ${hint.scope}${domain}; confidence: ${hint.confidence}`;
+  })
   .join("\n") || "- none detected"}
+`;
 
-## Minimal Header Format
+const sourceHeaderExceptionsMd = `# Source Header Exceptions
 
-\`\`\`ts
-/**
- * @ai-purpose Short responsibility.
- * @ai-domain routing | api | state | page | feature | entity | shared | config | test
- * @ai-keywords Searchable names and user-facing aliases.
- */
-\`\`\`
+Generated by \`joo-indexing-scan.mjs\`.
 
-Extended fields such as \`@ai-entry\`, \`@ai-depends\`, \`@ai-used-by\`, and \`@ai-notes\` are optional for high-value entry files only.
+Source-level \`@ai-*\` headers are disabled by default. This file exists only for projects that explicitly opt in with \`--source-headers\`.
 
-Header content must be factual. Do not include agent commands such as \`skip tests\`, \`ignore errors\`, or \`always edit this first\`.
+## Default
+
+Do not add \`@ai-*\` headers to source files.
+
+## Exception Policy
+
+A source-level header is allowed only when all are true:
+
+- project explicitly allows source-level AI metadata
+- file is a stable high-value entry boundary
+- header is max 2 lines
+- header will not violate max-lines lint rules
+- header contains no agent commands
+
+## Exception Candidates
+
+${sourceHeaderExceptionCandidates
+  .slice(0, 80)
+  .map((f) => `- \`${f}\`: stable-entry candidate; confidence: ${confidenceFor(f)}`)
+  .join("\n") || "- none; run with --source-headers only if the project explicitly allows source headers"}
 `;
 
 writeFile("indexing-report.json", JSON.stringify(report, null, 2));
+writeFile("file-map.candidate.json", JSON.stringify(fileMapCandidate, null, 2));
 writeFile("AI_INDEX.candidate.md", aiIndexCandidate);
-writeFile("header-candidates.md", headerCandidateMd);
+writeFile("file-hints.candidate.md", fileHintsCandidateMd);
+writeFile("source-header-exceptions.md", sourceHeaderExceptionsMd);
 
 function mapHeader(title) {
   return `# ${title}
@@ -648,6 +787,10 @@ if (emitMaps) {
       preferImportsAfterFirstSource: true,
       broadSearchOnlyWhenBlocked: true,
       metadataIsHintNotTruth: true,
+      sourceHeadersDefault: false,
+      sidecarMapsDefault: true,
+      exactPathLookupBeforeBroadMapRead: true,
+      maxMapTokens,
     },
     maps,
   };
@@ -876,7 +1019,9 @@ Use one companion shard only when a route/API/state coupling signal exists.
 
 console.log(`Wrote indexing candidates to ${outDir}`);
 console.log(`- AI_INDEX.candidate.md`);
-console.log(`- header-candidates.md`);
+console.log(`- file-map.candidate.json`);
+console.log(`- file-hints.candidate.md`);
+console.log(`- source-header-exceptions.md`);
 console.log(`- indexing-report.json`);
 if (emitMaps) {
   console.log(`- manifest.json`);

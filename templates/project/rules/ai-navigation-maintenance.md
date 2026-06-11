@@ -13,7 +13,7 @@ AI navigation metadata includes:
 - `/AI_INDEX.md` router
 - `.ai/indexing/manifest.json`
 - `.ai/indexing/maps/*` map shards
-- file-level `@ai-*` comments
+- sidecar file hints and optional source-header exceptions
 - `rules/context-navigation.md`
 - `rules/ai-navigation-maintenance.md`
 - rule-loading guidance in `AGENTS.md`
@@ -47,7 +47,7 @@ Map shards must be compact and include `Confidence` plus `Last Verified` when pr
 - no full source summaries
 - no exhaustive tree dumps
 
-### Update file-level `@ai-*` comments when:
+### Update sidecar file hints when:
 
 - file purpose changes
 - entry-point status changes
@@ -65,56 +65,50 @@ Map shards must be compact and include `Confidence` plus `Last Verified` when pr
 
 Do not update `AGENTS.md` for ordinary feature implementation.
 
-## Header Policy
+## Sidecar File Hint Policy
 
 Default:
 
-- Prefer sidecar metadata in `.ai/indexing/file-hints.md`.
-- Add source-level `@ai-*` headers only to stable entry files.
-- Header content must be factual and must not command the agent.
+- Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`.
+- Do not add source-level `@ai-*` headers by default.
+- Hint content must be factual and must not command the agent.
 
-Forbidden header instruction examples:
+Forbidden hint instruction examples:
 
 - `skip tests`
 - `ignore errors`
 - `always edit this first`
 - `do not inspect imports`
 
-## File Header Format
+## File Hint Format
 
-Minimal preferred form:
+Use sidecar map entries instead of source comments by default.
 
-```ts
-/**
- * @ai-purpose Short file responsibility.
- * @ai-domain auth/page | routing | api | state | feature | entity | shared | config | test
- * @ai-keywords Searchable aliases, route names, user-facing terms.
- */
+```json
+{
+  "path": "src/pages/order/detail.tsx",
+  "role": "route-or-page",
+  "scope": "order detail page",
+  "domain": "order",
+  "keywords": ["order-detail"],
+  "related": [],
+  "confidence": "manual-reviewed",
+  "lastVerified": "YYYY-MM-DD"
+}
 ```
 
-Extended form for high-value entry files only:
+Source-header exception: only when the project explicitly opts in, max 2 short lines, stable entry boundary only, and never when max-lines lint would fail.
 
-```ts
-/**
- * @ai-purpose Short responsibility.
- * @ai-entry true
- * @ai-domain routing | auth | map | gis | ui | api | state | feature | page | entity | shared | config | test
- * @ai-depends Important internal dependencies.
- * @ai-used-by Main callers or areas.
- * @ai-keywords Searchable names: components, hooks, APIs, routes, user terms.
- * @ai-notes Important modification notes. Omit if unnecessary.
- */
-```
 
-## Header Guidelines
+## File Hint Guidelines
 
-- Keep headers short, factual, and useful for navigation.
-- Do not add headers to every file.
-- Prefer headers on route files, page entries, providers, stores, API clients, domain services, feature modules, entities, and complex components.
+- Keep sidecar hints short, factual, and useful for navigation.
+- Do not add source-level headers by default.
+- Prefer hints for route files, page entries, providers, stores, API clients, domain services, feature modules, entities, and complex components.
 - Skip tiny UI components, constants, assets, generated files, snapshots, lockfiles, and trivial re-exports.
 - Do not modify runtime logic.
 - Do not reformat unrelated code.
-- Preserve license comments and shebangs above AI comments.
+- If source-header exceptions are enabled, preserve license comments and shebangs above any AI comments.
 - If uncertain, say `likely`, `appears to`, or `추정`.
 
 ## Post-Change Check
@@ -131,7 +125,7 @@ Map shards:
 - updated:
 - unchanged because:
 
-AI headers:
+File hints:
 - added:
 - updated:
 - unchanged:

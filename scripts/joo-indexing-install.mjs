@@ -28,6 +28,7 @@ const copies = [
   ["templates/project/AI_INDEX.template.md", "AI_INDEX.md"],
   ["templates/project/rules/context-navigation.md", "rules/context-navigation.md"],
   ["templates/project/rules/ai-navigation-maintenance.md", "rules/ai-navigation-maintenance.md"],
+  ["templates/project/.aiignore", ".aiignore"],
 ];
 
 function copyFile(srcRel, destRel) {
@@ -69,7 +70,9 @@ Generated/candidate AI indexing artifacts live here.
 Typical files:
 
 - AI_INDEX.candidate.md
-- header-candidates.md
+- file-map.candidate.json
+- file-hints.candidate.md
+- source-header-exceptions.md
 - indexing-report.json
 - manifest.json
 - maps/root.md
@@ -82,7 +85,7 @@ Typical files:
 
 Do not treat generated candidates as final truth. Review before applying.
 
-Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. Treat generated metadata as a hint, not truth.
+Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. Treat generated metadata as a hint, not truth. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in.
 `,
     "utf8"
   );
@@ -91,4 +94,4 @@ Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before
 }
 
 console.log("\nNext:");
-console.log("node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing");
+console.log("node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths");

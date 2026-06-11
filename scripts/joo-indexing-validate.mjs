@@ -10,6 +10,7 @@
  * - map shards stay compact
  * - referenced source paths still exist
  * - generated/sensitive-looking paths appear in metadata
+ * - optional source-level @ai-* headers do not appear when disabled
  */
 
 import fs from "node:fs";
@@ -30,9 +31,11 @@ function hasFlag(name) {
 const target = path.resolve(getArg("--target", "."));
 const indexPath = path.resolve(target, getArg("--index", "AI_INDEX.md"));
 const mapsDir = path.resolve(target, getArg("--maps", path.join(".ai", "indexing", "maps")));
+const fileMapPath = path.resolve(target, getArg("--file-map", path.join(".ai", "indexing", "file-map.candidate.json")));
 const warnOnly = hasFlag("--warn-only");
 const maxAiIndexLines = Number(getArg("--max-ai-index-lines", "160"));
 const maxMapLines = Number(getArg("--max-map-lines", "260"));
+const sourceHeaders = hasFlag("--source-headers");
 
 const GENERATED_PATH_PATTERNS = [
   /(^|\/)__generated__(\/|$)/i,
@@ -56,12 +59,14 @@ const report = {
   target,
   index: path.relative(target, indexPath).replaceAll(path.sep, "/"),
   mapsDir: path.relative(target, mapsDir).replaceAll(path.sep, "/"),
+  fileMap: path.relative(target, fileMapPath).replaceAll(path.sep, "/"),
   healthy: [],
   stale: [],
   missing: [],
   warnings: [],
   generatedLike: [],
   sensitiveLike: [],
+  sourceHeadersFound: [],
 };
 
 function rel(absOrRel) {
@@ -106,14 +111,57 @@ function extractBacktickPaths(text) {
   return [...paths];
 }
 
-function walkMarkdown(dir, acc = []) {
+
+function extractJsonPaths(text) {
+  const paths = new Set();
+  const looksLikePath = (v) => {
+    if (!v || /\s/.test(v)) return false;
+    if (!/[/.]/.test(v)) return false;
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return false;
+    if (/^(https?:|git@|npm|node|pnpm|yarn)$/.test(v)) return false;
+    if (/^(generated-only|manual-reviewed|low|medium|high|unknown|null|true|false)$/.test(v)) return false;
+    if (/^(route\/page|API\/query|package\/config)$/.test(v)) return false;
+    return true;
+  };
+  try {
+    const parsed = JSON.parse(text);
+    const visit = (value, key = "") => {
+      if (Array.isArray(value)) return value.forEach((item) => visit(item, key));
+      if (value && typeof value === "object") {
+        return Object.entries(value).forEach(([childKey, childValue]) => visit(childValue, childKey));
+      }
+      if (typeof value !== "string") return;
+      const v = value.trim().replace(/^\//, "");
+      if (!["path", "related", "file", "files", "map", "maps"].includes(key)) return;
+      if (looksLikePath(v)) paths.add(v);
+    };
+    visit(parsed);
+  } catch {
+    return [];
+  }
+  return [...paths];
+}
+
+function walkSourceFiles(dir, acc = []) {
+  if (!fs.existsSync(dir)) return acc;
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if ([".git", "node_modules", "dist", "build", ".next", "coverage", ".ai"].includes(entry.name)) continue;
+    const abs = path.join(dir, entry.name);
+    if (entry.isDirectory()) walkSourceFiles(abs, acc);
+    else if (/\.(tsx|ts|jsx|js|mjs|cjs|vue|svelte)$/.test(entry.name)) acc.push(abs);
+  }
+  return acc;
+}
+
+function walkMapFiles(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const abs = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      walkMarkdown(abs, acc);
-    } else if (/\.md$/.test(entry.name)) {
+      walkMapFiles(abs, acc);
+    } else if (/\.(md|json)$/.test(entry.name)) {
       acc.push(abs);
     }
   }
@@ -138,10 +186,26 @@ if (!fs.existsSync(indexPath)) {
   if (mapRefs.length) report.healthy.push(`Checked ${mapRefs.length} map shard reference(s) from ${report.index}`);
 }
 
+
+if (fs.existsSync(fileMapPath)) {
+  const text = read(fileMapPath);
+  const fileMapRel = rel(fileMapPath);
+  report.healthy.push(`Found sidecar file map: ${fileMapRel}`);
+  const refs = extractJsonPaths(text)
+    .filter((p) => !p.startsWith(".ai/indexing/maps/"))
+    .filter((p) => !p.startsWith("maps/"))
+    .filter((p) => !p.endsWith("/"));
+  for (const ref of refs) {
+    if (isGeneratedPath(ref)) report.generatedLike.push(`${fileMapRel} -> ${ref}`);
+    if (isSensitivePath(ref)) report.sensitiveLike.push(`${fileMapRel} -> ${ref}`);
+    if (!existsRel(ref)) report.stale.push(`${fileMapRel} references missing path: ${ref}`);
+  }
+}
+
 if (!fs.existsSync(mapsDir)) {
   report.warnings.push(`${report.mapsDir} is missing; skip map validation`);
 } else {
-  const mapFiles = walkMarkdown(mapsDir).sort();
+  const mapFiles = walkMapFiles(mapsDir).sort();
   report.healthy.push(`Found ${mapFiles.length} map shard file(s)`);
 
   for (const file of mapFiles) {
@@ -150,7 +214,7 @@ if (!fs.existsSync(mapsDir)) {
     const lines = lineCount(text);
     if (lines > maxMapLines) report.warnings.push(`${mapRel} has ${lines} lines; shard may be too large`);
 
-    const refs = extractBacktickPaths(text)
+    const refs = [...new Set([...extractBacktickPaths(text), ...extractJsonPaths(text)])]
       .filter((p) => !p.startsWith(".ai/indexing/maps/"))
       .filter((p) => !p.startsWith("maps/"))
       .filter((p) => !p.endsWith("/"));
@@ -160,6 +224,25 @@ if (!fs.existsSync(mapsDir)) {
       if (isSensitivePath(ref)) report.sensitiveLike.push(`${mapRel} -> ${ref}`);
       if (!existsRel(ref)) report.stale.push(`${mapRel} references missing path: ${ref}`);
     }
+  }
+}
+
+
+if (!sourceHeaders) {
+  const sourceFiles = walkSourceFiles(target);
+  for (const file of sourceFiles) {
+    let sample = "";
+    try {
+      sample = fs.readFileSync(file, "utf8").slice(0, 2000);
+    } catch {
+      continue;
+    }
+    if (/@ai-(purpose|domain|keywords|entry|depends|used-by|notes)\b/.test(sample)) {
+      report.sourceHeadersFound.push(rel(file));
+    }
+  }
+  if (report.sourceHeadersFound.length) {
+    report.warnings.push(`Source-level @ai-* headers found (${report.sourceHeadersFound.length}) while source headers are disabled by default.`);
   }
 }
 
@@ -178,6 +261,8 @@ for (const item of report.warnings) console.log(`Warning: ${item}`);
 for (const item of report.missing) console.log(`Missing: ${item}`);
 for (const item of report.stale.slice(0, 50)) console.log(`Stale: ${item}`);
 if (report.stale.length > 50) console.log(`Stale: ... truncated ${report.stale.length - 50} more`);
+for (const item of report.sourceHeadersFound.slice(0, 50)) console.log(`SourceHeader: ${item}`);
+if (report.sourceHeadersFound.length > 50) console.log(`SourceHeader: ... truncated ${report.sourceHeadersFound.length - 50} more`);
 
 console.log("\n[INDEX_VALIDATION_JSON]");
 console.log(JSON.stringify(report, null, 2));

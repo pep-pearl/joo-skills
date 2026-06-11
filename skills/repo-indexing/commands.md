@@ -17,13 +17,13 @@ Expected behavior:
    - `rules/context-navigation.md`
    - `rules/ai-navigation-maintenance.md`
    - `AGENTS.md` fragment
-4. Propose sparse `@ai-*` header candidates.
+4. Propose sidecar file hint candidates.
 5. Do not change runtime logic.
 6. Do not create a giant file tree.
 
 ## `/indexing annotate`
 
-Add or update sparse file-level AI headers.
+Add or update sidecar file hints without modifying source files by default.
 
 Rules:
 
@@ -31,15 +31,15 @@ Rules:
 - no generated files
 - no trivial components
 - no runtime logic changes
-- preserve license/shebang comments above AI header
-- prefer minimal `@ai-purpose`, `@ai-domain`, `@ai-keywords`
+- keep source files unchanged unless source headers are explicitly enabled
+- prefer sidecar fields: path, role, scope, domain, keywords, related, confidence, lastVerified
 - use extended fields only when they save future reads
 
 ## `/indexing audit`
 
 Check whether navigation metadata is stale.
 
-Check `AI_INDEX.md`, manifest, map shards, rules, and sparse headers.
+Check `AI_INDEX.md`, manifest, map shards, rules, and sidecar file hints.
 
 Do not edit unless user asks.
 

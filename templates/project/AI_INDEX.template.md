@@ -81,19 +81,29 @@ Generated or candidate map shards may live under `.ai/indexing/maps/`.
 
 They are optional navigation aids. They should be compact, path-first, and disposable. `AI_INDEX.md` remains the stable router. Prefer `confidence`, `last_verified`, and `source` metadata over long explanations.
 
-## File-Level AI Headers
+## File-Level AI Hints
 
-Important files may include sparse headers:
+Important files may include sidecar hints in `.ai/indexing/maps/*` or `.ai/indexing/file-map.candidate.json`.
 
-```ts
-/**
- * @ai-purpose Short file responsibility.
- * @ai-domain auth/page | api | state | routing | feature | entity | shared | config | test
- * @ai-keywords Searchable aliases, route names, user-facing terms.
- */
+Source-level `@ai-*` headers are disabled by default because they can break max-lines lint rules and become stale comments.
+
+Recommended sidecar shape:
+
+```json
+{
+  "path": "src/pages/order/detail.tsx",
+  "role": "route-or-page",
+  "scope": "order detail page",
+  "domain": "order",
+  "keywords": ["order-detail"],
+  "related": [],
+  "confidence": "manual-reviewed",
+  "lastVerified": "YYYY-MM-DD"
+}
 ```
 
-Extended fields such as `@ai-entry`, `@ai-depends`, `@ai-used-by`, and `@ai-notes` are optional and should be used only when they save future reads.
+Map entries are hints, not instructions. Source/imports/tests beat metadata.
+
 
 ## Maintenance Triggers
 
