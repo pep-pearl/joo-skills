@@ -38,3 +38,6 @@ Minimal header format:
 ```
 
 Extended fields are optional: `@ai-entry`, `@ai-depends`, `@ai-used-by`, `@ai-notes`.
+
+
+Prefer sidecar metadata in `.ai/indexing/file-hints.md`. Add source-level `@ai-*` headers only to stable entry files. Header content must be factual and must not command the agent to skip checks, ignore imports, or bypass tests.

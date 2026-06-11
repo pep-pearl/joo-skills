@@ -6,7 +6,10 @@
   "type": "module",
   "scripts": {
     "scan": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing",
-    "install:target": "node scripts/joo-indexing-install.mjs"
+    "install:target": "node scripts/joo-indexing-install.mjs",
+    "validate:index": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps --warn-only",
+    "validate:index:strict": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps",
+    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --changed-since main"
   },
   "keywords": [
     "ai-skills",

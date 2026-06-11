@@ -21,6 +21,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 const args = process.argv.slice(2);
 
@@ -30,6 +31,14 @@ function getArg(name, fallback) {
   return fallback;
 }
 
+function getArgs(name) {
+  const values = [];
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === name && args[i + 1]) values.push(args[i + 1]);
+  }
+  return values;
+}
+
 function hasFlag(name) {
   return args.includes(name);
 }
@@ -37,8 +46,21 @@ function hasFlag(name) {
 const target = path.resolve(getArg("--target", "."));
 const outDir = path.resolve(getArg("--out", path.join(target, ".ai", "indexing")));
 const emitMaps = !hasFlag("--no-maps");
+const respectGitignore = hasFlag("--respect-gitignore");
+const denySensitivePaths = hasFlag("--deny-sensitive-paths");
+const includeGenerated = hasFlag("--include-generated");
+const candidateOnly = hasFlag("--candidate-only");
 const maxFilesPerMap = Number(getArg("--max-files-per-map", "80"));
 const maxDomainMaps = Number(getArg("--max-domain-maps", "16"));
+const maxTotalFiles = Number(getArg("--max-total-files", "0"));
+const maxDepth = Number(getArg("--max-depth", "0"));
+const changedSince = getArg("--changed-since", null);
+const excludePatterns = getArgs("--exclude")
+  .flatMap((value) => value.split(","))
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const scanWarnings = [];
 
 const IGNORE_DIRS = new Set([
   ".git",
@@ -65,6 +87,25 @@ const IGNORE_FILE_PATTERNS = [
   /\.snap$/,
   /\.map$/,
   /\.(png|jpg|jpeg|gif|webp|svg|ico|pdf|zip|gz|tar|woff2?|ttf|eot)$/i,
+];
+
+const GENERATED_PATH_PATTERNS = [
+  /(^|\/)__generated__(\/|$)/i,
+  /(^|\/)generated(\/|$)/i,
+  /(^|\/)gen(\/|$)/i,
+  /(^|\/)graphql(\/|$).*\.generated\./i,
+  /\.generated\./i,
+  /\.gen\./i,
+  /openapi.*(generated|schema|client)/i,
+  /swagger.*(generated|schema|client)/i,
+];
+
+const SENSITIVE_PATH_PATTERNS = [
+  /(^|\/)\.env(\.|$)/i,
+  /(^|\/)(secret|secrets)(\/|\.|$)/i,
+  /(^|\/)(credential|credentials)(\/|\.|$)/i,
+  /(^|\/)(private|internal-only)(\/|\.|$)/i,
+  /(api[_-]?key|token|password|passwd)/i,
 ];
 
 const IMPORTANT_FILE_PATTERNS = [
@@ -106,7 +147,53 @@ const HEADER_CANDIDATE_PATTERNS = [
   /(^|\/)app\/.*\.(tsx|ts|jsx|js)$/,
 ];
 
+function globToRegex(pattern) {
+  const normalized = pattern.replaceAll(path.sep, "/");
+  const escaped = normalized.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  const regex = escaped.replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*");
+  if (normalized.endsWith("/")) return new RegExp(`(^|/)${regex}`);
+  if (normalized.startsWith("/")) return new RegExp(`^${regex.slice(1)}($|/|$)`);
+  if (!normalized.includes("/")) return new RegExp(`(^|/)${regex}($|/)`);
+  return new RegExp(`(^|/)${regex}($|/)`);
+}
+
+function loadGitignoreRules() {
+  if (!respectGitignore) return [];
+  const file = path.join(target, ".gitignore");
+  if (!fs.existsSync(file)) return [];
+  const rules = fs
+    .readFileSync(file, "utf8")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#") && !line.startsWith("!"))
+    .map(globToRegex);
+  if (rules.length) scanWarnings.push(`Loaded ${rules.length} basic .gitignore rules. Negation rules are not supported.`);
+  return rules;
+}
+
+const gitignoreRules = loadGitignoreRules();
+const cliExcludeRules = excludePatterns.map(globToRegex);
+
+function isIgnoredByRules(rel, rules) {
+  return rules.some((rule) => rule.test(rel));
+}
+
+function isGeneratedPath(file) {
+  return GENERATED_PATH_PATTERNS.some((p) => p.test(file));
+}
+
+function isSensitivePath(file) {
+  return SENSITIVE_PATH_PATTERNS.some((p) => p.test(file));
+}
+
+function isTooDeep(rel) {
+  if (!maxDepth) return false;
+  return rel.split("/").filter(Boolean).length > maxDepth;
+}
+
 function walk(dir, acc = []) {
+  if (maxTotalFiles && acc.length >= maxTotalFiles) return acc;
+
   let entries = [];
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -115,11 +202,21 @@ function walk(dir, acc = []) {
   }
 
   for (const entry of entries) {
+    if (maxTotalFiles && acc.length >= maxTotalFiles) break;
+
     const abs = path.join(dir, entry.name);
     const rel = path.relative(target, abs).replaceAll(path.sep, "/");
 
+    if (IGNORE_DIRS.has(entry.name)) continue;
+    if (isIgnoredByRules(rel, gitignoreRules) || isIgnoredByRules(rel, cliExcludeRules)) continue;
+    if (isTooDeep(rel)) continue;
+    if (denySensitivePaths && isSensitivePath(rel)) {
+      scanWarnings.push(`Sensitive-looking path excluded: ${rel}`);
+      continue;
+    }
+
     if (entry.isDirectory()) {
-      if (!IGNORE_DIRS.has(entry.name)) walk(abs, acc);
+      walk(abs, acc);
       continue;
     }
 
@@ -153,9 +250,15 @@ function asList(items, limit = maxFilesPerMap) {
   return lines.join("\n") || "- none detected";
 }
 
+function confidenceFor(file) {
+  if (isGeneratedPath(file)) return "low generated";
+  if (/AGENTS\.md|AI_INDEX\.md|package\.json|routes?|router|main\.|App\./i.test(file)) return "medium path-heuristic";
+  return "low path-heuristic";
+}
+
 function asFileMap(items, kind, limit = maxFilesPerMap) {
   const shown = items.slice(0, limit);
-  const lines = shown.map((f) => `- \`${f}\`: ${describeFile(f, kind)}`);
+  const lines = shown.map((f) => `- \`${f}\`: ${describeFile(f, kind)}; confidence: ${confidenceFor(f)}`);
   if (items.length > limit) lines.push(`- ... truncated ${items.length - limit} more; use targeted search`);
   return lines.join("\n") || "- none detected";
 }
@@ -201,7 +304,37 @@ function writeFile(rel, content) {
   fs.writeFileSync(abs, content.trimEnd() + "\n", "utf8");
 }
 
-const files = walk(target).sort();
+function getChangedFiles() {
+  if (!changedSince) return null;
+  try {
+    const output = execFileSync("git", ["-C", target, "diff", "--name-only", "--diff-filter=ACMR", changedSince], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const changed = output
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .filter((rel) => exists(rel));
+    scanWarnings.push(`Changed-since mode: ${changed.length} changed files from ${changedSince}.`);
+    return changed;
+  } catch (error) {
+    scanWarnings.push(`Could not read git changed files from ${changedSince}; falling back to full candidate set.`);
+    return null;
+  }
+}
+
+const allFiles = walk(target).sort();
+const scanTruncated = Boolean(maxTotalFiles && allFiles.length >= maxTotalFiles);
+if (scanTruncated) scanWarnings.push(`File walk reached --max-total-files ${maxTotalFiles}; output is truncated.`);
+
+const changedFiles = getChangedFiles();
+const candidateBaseFiles = (changedFiles ?? allFiles).sort();
+const generatedFiles = candidateBaseFiles.filter(isGeneratedPath);
+if (generatedFiles.length && !includeGenerated) {
+  scanWarnings.push(`Excluded ${generatedFiles.length} generated-looking files from maps. Use --include-generated to include them.`);
+}
+const files = includeGenerated ? candidateBaseFiles : candidateBaseFiles.filter((f) => !isGeneratedPath(f));
 
 const packageJson = readJson("package.json");
 const packageManager = exists("pnpm-lock.yaml") || exists("pnpm-workspace.yaml")
@@ -212,7 +345,7 @@ const packageManager = exists("pnpm-lock.yaml") || exists("pnpm-workspace.yaml")
       ? "npm"
       : packageJson?.packageManager ?? "unknown";
 
-const workspaceFiles = files.filter((f) =>
+const workspaceFiles = allFiles.filter((f) =>
   ["pnpm-workspace.yaml", "turbo.json", "nx.json", "package.json"].includes(f) || /(^|\/)package\.json$/.test(f)
 );
 
@@ -222,7 +355,7 @@ const topLevelDirs = fs
   .map((d) => d.name)
   .sort();
 
-const importantFiles = files.filter((f) => matchAny(f, IMPORTANT_FILE_PATTERNS)).sort();
+const importantFiles = allFiles.filter((f) => matchAny(f, IMPORTANT_FILE_PATTERNS)).sort();
 const entryCandidates = files.filter((f) => matchAny(f, ENTRY_CANDIDATE_PATTERNS)).sort();
 const headerCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
 
@@ -241,7 +374,7 @@ const stateCandidates = files
   .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
   .sort();
 
-const packageCandidates = files
+const packageCandidates = allFiles
   .filter((f) => /package\.json|pnpm-workspace|turbo\.json|nx\.json|vite\.config|next\.config|tsconfig|eslint|prettier|vitest|jest|playwright/i.test(f))
   .sort();
 
@@ -266,6 +399,11 @@ const domainSummaries = [...domainBuckets.entries()]
   .slice(0, maxDomainMaps);
 
 const generatedAt = new Date().toISOString();
+const baseMapMeta = {
+  confidence: "generated-only",
+  lastVerified: null,
+  source: "path-heuristic",
+};
 const maps = [
   {
     id: "root",
@@ -273,6 +411,7 @@ const maps = [
     scope: ["top-level", "ambiguous", "vague-product"],
     keywords: ["전체", "어디", "기능", "화면", "흐름", "모름", "ambiguous"],
     tokenBudget: 1200,
+    ...baseMapMeta,
   },
   {
     id: "routes",
@@ -280,6 +419,7 @@ const maps = [
     scope: ["routes", "pages", "screens"],
     keywords: ["route", "router", "page", "screen", "url", "라우트", "페이지", "화면"],
     tokenBudget: 1600,
+    ...baseMapMeta,
   },
   {
     id: "api",
@@ -287,6 +427,7 @@ const maps = [
     scope: ["api", "query", "client", "openapi", "backend"],
     keywords: ["api", "query", "mutation", "endpoint", "backend", "swagger", "openapi"],
     tokenBudget: 1600,
+    ...baseMapMeta,
   },
   {
     id: "state",
@@ -294,6 +435,7 @@ const maps = [
     scope: ["state", "store", "cache", "session"],
     keywords: ["state", "store", "cache", "session", "zustand", "redux", "jotai", "recoil"],
     tokenBudget: 1400,
+    ...baseMapMeta,
   },
   {
     id: "packages",
@@ -301,6 +443,7 @@ const maps = [
     scope: ["packages", "workspace", "build", "config"],
     keywords: ["package", "workspace", "build", "config", "lint", "test", "설정"],
     tokenBudget: 1400,
+    ...baseMapMeta,
   },
   ...domainSummaries.map(({ domain }) => ({
     id: `domain:${domain}`,
@@ -308,6 +451,7 @@ const maps = [
     scope: ["domain", domain],
     keywords: [domain],
     tokenBudget: 1400,
+    ...baseMapMeta,
   })),
 ];
 
@@ -316,6 +460,23 @@ const report = {
   generatedAt,
   packageManager,
   packageName: packageJson?.name ?? null,
+  scan: {
+    mode: candidateOnly ? "candidate-only" : changedSince ? "changed-since" : "default",
+    respectGitignore,
+    denySensitivePaths,
+    includeGenerated,
+    changedSince,
+    maxFilesPerMap,
+    maxDomainMaps,
+    maxTotalFiles: maxTotalFiles || null,
+    maxDepth: maxDepth || null,
+    excludePatterns,
+    filesSeen: allFiles.length,
+    filesIndexed: files.length,
+    generatedFilesExcluded: includeGenerated ? 0 : generatedFiles.length,
+    truncated: scanTruncated,
+    warnings: scanWarnings,
+  },
   topLevelDirs,
   workspaceFiles,
   importantFiles,
@@ -332,6 +493,10 @@ const report = {
 
 fs.mkdirSync(outDir, { recursive: true });
 
+const scanWarningBlock = scanWarnings.length
+  ? scanWarnings.map((warning) => `- ${warning}`).join("\n")
+  : "- none";
+
 const aiIndexCandidate = `# AI_INDEX.candidate.md
 
 Generated by \`joo-indexing-scan.mjs\`.
@@ -343,6 +508,19 @@ Use this as input for an AI agent. Do not copy blindly.
 - name: ${report.packageName ?? "TODO"}
 - package manager: ${report.packageManager}
 - top-level dirs: ${report.topLevelDirs.map((d) => `\`${d}\``).join(", ") || "TODO"}
+
+## Scan Metadata
+
+- mode: ${report.scan.mode}
+- confidence: generated-only
+- files seen: ${report.scan.filesSeen}
+- files indexed: ${report.scan.filesIndexed}
+- generated-looking files excluded: ${report.scan.generatedFilesExcluded}
+- truncated: ${report.scan.truncated ? "yes" : "no"}
+
+## Scan Warnings
+
+${scanWarningBlock}
 
 ## Existing Navigation Files
 
@@ -362,9 +540,15 @@ Keep \`AI_INDEX.md\` short. It should route tasks to one shard, then source file
 - package/build/config work: \`.ai/indexing/maps/packages.md\`
 - domain work: \`.ai/indexing/maps/domains/<domain>.md\` when present
 
+## Trust Rule
+
+This candidate is a disposable navigation hint. Source/imports/tests beat generated metadata.
+
+If source contradicts this candidate, report stale metadata instead of forcing the index to fit.
+
 ## Map Shards Generated
 
-${maps.map((m) => `- \`${m.path}\`: ${m.scope.join(", ")}`).join("\n")}
+${maps.map((m) => `- \`${m.path}\`: ${m.scope.join(", ")}; confidence: ${m.confidence}; last_verified: ${m.lastVerified ?? "unknown"}`).join("\n")}
 
 ## Workspace / Config Candidates
 
@@ -403,11 +587,13 @@ Generated by \`joo-indexing-scan.mjs\`.
 
 Review manually or with AI. Do not add headers to every file.
 
+Prefer sidecar metadata in \`.ai/indexing/file-hints.md\`. Add source-level headers only to stable entry files.
+
 ## Candidates
 
 ${headerCandidates
   .slice(0, 160)
-  .map((f) => `- \`${f}\`: likely navigation-relevant`)
+  .map((f) => `- \`${f}\`: likely navigation-relevant; confidence: ${confidenceFor(f)}`)
   .join("\n") || "- none detected"}
 
 ## Minimal Header Format
@@ -421,36 +607,54 @@ ${headerCandidates
 \`\`\`
 
 Extended fields such as \`@ai-entry\`, \`@ai-depends\`, \`@ai-used-by\`, and \`@ai-notes\` are optional for high-value entry files only.
+
+Header content must be factual. Do not include agent commands such as \`skip tests\`, \`ignore errors\`, or \`always edit this first\`.
 `;
 
 writeFile("indexing-report.json", JSON.stringify(report, null, 2));
 writeFile("AI_INDEX.candidate.md", aiIndexCandidate);
 writeFile("header-candidates.md", headerCandidateMd);
 
+function mapHeader(title) {
+  return `# ${title}
+
+Generated by \`joo-indexing-scan.mjs\`.
+
+## Metadata
+
+- confidence: generated-only
+- last_verified: unknown
+- source: path-heuristic
+- files_indexed: ${report.scan.filesIndexed}
+`;
+}
+
 if (emitMaps) {
   const manifest = {
-    version: 1,
+    version: 2,
     generatedAt,
     project: {
       name: report.packageName ?? null,
       packageManager,
     },
+    scan: report.scan,
     policy: {
       aiIndexRole: "router-only",
       defaultMapReadLimit: 1,
+      companionMapReadLimitWhenCoupled: 1,
+      maxMapReadLimitBeforeEdit: 2,
       defaultSourceReadLimitBeforeDecision: 3,
+      maxSourceReadLimitBeforeDecision: 5,
       preferImportsAfterFirstSource: true,
       broadSearchOnlyWhenBlocked: true,
+      metadataIsHintNotTruth: true,
     },
     maps,
   };
 
   writeFile("manifest.json", JSON.stringify(manifest, null, 2));
 
-  writeFile("maps/root.md", `# Root Map
-
-Generated by \`joo-indexing-scan.mjs\`.
-
+  writeFile("maps/root.md", `${mapHeader("Root Map")}
 ## Scope
 
 Use this only for vague product/design/planning requests or when the task area is unclear.
@@ -468,7 +672,7 @@ ${importantFiles
 
 ## Available Map Shards
 
-${maps.map((m) => `- \`${m.path}\`: ${m.scope.join(", ")}`).join("\n")}
+${maps.map((m) => `- \`${m.path}\`: ${m.scope.join(", ")}; confidence: ${m.confidence}`).join("\n")}
 
 ## Entry Candidates
 
@@ -479,12 +683,11 @@ ${asFileMap(entryCandidates, "entry")}
 Read one likely shard next. Do not read all shards.
 
 If a likely source file is found, follow imports instead of reading more maps.
+
+Use one companion shard only when a coupling signal exists.
 `);
 
-  writeFile("maps/routes.md", `# Routes / Pages Map
-
-Generated by \`joo-indexing-scan.mjs\`.
-
+  writeFile("maps/routes.md", `${mapHeader("Routes / Pages Map")}
 ## Scope
 
 Routes, pages, screens, navigation, layouts, route guards.
@@ -501,6 +704,11 @@ ${asList(uniquePageDirs)}
 
 ${asFileMap(routeCandidates, "route/page")}
 
+## Cheap Escalation
+
+- route/page + data issue -> also read \`maps/api.md\`
+- route/page + session/permission issue -> also read \`maps/state.md\`
+
 ## Do Not Start Here
 
 - generic UI atoms unless the task is purely visual
@@ -515,10 +723,7 @@ ${asFileMap(routeCandidates, "route/page")}
 - route-to-page mapping changed
 `);
 
-  writeFile("maps/api.md", `# API / Query Map
-
-Generated by \`joo-indexing-scan.mjs\`.
-
+  writeFile("maps/api.md", `${mapHeader("API / Query Map")}
 ## Scope
 
 API clients, query/mutation hooks, OpenAPI/Swagger integration, backend endpoint mapping.
@@ -535,6 +740,13 @@ ${asFileMap(apiCandidates, "API/query")}
 
 After finding the API/query entry, follow imports to types, generated clients, or domain services only when needed.
 
+Inspect generated clients only at the exact operation/type boundary.
+
+## Cheap Escalation
+
+- API task + visible page behavior -> also read \`maps/routes.md\`
+- API task + session/auth behavior -> also read \`maps/state.md\`
+
 ## Do Not Start Here
 
 - generated API outputs unless the task is about generated code
@@ -548,10 +760,7 @@ After finding the API/query entry, follow imports to types, generated clients, o
 - generated client path changed
 `);
 
-  writeFile("maps/state.md", `# State / Store Map
-
-Generated by \`joo-indexing-scan.mjs\`.
-
+  writeFile("maps/state.md", `${mapHeader("State / Store Map")}
 ## Scope
 
 Global state, stores, atoms, cache, session state, client-side persistence.
@@ -568,6 +777,11 @@ ${asFileMap(stateCandidates, "state")}
 
 After finding the state entry, follow imports to selectors, actions, persistence, or API calls only when needed.
 
+## Cheap Escalation
+
+- state/session + route guard issue -> also read \`maps/routes.md\`
+- cache/query ownership issue -> also read \`maps/api.md\`
+
 ## Do Not Start Here
 
 - local component state unless the task names that component
@@ -581,10 +795,7 @@ After finding the state entry, follow imports to selectors, actions, persistence
 - state entry files renamed
 `);
 
-  writeFile("maps/packages.md", `# Packages / Config Map
-
-Generated by \`joo-indexing-scan.mjs\`.
-
+  writeFile("maps/packages.md", `${mapHeader("Packages / Config Map")}
 ## Scope
 
 Package manager, workspace layout, build/test/lint config, monorepo package boundaries.
@@ -605,6 +816,8 @@ ${asList(workspaceFiles)}
 
 Use this map for dependency, package, script, build, lint, or test setup tasks.
 
+For runtime failures, read the exact failing package/config file before broad package search.
+
 ## Staleness Triggers
 
 - package manager changed
@@ -617,10 +830,7 @@ Use this map for dependency, package, script, build, lint, or test setup tasks.
     const domainRoutes = domainFiles.filter((f) => routeCandidates.includes(f));
     const domainApis = domainFiles.filter((f) => apiCandidates.includes(f));
     const domainState = domainFiles.filter((f) => stateCandidates.includes(f));
-    writeFile(`maps/domains/${domain}.md`, `# Domain Map: ${domain}
-
-Generated by \`joo-indexing-scan.mjs\`.
-
+    writeFile(`maps/domains/${domain}.md`, `${mapHeader(`Domain Map: ${domain}`)}
 ## Scope
 
 Domain-like area inferred from paths containing \`${domain}\`.
@@ -653,6 +863,8 @@ Use this shard only when the user request clearly maps to \`${domain}\` or root/
 
 After finding a source entry, follow imports instead of reading other domain maps.
 
+Use one companion shard only when a route/API/state coupling signal exists.
+
 ## Staleness Triggers
 
 - domain folder renamed or moved
@@ -674,4 +886,8 @@ if (emitMaps) {
   console.log(`- maps/state.md`);
   console.log(`- maps/packages.md`);
   if (domainSummaries.length) console.log(`- maps/domains/*.md (${domainSummaries.length})`);
+}
+if (scanWarnings.length) {
+  console.log(`Warnings:`);
+  for (const warning of scanWarnings) console.log(`- ${warning}`);
 }

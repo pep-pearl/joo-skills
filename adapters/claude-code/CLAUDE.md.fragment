@@ -2,6 +2,8 @@
 
 When working in this repository, use the Joo Skills navigation rules.
 
+Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
+
 ## Auto-load
 
 Read these first when navigating unfamiliar code:
@@ -16,7 +18,7 @@ Use these conditionally:
 - screen spec rules when official screen specs are referenced
 - API integration rules when connecting UI to backend/OpenAPI
 
-After a likely source file is found, prefer import-following over reading more maps.
+After a likely source file is found, prefer import-following over reading more maps. Use one companion shard only when a coupling signal exists.
 
 ## Commands
 

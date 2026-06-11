@@ -7,10 +7,27 @@
 - Always read `rules/context-navigation.md` before unfamiliar repo navigation.
 - Read `AI_INDEX.md` before broad search.
 - Treat `AI_INDEX.md` as a small router, not a full architecture document.
-- Read at most one `.ai/indexing/maps/*` shard before source files unless the task is explicitly repo-wide.
+- Read at most one `.ai/indexing/maps/*` shard before source files unless the task is explicitly repo-wide. Use one companion shard only when a coupling signal exists.
 - Do not load `docs/prompts/*` unless the user explicitly references one.
 - Prefer small, targeted edits.
 - If user names files, start there.
+
+## Priority
+
+Project safety rules beat AI navigation rules.
+
+Priority order:
+
+1. User's explicit instruction
+2. Nearest project/team `AGENTS.md` or equivalent rule file
+3. Security, test, generated-code, and ownership rules
+4. Exact files named by the user
+5. Existing source/imports/tests
+6. `AI_INDEX.md`
+7. Map shards
+8. Targeted search
+
+If a navigation rule conflicts with a safety or ownership rule, follow the safety/ownership rule and mention the conflict briefly.
 
 ## Conditional Rules
 
@@ -33,13 +50,15 @@ Read only when relevant:
 Default order:
 
 1. Exact files from the user.
-2. `rules/context-navigation.md`.
-3. `AI_INDEX.md`.
-4. One relevant `.ai/indexing/maps/*` shard if needed.
-5. Relevant source files.
-6. Imports from the first relevant source file.
-7. Relevant tests.
-8. Targeted search only when blocked.
+2. Nearest project/team safety rules.
+3. `rules/context-navigation.md`.
+4. `AI_INDEX.md`.
+5. One relevant `.ai/indexing/maps/*` shard if needed.
+6. Relevant source files.
+7. Imports from the first relevant source file.
+8. One companion shard only when a coupling signal exists.
+9. Relevant tests.
+10. Targeted search only when blocked.
 
 ## After Code Changes
 

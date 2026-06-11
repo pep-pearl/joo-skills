@@ -18,9 +18,11 @@ Plan frontend API integration from Swagger/OpenAPI/domain specs without breaking
 2. page or hook using data
 3. shared API client
 4. domain package
-5. generated OpenAPI client
+5. generated OpenAPI client for the exact operation/type only
 6. mock/dummy fallback
 7. tests
+
+Do not inspect every endpoint or paste full Swagger schemas unless the user explicitly asks.
 
 ## Classification
 
@@ -31,6 +33,32 @@ Every API task should classify each endpoint:
 - `backend-pending`: endpoint missing or unusable
 - `deferred`: intentionally postponed
 - `spec-conflict`: Swagger and screen spec disagree
+
+## Compact Contract Card
+
+For each endpoint, write at most one compact card.
+
+```txt
+Endpoint:
+- status: real-api | dummy-wired | backend-pending | deferred | spec-conflict
+- screen:
+- caller:
+- domain boundary:
+- query key:
+- request shape:
+- response risk:
+- error mapping:
+- fallback:
+- test target:
+```
+
+Rules:
+
+- Do not paste full Swagger schema.
+- Do not inspect all endpoints.
+- Inspect only endpoints used by the current screen/flow.
+- Generated client may be read only at the specific operation/type boundary.
+- Prefer runtime behavior and UI contract over generated-client internals.
 
 ## Planning Output
 
@@ -44,6 +72,9 @@ API Plan:
 - query/mutation:
 - fallback:
 - tests:
+
+Contract Cards:
+- ...
 ```
 
 ## Rules

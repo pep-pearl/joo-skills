@@ -2,6 +2,8 @@
 
 Use the local AI navigation system before broad repository exploration.
 
+Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
+
 Default order:
 
 1. If user names exact files, start there.
@@ -9,7 +11,8 @@ Default order:
 3. Read `AI_INDEX.md` if present.
 4. Read at most one relevant `.ai/indexing/maps/*` shard if needed.
 5. Follow imports downward after finding a likely source file.
-6. Search broadly only when targeted navigation fails.
+6. Read one companion shard only when a coupling signal exists.
+7. Search broadly only when targeted navigation fails.
 
 Conditional skills:
 

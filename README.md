@@ -20,8 +20,10 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 - `AI_INDEX.md`는 architecture 문서가 아니라 작은 router입니다.
 - 상세 파일 매핑은 `.ai/indexing/maps/*`에 shard로 나눕니다.
 - 평소 작업에서는 map shard를 최대 1개만 읽고, 이후에는 import-following을 우선합니다.
+- 단, route/API/state/style/auth처럼 결합 신호가 있으면 companion shard 1개까지만 싸게 승급합니다.
 - 자연어/기획/디자인식 요청이 모호할 때만 `maps/root.md`에서 시작합니다.
 - scripts는 후보를 만들고, AI는 필요한 조각만 판단해서 사용합니다.
+- index와 map은 truth가 아니라 disposable navigation hint입니다. source/import/test가 더 우선합니다.
 
 ## Repository Structure
 
@@ -109,6 +111,39 @@ map shard 생성을 끄고 기존 후보 파일만 만들고 싶으면:
 node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --no-maps
 ```
 
+민감 경로와 generated 파일을 더 보수적으로 다루고 싶으면:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-scan.mjs \
+  --target . \
+  --out .ai/indexing \
+  --respect-gitignore \
+  --deny-sensitive-paths \
+  --max-total-files 3000
+```
+
+변경분 중심으로 refresh 후보를 만들고 싶으면:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-scan.mjs \
+  --target . \
+  --out .ai/indexing \
+  --changed-since main
+```
+
+### 3-1. index 검증
+
+AI가 토큰으로 stale path를 추론하기 전에, 가능한 검증은 스크립트로 먼저 처리합니다.
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-validate.mjs \
+  --target . \
+  --index AI_INDEX.md \
+  --maps .ai/indexing/maps
+```
+
+CI에서 실패시키고 싶으면 기본 모드를 쓰고, 로컬에서 경고만 보고 싶으면 `--warn-only`를 붙입니다.
+
 ### 4. AI에게 명령
 
 ```txt
@@ -126,11 +161,13 @@ Do not full-scan the repo. Follow the joo-skills repo-indexing skill.
 
 ```txt
 exact files from user
+-> project/team safety rules
 -> rules/context-navigation.md
 -> AI_INDEX.md
 -> at most one .ai/indexing/maps/* shard
 -> source file
 -> imports
+-> companion shard only when coupling signal exists
 -> tests if behavior matters
 -> targeted search only when blocked
 ```
@@ -144,3 +181,142 @@ exact files from user
 - Headers are for high-value entry files only.
 - Scripts produce candidates; AI makes judgment.
 - Every code change should briefly decide whether navigation metadata became stale.
+
+
+## Cheap Escalation
+
+기본은 map shard 0-1개입니다. 하지만 다음 결합 신호가 있으면 companion shard 1개까지 추가로 읽을 수 있습니다.
+
+- route + auth/permission/session
+- route + query/mutation/cache
+- UI bug + theme/style/token/responsive
+- form + validation/API error
+- disabled/loading/error state
+- stale data/cache/invalidation
+- feature flag/experiment
+- i18n/date/timezone/locale
+- generated client/schema mismatch
+
+Hard cap before edit:
+
+- map shards: max 2
+- source files: max 5
+- broad search: exact file, index, import-following이 모두 막힌 뒤에만
+
+## Metadata Trust
+
+`AI_INDEX.md`, map shard, `@ai-*` header는 truth가 아니라 navigation hint입니다.
+
+Trust order:
+
+1. user-provided exact file
+2. project/team safety rules
+3. source/imports/tests
+4. `AI_INDEX.md`
+5. map shards
+6. generated candidates
+
+source/import/test가 metadata와 충돌하면 source가 이깁니다. 이 경우 metadata를 억지로 따르지 말고 stale로 보고합니다.
+
+## When Not To Use This Workflow
+
+This workflow is optimized for token-efficient AI navigation in medium or large repositories.
+
+It is not a full architecture documentation system, security audit tool, or replacement for project ownership rules.
+
+Do not use this workflow as the primary navigation method in the following cases.
+
+### 1. Security-critical or highly regulated repositories
+
+Avoid this workflow when path names, domain names, route names, or package names are sensitive.
+
+The scanner produces metadata from repository structure. Even when source file contents are not copied, generated index files may expose sensitive project shape.
+
+Use a stricter internal indexing process instead.
+
+### 2. Repositories without stable structure
+
+Avoid this workflow when the project is in early rewrite, migration, or large-scale restructuring.
+
+The index is useful only when routes, domains, packages, API boundaries, and state ownership are stable enough to act as navigation hints.
+
+If files move every day, the metadata will become stale faster than it helps.
+
+### 3. Tasks that require whole-repository correctness
+
+Do not rely on this workflow alone for:
+
+- security review
+- license review
+- dependency migration
+- framework migration
+- naming convention migration
+- dead code removal
+- public API breaking-change analysis
+- large refactors across many packages
+
+For these tasks, targeted navigation is not enough. Use dedicated repo-wide analysis tools.
+
+### 4. Repositories dominated by generated code
+
+Avoid using generated files as map entries.
+
+Generated clients, snapshots, build outputs, compiled assets, route outputs, and schema dumps should usually be excluded from AI maps.
+
+Index the human-owned boundary around generated code instead.
+
+### 5. Projects that do not match the selected navigation skill
+
+Do not apply FSD navigation rules to non-FSD projects.
+
+For example, do not force the `app -> pages -> widgets -> features -> entities -> shared` reading order onto:
+
+- Next.js App Router projects
+- Remix route-module projects
+- TanStack Router file-route projects
+- vertical-slice monorepos
+- package-owned domain architectures
+
+Use the generic repo navigation skill or create a framework-specific adapter.
+
+### 6. When exact user-provided files conflict with the index
+
+Exact files from the user always beat the index.
+
+If the user names a file, start there. Use `AI_INDEX.md` only as a supporting router.
+
+If source imports contradict map metadata, trust the source and report stale metadata.
+
+### 7. When metadata appears stale or misleading
+
+Do not keep following the index when:
+
+- referenced files no longer exist
+- route/page ownership changed
+- API clients moved
+- state ownership changed
+- map shards point to generated or obsolete files
+- `AI_INDEX.md` became a large file tree instead of a router
+
+In these cases, stop and run an index refresh or report the stale metadata.
+
+### 8. When the project already has stronger local rules
+
+This workflow must not override project-specific rules.
+
+Security rules, generated-code rules, ownership rules, test requirements, and team `AGENTS.md` instructions take priority over AI navigation metadata.
+
+### Recommended fallback
+
+When this workflow does not fit, use this safer order:
+
+```txt
+exact files from user
+-> nearest project/team rules
+-> failing test or error output
+-> source imports
+-> targeted search
+-> broader repository analysis only when required
+```
+
+The index is a disposable navigation hint, not the source of truth.

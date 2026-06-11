@@ -37,14 +37,48 @@ src/
 Every task should start from the smallest likely file set:
 
 1. exact files from user
-2. project router: `AI_INDEX.md`
-3. at most one map shard
-4. entry point
-5. imported files
-6. tests
-7. broader search only when blocked
+2. project/team safety rules
+3. project router: `AI_INDEX.md`
+4. at most one map shard
+5. entry point
+6. imported files
+7. one companion shard only when a coupling signal exists
+8. tests
+9. broader search only when blocked
 
-## 3. Map Shards Are Optional Detail
+## 3. Cheap Escalation, Not Broad Reading
+
+The default remains one map shard.
+
+Escalate by one companion shard only when a coupling signal exists:
+
+- route + auth/session/permission
+- route + API/query/cache
+- UI bug + theme/style/token/responsive
+- form + validation/API error
+- generated client/schema mismatch
+
+Hard cap before edit:
+
+- map shards: 2
+- source files: 5
+
+This keeps token use bounded while avoiding confidently wrong edits from under-reading.
+
+## 4. Metadata Is A Hint, Not Truth
+
+Trust order:
+
+1. exact files from user
+2. project/team safety rules
+3. source/imports/tests
+4. `AI_INDEX.md`
+5. map shards
+6. generated candidates
+
+When source/imports contradict metadata, source wins and the metadata should be reported as stale.
+
+## 5. Map Shards Are Optional Detail
 
 Detailed navigation belongs in `.ai/indexing/maps/*`, not in `AI_INDEX.md`.
 
@@ -65,9 +99,9 @@ Rules:
 - include natural-language aliases only when useful
 - once source entry is found, follow imports
 
-## 4. Headers Are Sparse
+## 6. Headers Are Sparse
 
-Use `@ai-*` headers only for files that help navigation.
+Prefer sidecar metadata in `.ai/indexing/file-hints.md`. Use source-level `@ai-*` headers only for stable files that help navigation.
 
 Good targets:
 
@@ -98,9 +132,9 @@ Prefer minimal headers:
  */
 ```
 
-Use extended fields only when they save future reads.
+Use extended fields only when they save future reads. Header content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
 
-## 5. Index Maintenance Is Part Of Done
+## 7. Index Maintenance Is Part Of Done
 
 After code changes, decide whether metadata changed.
 
@@ -117,7 +151,7 @@ Update only affected metadata:
 - package/build changed -> `maps/packages.md`
 - domain ownership changed -> related `maps/domains/*.md`
 
-## 6. Borrow Patterns, Do Not Clone Systems
+## 8. Borrow Patterns, Do Not Clone Systems
 
 This repo borrows ideas from workflow/agent ecosystems:
 

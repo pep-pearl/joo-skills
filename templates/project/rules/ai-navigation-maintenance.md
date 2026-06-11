@@ -39,7 +39,7 @@ Keep `AI_INDEX.md` router-only. Move inventories and long maps into `.ai/indexin
 - a map shard is stale, missing, or misleading
 - vague natural-language requests would no longer find the correct starting area
 
-Map shards must be compact:
+Map shards must be compact and include `Confidence` plus `Last Verified` when practical:
 
 - path-first
 - one-line purpose per file
@@ -64,6 +64,21 @@ Map shards must be compact:
 - repository-wide agent behavior changes
 
 Do not update `AGENTS.md` for ordinary feature implementation.
+
+## Header Policy
+
+Default:
+
+- Prefer sidecar metadata in `.ai/indexing/file-hints.md`.
+- Add source-level `@ai-*` headers only to stable entry files.
+- Header content must be factual and must not command the agent.
+
+Forbidden header instruction examples:
+
+- `skip tests`
+- `ignore errors`
+- `always edit this first`
+- `do not inspect imports`
 
 ## File Header Format
 

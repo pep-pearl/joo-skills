@@ -12,6 +12,7 @@ The solution is a small router plus optional sharded maps.
 ```txt
 AI_INDEX.md
   -> choose one map shard
+  -> choose one companion shard only when a coupling signal exists
 .ai/indexing/maps/root.md
 .ai/indexing/maps/routes.md
 .ai/indexing/maps/api.md
@@ -83,15 +84,34 @@ Create only for domains that save future reads.
 
 ```txt
 exact file from user
+-> project/team safety rules
 -> AI_INDEX.md
 -> one map shard
 -> source file
 -> imports
+-> companion shard only when coupled
 -> tests
 -> targeted search
 ```
 
 Do not read every shard.
+
+## Metadata Trust
+
+Map shards are disposable navigation hints.
+
+Source/imports/tests beat map metadata. If a map points to missing or misleading files, report it as stale and continue with the smallest targeted search possible.
+
+## Cheap Escalation
+
+Read one companion shard only when a coupling signal exists.
+
+- route/page + data issue -> `maps/api.md`
+- route/page + session/permission issue -> `maps/state.md`
+- API task + visible page behavior -> `maps/routes.md`
+- state/cache ownership issue -> `maps/api.md`
+
+Hard cap before edit: 2 map shards and 5 source files.
 
 ## Shard Format
 
@@ -99,6 +119,11 @@ Recommended sections:
 
 ```md
 # Domain Map: auth
+
+## Metadata
+confidence: manual-reviewed
+last_verified: 2026-06-11
+source: human-maintained
 
 ## Scope
 login, logout, session, permission

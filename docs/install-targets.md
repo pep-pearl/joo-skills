@@ -18,6 +18,26 @@ Then run:
 node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing
 ```
 
+Optional safer scan:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-scan.mjs \
+  --target . \
+  --out .ai/indexing \
+  --respect-gitignore \
+  --deny-sensitive-paths \
+  --max-total-files 3000
+```
+
+Validate generated or maintained metadata before asking an agent to reason about it:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-validate.mjs \
+  --target . \
+  --index AI_INDEX.md \
+  --maps .ai/indexing/maps
+```
+
 ## Codex / oh-my-codex
 
 Use:

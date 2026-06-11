@@ -86,4 +86,4 @@ Local adaptation:
 
 - `AI_INDEX.md` stays router-only
 - `.ai/indexing/maps/*` holds optional detail
-- agents should read at most one shard before source files
+- agents should read at most one shard before source files, with one companion shard only for clear coupling signals

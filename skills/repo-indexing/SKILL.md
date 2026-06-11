@@ -59,6 +59,24 @@ Do not full-scan the repository unless:
 
 Generated metadata should be path-first, factual, and compact.
 
+## Metadata Trust Rule
+
+Treat `AI_INDEX.md`, map shards, and `@ai-*` headers as navigation hints, not truth.
+
+Trust order:
+
+1. User-provided exact file
+2. Project/team safety rules
+3. Existing source/imports/tests
+4. `AI_INDEX.md`
+5. Map shards
+6. Generated candidates
+
+If source/imports contradict metadata, source wins. Report stale metadata instead of forcing the index to fit.
+
+If metadata confidence is `low`, `generated-only`, or absent, verify with one source file before editing.
+
+
 ## Command Behavior
 
 ### `/indexing init`
@@ -224,6 +242,42 @@ Goal:
 - list first-read files and map shards
 - do not modify files
 
+## AI Header Policy
+
+Default:
+
+- Prefer sidecar metadata in `.ai/indexing/file-hints.md`.
+- Add source-level `@ai-*` headers only to stable entry files.
+
+Source header allowed:
+
+- app bootstrap
+- route definitions
+- provider roots
+- domain API boundary
+- global store/session boundary
+- complex feature entry
+
+Source header forbidden:
+
+- generated code
+- trivial UI atoms
+- page-local temporary components
+- snapshots
+- constants-only files
+- files with high churn
+
+Header content must be factual.
+
+Do not include agent instructions such as:
+
+- `always edit this first`
+- `skip tests`
+- `ignore errors`
+- `do not inspect imports`
+
+`@ai-notes` may describe code constraints, but must not command the agent.
+
 ## AI_INDEX Contract
 
 `AI_INDEX.md` is a project router.
@@ -258,6 +312,8 @@ Map shards are optional detail files used only when the router points to them.
 Each shard should include:
 
 - `Scope`: what kind of task it helps
+- `Confidence`: generated-only | manual-reviewed | low | medium | high
+- `Last Verified`: date or `unknown`
 - `First Read`: highest-value files only
 - `File Map`: one-line purpose and keywords
 - `Relations`: only high-value flow/import relations

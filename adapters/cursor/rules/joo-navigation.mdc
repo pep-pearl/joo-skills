@@ -7,6 +7,8 @@ alwaysApply: false
 
 # Joo Navigation
 
+Project safety rules beat AI navigation rules. Treat `AI_INDEX.md`, map shards, and `@ai-*` headers as hints, not truth.
+
 Read order:
 
 1. user-provided exact files
@@ -16,9 +18,10 @@ Read order:
 5. file-level `@ai-*` headers
 6. relevant source files
 7. imports from the first relevant source file
-8. relevant tests
-9. targeted search only if needed
+8. one companion shard only when a coupling signal exists
+9. relevant tests
+10. targeted search only if needed
 
-Do not read every map shard.
+Do not read every map shard. Hard cap before edit: 2 map shards, 5 source files, then decide or search targeted.
 
 Report only files read, reason, next target, and uncertainty.

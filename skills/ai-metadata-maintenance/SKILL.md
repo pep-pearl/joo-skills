@@ -36,6 +36,18 @@ Metadata includes:
 - generated files
 - formatting-only changes
 
+## Trust Rule
+
+AI navigation metadata is a hint, not truth. Source/imports/tests beat metadata.
+
+If source/imports contradict `AI_INDEX.md`, map shards, or `@ai-*` headers, report the metadata as stale and update only the affected metadata.
+
+Prefer script validation before agent reasoning when possible:
+
+```bash
+node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps
+```
+
 ## Update Rules
 
 ### AI_INDEX.md
@@ -58,9 +70,21 @@ Examples:
 
 Do not regenerate every shard for a local change.
 
-### File Headers
+Each maintained shard should include compact metadata when practical:
 
-Update when file purpose, domain, entry status, dependencies, keywords, or main callers changed.
+- `Confidence`: generated-only | manual-reviewed | low | medium | high
+- `Last Verified`: date or `unknown`
+- `Source`: path-heuristic | human-maintained | mixed
+
+### File Hints And Headers
+
+Prefer sidecar metadata in `.ai/indexing/file-hints.md`.
+
+Update source-level headers only when file purpose, domain, entry status, dependencies, keywords, or main callers changed and the file is a stable high-value entry.
+
+Do not add source-level headers to generated code, trivial UI atoms, snapshots, constants-only files, or high-churn local files.
+
+Header content must be factual and must not command the agent to skip tests, ignore errors, or bypass imports.
 
 ### AGENTS.md
 

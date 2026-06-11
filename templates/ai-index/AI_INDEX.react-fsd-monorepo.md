@@ -21,8 +21,13 @@ Keep short, factual, path-first. Put detailed maps in `.ai/indexing/maps/*`.
 3. Read at most one map shard.
 4. Follow imports downward:
    - pages -> widgets -> features -> entities -> shared
-5. Read tests when behavior matters.
-6. Search broadly only when blocked.
+5. Read one companion shard only when a coupling signal exists.
+6. Read tests when behavior matters.
+7. Search broadly only when blocked.
+
+## Metadata Trust
+
+This router and map shards are navigation hints, not source of truth. Source/imports/tests beat metadata.
 
 ## Task Router
 
@@ -53,9 +58,13 @@ Keep short, factual, path-first. Put detailed maps in `.ai/indexing/maps/*`.
 
 Respect dependency direction.
 
+## Cheap Escalation
+
+Read one companion shard only when a coupling signal exists. Hard cap before edit: 2 map shards and 5 source files.
+
 ## Read Budget
 
-- maps: 0-1
+- maps: 0-1, or 2 only with a coupling signal
 - source files: 1-3 before deciding next
 - tests: when behavior matters
 - broad search: only after targeted navigation fails

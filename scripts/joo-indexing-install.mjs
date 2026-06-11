@@ -82,7 +82,7 @@ Typical files:
 
 Do not treat generated candidates as final truth. Review before applying.
 
-Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports.
+Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. Treat generated metadata as a hint, not truth.
 `,
     "utf8"
   );
