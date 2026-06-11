@@ -42,7 +42,7 @@ Local adaptation:
 
 - scan output goes to `.ai/indexing`
 - generated candidates are compact and reviewable
-- `--respect-gitignore`, `--respect-ai-ignore`, and `--deny-sensitive-paths` mirror this idea without packing the whole repo
+- scan safe defaults mirror this idea without packing the whole repo: `.gitignore`/AI ignore files are respected and sensitive-looking paths are denied unless explicitly opted out
 
 ## Superpowers-style Composable Skills
 

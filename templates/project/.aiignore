@@ -1,5 +1,5 @@
 # AI indexing ignore file
-# These paths are excluded from joo-indexing-scan when --respect-ai-ignore is used.
+# These paths are excluded from joo-indexing-scan by default. Use --no-respect-ai-ignore only in trusted local scans.
 
 # generated / build output
 dist/

@@ -98,3 +98,22 @@ Known failure patterns should be promoted by root cause, not error code, when an
 - project AGENTS and AI_INDEX templates
 - install script now copies `rules/failure-triage.md`
 - PR template now includes stale metadata recovery and known failure pattern promotion checkboxes
+
+
+## Additional hardening applied in this patch
+
+### Safe-by-default scanner
+
+- `joo-indexing-scan.mjs` now respects `.gitignore`, `.aiignore`/`.ignore`/`.repomixignore`, skips `.ai/`, and denies sensitive-looking paths by default.
+- Added explicit opt-outs for trusted local review: `--no-respect-gitignore`, `--no-respect-ai-ignore`, and `--allow-sensitive-paths`.
+- Kept `--respect-gitignore`, `--respect-ai-ignore`, and `--deny-sensitive-paths` as backward-compatible no-ops so older commands do not break.
+- Updated README, install docs, package scripts, and installer next-step output to reflect the new defaults.
+
+### Write-safety contract
+
+- Added a pre/post edit safety contract to project templates, repo navigation skill, agent loop skill, and agent adapter fragments.
+- Agents must name exact files before editing, avoid deletes/renames/moves/broad codemods unless requested, avoid generated/lock/snapshot/build/env/secret/credential/private config edits unless requested, and report verification plus metadata impact after edits.
+
+### Anti-pattern guardrails
+
+- Added explicit bad examples for dumb agents: no full-tree `AI_INDEX.md`, no mass `@ai-*` headers, no source edits to satisfy stale metadata, no repo-wide grep when error anchors exist, no all-shard reads, and no full OpenAPI/generated-client inspection when a narrow boundary is enough.

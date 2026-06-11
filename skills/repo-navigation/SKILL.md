@@ -196,6 +196,37 @@ AI navigation metadata:
 - skipped: unrelated shards
 ```
 
+## Write Safety Contract
+
+Before editing source files:
+
+- Name the exact files you intend to edit.
+- Do not delete, rename, or move files unless the user explicitly requested it.
+- Do not edit generated files, lockfiles, snapshots, build outputs, `.env*`, secret files, credential files, or private config unless explicitly requested.
+- Do not run repo-wide replace or broad codemods unless the user asked for a repo-wide change and the matched files were reviewed.
+- If AI metadata conflicts with source code, source/imports/tests win. Do not change runtime logic to match stale metadata.
+- Prefer the smallest behavior-preserving change.
+
+After editing:
+
+- List changed files.
+- State what was verified.
+- State tests/checks run, or why they were skipped.
+- State whether `AI_INDEX.md` or map shards need updates.
+
+## Agent Anti-Patterns
+
+Avoid these failure modes:
+
+- Replacing `AI_INDEX.md` with a full file tree.
+- Adding `@ai-*` headers to every source file.
+- Editing source code because a generated map says the file has a role.
+- Starting with repo-wide grep when an exact file, line, test, or stack anchor exists.
+- Reading every map shard before opening source.
+- Inspecting full OpenAPI/Swagger output when one endpoint or operation is relevant.
+- Touching generated clients unless the exact operation/type boundary requires it.
+- Reformatting unrelated code while fixing a navigation or metadata issue.
+
 ## Stop Rule
 
 After one map and three source files, decide one of:

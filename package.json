@@ -5,11 +5,11 @@
   "description": "Personal AI workflow, repo indexing, and agent skill archive.",
   "type": "module",
   "scripts": {
-    "scan": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths --max-map-tokens 1600",
+    "scan": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --max-map-tokens 1600",
     "install:target": "node scripts/joo-indexing-install.mjs",
     "validate:index": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps --warn-only",
     "validate:index:strict": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps",
-    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths --changed-since main --max-map-tokens 1600",
+    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --changed-since main --max-map-tokens 1600",
     "lookup": "node scripts/joo-indexing-lookup.mjs --target .",
     "diff-check": "node scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only",
     "diff-check:strict": "node scripts/joo-indexing-diff-check.mjs --target . --base main",

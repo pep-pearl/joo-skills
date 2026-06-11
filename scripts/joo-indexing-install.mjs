@@ -98,6 +98,6 @@ Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before
 }
 
 console.log("\nNext:");
-console.log("node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --respect-gitignore --respect-ai-ignore --deny-sensitive-paths");
+console.log("node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --max-map-tokens 1600");
 console.log("node /path/to/joo-skills/scripts/joo-indexing-lookup.mjs --target . --keyword <term>");
 console.log("node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only");

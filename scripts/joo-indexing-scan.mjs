@@ -19,6 +19,7 @@
  * - maps/domains/*.md
  *
  * This script does not modify source files. Source-level @ai-* headers are disabled by default.
+ * Safe defaults: respects .gitignore/.aiignore and excludes sensitive-looking paths unless explicitly opted out.
  */
 
 import fs from "node:fs";
@@ -48,12 +49,14 @@ function hasFlag(name) {
 const target = path.resolve(getArg("--target", "."));
 const outDir = path.resolve(getArg("--out", path.join(target, ".ai", "indexing")));
 const emitMaps = !hasFlag("--no-maps");
-const respectGitignore = hasFlag("--respect-gitignore");
-const denySensitivePaths = hasFlag("--deny-sensitive-paths");
+// Safe-by-default scanning. Positive flags are kept as backward-compatible no-ops.
+// Use explicit opt-out flags only for trusted local repos where broader indexing is intentional.
+const respectGitignore = !hasFlag("--no-respect-gitignore");
+const denySensitivePaths = !hasFlag("--allow-sensitive-paths");
 const includeGenerated = hasFlag("--include-generated");
 const candidateOnly = hasFlag("--candidate-only");
 const allowSourceHeaders = hasFlag("--source-headers");
-const respectAiIgnore = hasFlag("--respect-ai-ignore");
+const respectAiIgnore = !hasFlag("--no-respect-ai-ignore");
 const maxFilesPerMap = Number(getArg("--max-files-per-map", "80"));
 const maxMapTokens = Number(getArg("--max-map-tokens", "1600"));
 const maxDomainMaps = Number(getArg("--max-domain-maps", "16"));
@@ -67,8 +70,22 @@ const excludePatterns = getArgs("--exclude")
 
 const scanWarnings = [];
 
+if (hasFlag("--no-respect-gitignore")) {
+  scanWarnings.push(".gitignore rules are ignored because --no-respect-gitignore was used.");
+}
+if (hasFlag("--no-respect-ai-ignore")) {
+  scanWarnings.push(".aiignore/.ignore/.repomixignore rules are ignored because --no-respect-ai-ignore was used.");
+}
+if (hasFlag("--allow-sensitive-paths")) {
+  scanWarnings.push("Sensitive-looking paths are allowed because --allow-sensitive-paths was used. Do not share outputs with external AI tools before review.");
+}
+if (hasFlag("--respect-gitignore") || hasFlag("--respect-ai-ignore") || hasFlag("--deny-sensitive-paths")) {
+  scanWarnings.push("Safe scan flags are enabled by default; --respect-gitignore, --respect-ai-ignore, and --deny-sensitive-paths are kept for backward compatibility.");
+}
+
 const IGNORE_DIRS = new Set([
   ".git",
+  ".ai",
   "node_modules",
   "dist",
   "build",
@@ -214,6 +231,7 @@ function walk(dir, acc = []) {
     const abs = path.join(dir, entry.name);
     const rel = path.relative(target, abs).replaceAll(path.sep, "/");
 
+    if (abs === outDir || abs.startsWith(`${outDir}${path.sep}`)) continue;
     if (IGNORE_DIRS.has(entry.name)) continue;
     if (isIgnoredByRules(rel, gitignoreRules) || isIgnoredByRules(rel, aiIgnoreRules) || isIgnoredByRules(rel, cliExcludeRules)) continue;
     if (isTooDeep(rel)) continue;

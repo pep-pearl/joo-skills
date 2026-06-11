@@ -21,16 +21,16 @@ Then run:
 node /path/to/joo-skills/scripts/joo-indexing-scan.mjs --target . --out .ai/indexing
 ```
 
-Optional safer scan:
+Large repo scan with an explicit file cap:
 
 ```bash
 node /path/to/joo-skills/scripts/joo-indexing-scan.mjs \
   --target . \
   --out .ai/indexing \
-  --respect-gitignore \
-  --deny-sensitive-paths \
   --max-total-files 3000
 ```
+
+Scan is safe-by-default: it respects `.gitignore`, `.aiignore`/`.ignore`/`.repomixignore`, skips `.ai/`, and denies sensitive-looking paths. Use `--no-respect-gitignore`, `--no-respect-ai-ignore`, or `--allow-sensitive-paths` only for trusted local review.
 
 Validate generated or maintained metadata before asking an agent to reason about it:
 

@@ -26,3 +26,11 @@ Conditional skills:
 Do not auto-load `docs/prompts/*` unless the user explicitly references them.
 
 Stale metadata rule: source/imports/tests beat AI metadata. If metadata points to missing or wrong files, recover with exact lookup/import/test/targeted search, continue from source, and update only affected metadata when maintenance is in scope.
+
+Write safety:
+
+- Before editing, name exact files to change.
+- Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+- Do not edit generated, lock, snapshot, build, env, secret, credential, or private config files unless explicitly requested.
+- Source/imports/tests beat AI metadata; never change runtime logic to satisfy stale metadata.
+- After editing, list changed files, verification, skipped checks, and metadata impact.

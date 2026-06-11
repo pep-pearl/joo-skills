@@ -26,3 +26,11 @@ General behavior:
 - update navigation metadata only when repo navigation changed, metadata is stale, or a repeated/expensive failure pattern should be promoted by root cause
 
 If metadata is stale, source/imports/tests win. Recover with exact lookup/import/test/targeted search and update only affected metadata.
+
+Write safety:
+
+- Before editing, name exact files to change.
+- Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+- Do not edit generated, lock, snapshot, build, env, secret, credential, or private config files unless explicitly requested.
+- Source/imports/tests beat AI metadata; never change runtime logic to satisfy stale metadata.
+- After editing, list changed files, verification, skipped checks, and metadata impact.

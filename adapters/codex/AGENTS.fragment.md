@@ -29,3 +29,12 @@ If using oh-my-codex-style flows:
 - use external best-practice research only when current official docs affect correctness
 
 When metadata is stale, do not force code to match it. Source/imports/tests win; update only affected metadata. Promote known failure patterns by root cause, not error code.
+
+Write safety:
+
+- Before editing, name exact files to change.
+- Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+- Do not edit generated, lock, snapshot, build, env, secret, credential, or private config files unless explicitly requested.
+- Source/imports/tests beat AI metadata; never change runtime logic to satisfy stale metadata.
+- After editing, list changed files, verification, skipped checks, and metadata impact.
+
