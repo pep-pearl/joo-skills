@@ -7,7 +7,7 @@ Project safety rules beat AI navigation rules. Treat AI metadata as hints, not t
 Default order:
 
 1. If user names exact files, start there.
-2. If changed code already exists, use `/diff impact` or `npm run diff:impact` before normal `AI_INDEX.md` routing.
+2. If changed code already exists, run `npm run diff:impact`; if unavailable, inspect changed files directly before normal `AI_INDEX.md` routing.
 3. If an error log/failing test/CI/build/type/lint/runtime failure is present, use `rules/failure-triage.md` when present and create a temporary failure card.
 4. Read `rules/context-navigation.md` if present.
 5. Read `AI_INDEX.md` if present.
@@ -28,6 +28,8 @@ Conditional skills:
 Do not auto-load `docs/prompts/*` unless the user explicitly references them.
 
 Stale metadata rule: source/imports/tests beat AI metadata. If metadata points to missing or wrong files, recover with exact lookup/import/test/targeted search, continue from source, and update only affected metadata when maintenance is in scope.
+
+Full repo scans are forbidden by default. If repo-wide work is truly required, scan filenames first and then open narrowed file contents.
 
 Write safety:
 

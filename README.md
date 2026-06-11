@@ -25,6 +25,21 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 
 `AI_INDEX.md`와 `.ai/indexing/maps/*`는 architecture 문서가 아니라 **AI가 다음에 읽을 파일을 고르는 disposable navigation hint**입니다. 실제 truth는 항상 source, import, test, runtime behavior입니다.
 
+## Weak-Agent Runtime Contract
+
+대상 프로젝트에 설치되는 `AGENTS.md`와 `rules/context-navigation.md`의 최상단에는 짧은 runtime contract가 들어갑니다. 핵심은 다음입니다.
+
+```txt
+exact files / changed files / error anchors beat AI_INDEX
+run npm run diff:impact for existing changes; fallback to changed files directly
+read at most one map shard before source
+after source is found, follow imports/callers/tests
+source/imports/tests beat metadata
+no full repo scan by default; if unavoidable, scan filenames before contents
+```
+
+이 짧은 계약은 약한 agent가 긴 skill 문서를 다 읽기 전에 먼저 따라야 하는 hard guardrail입니다.
+
 ## When To Use
 
 이 도구가 특히 유용한 경우:
@@ -240,7 +255,7 @@ Only use AI_INDEX.md if the error anchor is not enough.
 | `/diff review` | 변경 파일과 직접 import/matching test 중심으로 리뷰합니다. | PR 리뷰에서 unrelated shard를 읽지 않고 싶을 때 | review focus, targeted tests, stale metadata risk |
 | `/diff fix-plan` | 기존 diff를 고치기 위한 최소 수정 계획을 만듭니다. | 이미 변경된 코드에서 무엇만 고칠지 정리할 때 | patch targets, verification, metadata decision |
 | `/diff-check` | 변경된 source가 metadata 갱신을 요구하는지 확인합니다. | PR에서 `AI_INDEX.md`/maps 갱신 누락을 잡고 싶을 때 | routes/api/state/packages/domain별 갱신 필요 경고 |
-| `/benchmark navigation` | 저장된 navigation case로 lookup 품질을 측정합니다. | index 구조를 바꾼 뒤 회귀가 생겼는지 보고 싶을 때 | pass/warn/fail, first hit position, average score |
+| `/benchmark navigation` | 저장된 navigation case로 lookup 품질과 선택적 토큰/파일 절감 추정치를 측정합니다. | index 구조를 바꾼 뒤 회귀나 토큰 절감 효과를 보고 싶을 때 | pass/warn/fail, first hit position, average score, token/file savings |
 
 ## Command Guide: 사용자가 직접 실행하는 Node scripts
 
@@ -427,7 +442,7 @@ node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base m
 
 ### `joo-navigation-benchmark.mjs`
 
-대표 navigation case를 저장해두고 lookup 결과가 기대 entry file을 잘 찾는지 측정합니다.
+대표 navigation case를 저장해두고 lookup 결과가 기대 entry file을 잘 찾는지 측정합니다. case에 `baseline`/`optimized` metric을 넣으면 예상 file/token 절감률도 같이 출력합니다.
 
 ```bash
 node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
@@ -441,6 +456,7 @@ node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
 - `AI_INDEX.md`나 map shard 구조를 바꾼 뒤 품질 회귀를 확인할 때
 - 팀에서 자주 하는 작업 요청을 benchmark case로 고정하고 싶을 때
 - “AI가 처음 읽는 파일”이 실제로 좋아졌는지 수치로 보고 싶을 때
+- broad 탐색 대비 예상 token/file read 절감률을 케이스별로 기록하고 싶을 때
 
 자주 쓰는 옵션:
 
@@ -563,6 +579,15 @@ node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
   --cases .ai/indexing/benchmarks/navigation-cases.json \
   --lookup-script /path/to/joo-skills/scripts/joo-indexing-lookup.mjs \
   --top-n 5
+```
+
+토큰 절감도 보고 싶으면 case에 아래처럼 추정치를 넣습니다. 이 값은 benchmark가 LLM을 호출해 자동 측정하는 값이 아니라, 대표 작업에서 baseline 탐색과 optimized 탐색을 비교하기 위한 기록값입니다.
+
+```json
+{
+  "baseline": { "filesRead": 34, "estimatedTokens": 42000 },
+  "optimized": { "filesRead": 6, "estimatedTokens": 8500 }
+}
 ```
 
 ## Output Files: 무엇을 어떻게 읽어야 하나

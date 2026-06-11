@@ -1,10 +1,30 @@
 # AGENTS.md
 
+## Runtime Contract — read this first
+
+These rules are intentionally short for weak agents. Follow them before any longer guidance.
+
+1. If the user names exact files, open those files first and do not read maps yet.
+2. If code is already changed, run `npm run diff:impact` first. If it fails, inspect the changed files directly. Do not start from `AI_INDEX.md`.
+3. If an error log, failing test, stack trace, CI/build/type/lint/runtime failure exists, use the file/line/test/userland stack anchor first. Do not start with keyword search.
+4. Read `AI_INDEX.md` before broad search only when there is no stronger exact/diff/error anchor.
+5. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
+6. After a likely source file is found, follow imports/callers/tests instead of reading more maps.
+7. Treat `AI_INDEX.md`, map shards, and file hints as navigation hints, never as truth.
+8. Source/imports/tests beat AI metadata. Never change runtime code to satisfy stale metadata.
+9. Do not edit generated, lock, snapshot, build output, `.env*`, secret, credential, or private config files unless explicitly requested.
+10. Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+11. Before editing source, name the exact files to change.
+12. After editing, list changed files, verification, skipped checks, and whether AI metadata changed.
+13. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
+14. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
+15. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
+
 ## Core
 
 - Follow the nearest applicable `AGENTS.md`.
 - Read only rules needed for the task.
-- Always read `rules/context-navigation.md` before unfamiliar repo navigation.
+- Read `rules/context-navigation.md` only when the runtime contract and `AI_INDEX.md` are not enough for unfamiliar or cross-cutting navigation.
 - When work starts from an error log, failing test, CI/build/type/lint/runtime failure, or stack trace, read `rules/failure-triage.md` and create a temporary failure card before repo exploration.
 - Read `AI_INDEX.md` before broad search.
 - Treat `AI_INDEX.md` as a small router, not a full architecture document.
@@ -12,7 +32,7 @@
 - Do not load `docs/prompts/*` unless the user explicitly references one.
 - Prefer small, targeted edits.
 - If user names files, start there.
-- If code is already changed, use `/diff impact` before normal `AI_INDEX.md` routing.
+- If code is already changed, run `npm run diff:impact` first; if unavailable, inspect changed files directly before normal `AI_INDEX.md` routing.
 
 ## Priority
 
@@ -51,7 +71,7 @@ Read only when relevant:
 - `/indexing refresh`: update changed metadata sections only.
 - `/indexing explain`: explain how future agents should navigate this repo.
 - `/failure triage`: create a temporary failure routing card from error output.
-- `/diff impact`: classify changed files and choose read-next/skip/metadata targets.
+- `/diff impact` / `npm run diff:impact`: classify changed files and choose read-next/skip/metadata targets.
 - `/diff review`: review changed files, direct imports, and matching tests only.
 - `/diff fix-plan`: plan the smallest fix path for an existing diff.
 - `npm run lookup -- --keyword <term>`: lookup exact path/keyword/intent without reading whole maps.
@@ -64,7 +84,7 @@ Read only when relevant:
 Default order:
 
 1. Exact files from the user.
-2. Changed files from PR/diff/staged files, using `/diff impact` when available.
+2. Changed files from PR/diff/staged files, using `npm run diff:impact` when available.
 3. Nearest project/team safety rules.
 4. Error log or failing command, when present; use `rules/failure-triage.md`.
 5. `rules/context-navigation.md`.
@@ -110,7 +130,7 @@ Avoid these failure modes:
 
 ## After Code Changes
 
-Check whether AI navigation metadata must change. If a diff exists, use `/diff impact` first and update only required/maybe metadata targets.
+Check whether AI navigation metadata must change. If a diff exists, run `npm run diff:impact` first and update only required/maybe metadata targets. If unavailable, inspect changed files directly.
 
 Update metadata when changes affect:
 

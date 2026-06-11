@@ -12,7 +12,7 @@ Project safety rules beat AI navigation rules. Treat `AI_INDEX.md`, map shards, 
 Read order:
 
 1. user-provided exact files
-2. changed files from PR/diff/staged files; use `/diff impact` before normal router navigation
+2. changed files from PR/diff/staged files; run `npm run diff:impact`; if unavailable, inspect changed files directly before normal router navigation
 3. project/team safety rules
 4. error log/failing command anchors when present; create a temporary `[FAILURE_TRIAGE]` card before source reads
 5. `rules/context-navigation.md`
@@ -28,6 +28,8 @@ Read order:
 For already-changed code, changed files beat `AI_INDEX.md`; read exact changed files, direct imports, and matching tests before map shards. Do not read every map shard. For failures, file/line/test/userland stack anchors beat keyword search and generated files are never first-read files. Hard cap before edit: 2 map shards, 5 source files, then decide or search targeted.
 
 If metadata is stale, source/imports/tests win. Recover with exact lookup/import/test/targeted symbol search and update only affected metadata when maintenance is in scope.
+
+Full repo scans are forbidden by default. If repo-wide work is truly required, scan filenames first and then open narrowed file contents.
 
 Write safety:
 

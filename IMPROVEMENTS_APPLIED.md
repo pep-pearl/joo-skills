@@ -147,4 +147,27 @@ Known failure patterns should be promoted by root cause, not error code, when an
 
 - Added npm scripts: `diff:impact`, `diff:impact:staged`, `diff:impact:json`, `diff:review`, and `diff:fix-plan`.
 - Updated `repo-navigation`, `context-navigation`, `agent-operating-loop`, AGENTS templates, adapter fragments, README, install docs, skill map, and PR templates to use diff impact before normal router navigation when code is already changed.
-- Updated metadata maintenance rules so `/diff impact` gates which shards are required, maybe, or skipped before any refresh.
+- Updated metadata maintenance rules so `npm run diff:impact` / `/diff impact` gates which shards are required, maybe, or skipped before any refresh.
+
+## Weak-agent hardening applied in this revision
+
+### Runtime contract added to installed project guidance
+
+- Added a short `Runtime Contract` at the top of `templates/project/AGENTS.template.md` and `templates/project/rules/context-navigation.md`.
+- The contract is intentionally command-like for weak agents: exact files, diff anchors, and error anchors beat `AI_INDEX.md`; one shard before source; source/imports/tests beat metadata; no full repo scan by default; scan filenames before contents if repo-wide work is unavoidable.
+
+### Diff command wording normalized
+
+- Replaced ambiguous “mentally apply `/diff impact`” style wording with: run `npm run diff:impact`; if unavailable, inspect changed files directly.
+- Applied this to repo navigation, agent loop, metadata maintenance, installed templates, and adapter fragments.
+
+### Full-scan guard tightened
+
+- Added explicit full-scan rules to `AI_INDEX.template.md`, `context-navigation.md`, repo navigation skill, and adapter fragments.
+- A full scan is now treated as an exception: user-requested repo-wide work or failure of exact/diff/error/router/lookup/import navigation. Filename-only scan must happen before content reads.
+
+### Token savings measurement added
+
+- `joo-navigation-benchmark.mjs` now reports estimated token/file savings when benchmark cases include `baseline` and `optimized` metrics.
+- `schemas/navigation-benchmark-case.schema.json` now accepts `baseline`, `optimized`, and `joo` metric objects.
+- The example benchmark case now includes baseline vs optimized file/token estimates.

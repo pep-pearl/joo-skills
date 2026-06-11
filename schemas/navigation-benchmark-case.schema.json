@@ -61,6 +61,51 @@
           "items": {
             "type": "string"
           }
+        },
+        "baseline": {
+          "type": "object",
+          "properties": {
+            "filesRead": {
+              "type": "number"
+            },
+            "estimatedTokens": {
+              "type": "number"
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "optimized": {
+          "type": "object",
+          "properties": {
+            "filesRead": {
+              "type": "number"
+            },
+            "estimatedTokens": {
+              "type": "number"
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        },
+        "joo": {
+          "type": "object",
+          "properties": {
+            "filesRead": {
+              "type": "number"
+            },
+            "estimatedTokens": {
+              "type": "number"
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
         }
       }
     }

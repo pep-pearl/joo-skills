@@ -36,6 +36,8 @@ Treat these as user-invoked skill commands:
 - `/diff review`
 - `/diff fix-plan`
 
+Full repo scans are forbidden by default. If repo-wide work is truly required, scan filenames first and then open narrowed file contents.
+
 ## Write Safety
 
 - Before editing, name exact files to change.

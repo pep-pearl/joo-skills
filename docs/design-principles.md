@@ -171,7 +171,7 @@ Update only affected metadata:
 
 ## 9. Measure Navigation Quality
 
-Good AI navigation metadata should be benchmarked, not only reviewed by eye. Keep a small set of representative navigation cases under `.ai/indexing/benchmarks/navigation-cases.json` and run `joo-navigation-benchmark.mjs` after large indexing changes.
+Good AI navigation metadata should be benchmarked, not only reviewed by eye. Keep a small set of representative navigation cases under `.ai/indexing/benchmarks/navigation-cases.json` and run `joo-navigation-benchmark.mjs` after large indexing changes. Add baseline vs optimized file-count/token estimates when available so token savings are measured instead of guessed.
 
 Use diff-based metadata checks in PRs so route/API/state/package changes do not silently stale the router or map shards.
 

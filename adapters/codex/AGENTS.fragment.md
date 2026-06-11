@@ -16,7 +16,7 @@ Project safety rules beat AI navigation rules. Treat AI metadata as hints, not t
 
 Before large code work:
 
-1. If code is already changed, run `/diff impact` before normal repo navigation.
+1. If code is already changed, run `npm run diff:impact` before normal repo navigation; if unavailable, inspect changed files directly.
 2. Run repo navigation mentally.
 3. Read `rules/context-navigation.md` when present.
 4. If an error log/failing test/build/type/lint/runtime failure is present, use failure anchors first and avoid keyword search.
@@ -30,10 +30,12 @@ If using oh-my-codex-style flows:
 
 - use `/indexing init` before planning on a new repo
 - use `/indexing refresh` after route/domain/API/state/package changes
-- use `/diff impact` before reviewing an existing PR or staged diff
+- run `npm run diff:impact` before reviewing an existing PR or staged diff; if unavailable, inspect changed files directly
 - use external best-practice research only when current official docs affect correctness
 
 When metadata is stale, do not force code to match it. Source/imports/tests win; update only affected metadata. Promote known failure patterns by root cause, not error code.
+
+Full repo scans are forbidden by default. If repo-wide work is truly required, scan filenames first and then open narrowed file contents.
 
 Write safety:
 

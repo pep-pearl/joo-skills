@@ -193,7 +193,7 @@ Use this skill before `ai-metadata-maintenance` when a code diff already exists.
 
 Rules:
 
-- If `/diff impact` says a shard is `required`, update only that shard after source review.
+- If `npm run diff:impact` or `/diff impact` says a shard is `required`, update only that shard after source review.
 - If it says `maybe`, inspect changed source/imports/tests before touching metadata.
 - If it says `skip`, do not read or regenerate that shard.
 - `AI_INDEX.md` changes are required only for changed first-read files, router semantics, or domain entry ownership.

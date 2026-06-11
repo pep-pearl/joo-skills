@@ -1,5 +1,25 @@
 # Context Navigation Rule
 
+## Runtime Contract — read this first
+
+These rules are intentionally short for weak agents. Follow them before any longer guidance.
+
+1. If the user names exact files, open those files first and do not read maps yet.
+2. If code is already changed, run `npm run diff:impact` first. If it fails, inspect the changed files directly. Do not start from `AI_INDEX.md`.
+3. If an error log, failing test, stack trace, CI/build/type/lint/runtime failure exists, use the file/line/test/userland stack anchor first. Do not start with keyword search.
+4. Read `AI_INDEX.md` before broad search only when there is no stronger exact/diff/error anchor.
+5. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
+6. After a likely source file is found, follow imports/callers/tests instead of reading more maps.
+7. Treat `AI_INDEX.md`, map shards, and file hints as navigation hints, never as truth.
+8. Source/imports/tests beat AI metadata. Never change runtime code to satisfy stale metadata.
+9. Do not edit generated, lock, snapshot, build output, `.env*`, secret, credential, or private config files unless explicitly requested.
+10. Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+11. Before editing source, name the exact files to change.
+12. After editing, list changed files, verification, skipped checks, and whether AI metadata changed.
+13. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
+14. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
+15. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
+
 ## Purpose
 
 Minimize token use during normal development tasks.
@@ -54,7 +74,7 @@ Before reading many files, classify the request:
 ## Read Order
 
 1. User-provided exact files.
-2. Changed files, staged files, or PR file lists. Use `/diff impact` before normal router navigation.
+2. Changed files, staged files, or PR file lists. Run `npm run diff:impact` before normal router navigation. If the script is unavailable, inspect changed files directly.
 3. Nearest project/team safety rules.
 4. Error log or failing command, when present. Create a temporary `[FAILURE_TRIAGE]` card before source reads.
 5. `/AI_INDEX.md` as the router.
@@ -71,7 +91,7 @@ Before reading many files, classify the request:
 
 ## Diff Navigation
 
-When code is already changed, use `pr-diff-impact` before normal router navigation. Diff anchors beat `AI_INDEX.md` routing.
+When code is already changed, run `npm run diff:impact` before normal router navigation. If unavailable, inspect changed files directly. Diff anchors beat `AI_INDEX.md` routing.
 
 Use this order:
 
@@ -132,7 +152,7 @@ For vague product requests:
 For cross-cutting work:
 
 - Use root/package maps plus targeted search.
-- Avoid full scans unless the task truly requires repo-wide analysis.
+- Avoid full scans unless the task truly requires repo-wide analysis; if unavoidable, scan filenames before contents.
 
 ## Cheap Escalation Rule
 

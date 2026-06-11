@@ -16,7 +16,7 @@ Give coding agents a durable loop for non-trivial tasks.
 ## Loop
 
 1. Clarify only if required.
-2. If code is already changed, run or mentally apply `/diff impact` before normal repo navigation.
+2. If code is already changed, run `npm run diff:impact` before normal repo navigation. If unavailable, inspect changed files directly.
 3. Read minimal files.
 4. State assumptions.
 5. Make small plan.
@@ -31,7 +31,7 @@ Give coding agents a durable loop for non-trivial tasks.
 When a task starts from an existing PR, staged files, or working-tree changes:
 
 - Start from changed files instead of `AI_INDEX.md`.
-- Use `/diff impact` to decide read-next, skip, and metadata targets.
+- Use `npm run diff:impact` to decide read-next, skip, and metadata targets. If unavailable, inspect changed files directly.
 - Review direct imports and matching tests before unrelated shards.
 - Use `ai-metadata-maintenance` only for required/maybe targets.
 

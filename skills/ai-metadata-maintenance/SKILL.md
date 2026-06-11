@@ -57,7 +57,7 @@ node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai
 
 ## Diff-Based Maintenance Gate
 
-When source changes already exist, use `/diff impact` before deciding metadata updates.
+When source changes already exist, run `npm run diff:impact` before deciding metadata updates. If unavailable, inspect changed files directly.
 
 Preferred script:
 

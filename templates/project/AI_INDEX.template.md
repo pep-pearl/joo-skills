@@ -1,5 +1,15 @@
 # AI_INDEX.md
 
+## Runtime Contract — weak-agent safe
+
+1. Exact files, changed files, and error anchors beat this router.
+2. Read this file only to choose the smallest next context file.
+3. Read at most one map shard before source; use a second shard only for a coupling signal.
+4. After source is found, follow imports/callers/tests instead of more maps.
+5. Metadata is a hint. Source/imports/tests are truth.
+6. Never edit runtime code to match stale metadata.
+7. Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
+
 ## Purpose
 
 Small router for AI repo navigation.
@@ -76,6 +86,10 @@ error log / failing command
 
 Do not persist every failure. Promote known failure patterns only by repeated or expensive root cause, not error code.
 
+## Full Scan Rule
+
+Do not full-scan the repository by default. A full scan is allowed only when the user explicitly asks for repo-wide work or exact/diff/error/router/lookup/import navigation all fail. If allowed, scan filenames first and open file contents only after narrowing targets.
+
 ## Read Budget
 
 Default budget before editing:
@@ -106,7 +120,7 @@ Prefer exact path or keyword lookup over reading a whole map when the target is 
 node scripts/joo-indexing-lookup.mjs --target . --keyword "domain term"
 ```
 
-Representative cases may live in `.ai/indexing/benchmarks/navigation-cases.json` and can be checked with `joo-navigation-benchmark.mjs`.
+Representative cases may live in `.ai/indexing/benchmarks/navigation-cases.json` and can be checked with `joo-navigation-benchmark.mjs`. Include `baseline` and `optimized` token/read metrics when available so token savings are measured, not guessed.
 
 ## File-Level AI Hints
 

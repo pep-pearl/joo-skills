@@ -22,7 +22,7 @@ General behavior:
 
 - path-first
 - targeted reads
-- when code is already changed, use `/diff impact` before normal `AI_INDEX.md` routing
+- when code is already changed, run `npm run diff:impact`; if unavailable, inspect changed files directly before normal `AI_INDEX.md` routing
 - when failure output is present, create a temporary failure card and use file/line/test/userland stack anchors before maps or keyword search
 - read at most one `.ai/indexing/maps/*` shard before source files; use one companion shard only for coupling signals
 - follow imports after the first relevant source file
@@ -30,6 +30,8 @@ General behavior:
 - update navigation metadata only when repo navigation changed, metadata is stale, or a repeated/expensive failure pattern should be promoted by root cause
 
 If metadata is stale, source/imports/tests win. Recover with exact lookup/import/test/targeted search and update only affected metadata.
+
+Full repo scans are forbidden by default. If repo-wide work is truly required, scan filenames first and then open narrowed file contents.
 
 Write safety:
 

@@ -113,7 +113,7 @@ Do not update `AGENTS.md` for ordinary feature implementation.
 
 ## Diff-Based Maintenance Gate
 
-When source changes already exist, use `/diff impact` before deciding metadata updates.
+When source changes already exist, run `npm run diff:impact` before deciding metadata updates. If unavailable, inspect changed files directly.
 
 Preferred script:
 

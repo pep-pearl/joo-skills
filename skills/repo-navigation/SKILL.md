@@ -1,5 +1,14 @@
 # Repo Navigation Skill
 
+## Runtime Contract — weak-agent safe
+
+- Exact files, changed files, and error anchors beat `AI_INDEX.md`.
+- Run `npm run diff:impact` for existing changes; if unavailable, inspect changed files directly.
+- Read at most one map shard before source; use a second shard only for coupling.
+- After source is found, follow imports/callers/tests instead of more maps.
+- Source/imports/tests beat AI metadata. Never edit code to satisfy stale metadata.
+- Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
+
 ## Purpose
 
 Choose the minimum file set needed for a development task.
@@ -66,7 +75,7 @@ Classify the request before opening many files:
 ## Read Algorithm
 
 1. If user provides exact files, record them as first anchors.
-2. If changed files, staged files, or PR file lists are available, run or mentally apply `/diff impact` and use changed files as first anchors.
+2. If changed files, staged files, or PR file lists are available, run `npm run diff:impact`; if unavailable, inspect changed files directly and use changed files as first anchors.
 3. Read nearest project/team rules if present.
 4. If the user provides error output or a failing command, create a temporary `[FAILURE_TRIAGE]` card before source reads and read from error anchors. Do not start with keyword search.
 5. Read `rules/context-navigation.md` if present.
@@ -87,16 +96,18 @@ Classify the request before opening many files:
 9. Read the first likely source file.
 10. Follow imports downward.
 11. Prefer targeted search over directory scans.
-12. Broader search only if:
+12. Broader search or scan only if:
    - index is missing
    - index is stale
    - import-following is blocked
    - task truly requires cross-repo audit
 
+If broader scanning is unavoidable, scan filenames first and open only narrowed file contents.
+
 
 ## Diff Navigation
 
-When code is already changed, use `pr-diff-impact` before normal router navigation. Diff anchors beat `AI_INDEX.md` routing.
+When code is already changed, run `npm run diff:impact` before normal router navigation. Diff anchors beat `AI_INDEX.md` routing.
 
 Use this order:
 
