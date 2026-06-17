@@ -1,0 +1,1441 @@
+{
+  "createdAt": "2026-06-17T01:22:04.044Z",
+  "model": "mock-model",
+  "repeat": 3,
+  "results": [
+    {
+      "variant": "baseline",
+      "caseId": "storefront-shipping-status",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9075,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9075,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9255
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx",
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "storefront-shipping-status",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 5808,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 5808,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 5988
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx",
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "profile-cache-invalidation",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9355,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9355,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9535
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts",
+          "apps/storefront/src/features/profile-editor/api/profileApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "profile-cache-invalidation",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 5987,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 5987,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6167
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts",
+          "apps/storefront/src/features/profile-editor/api/profileApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "logout-cart-reset",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9635,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9635,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9815
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "packages/session/src/logout.ts",
+          "apps/storefront/src/features/cart/model/cartStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "logout-cart-reset",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6166,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6166,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6346
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "packages/session/src/logout.ts",
+          "apps/storefront/src/features/cart/model/cartStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "admin-assignee-url-filter",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9915,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9915,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10095
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx",
+          "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "admin-assignee-url-filter",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6346,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6346,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6526
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx",
+          "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "checkout-coupon-validation",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10195,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10195,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10375
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx",
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "checkout-coupon-validation",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6525,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6525,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6705
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx",
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "search-url-state",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10475,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10475,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10655
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/product-search/ui/SearchPage.tsx",
+          "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "search-url-state",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6704,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6704,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6884
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/product-search/ui/SearchPage.tsx",
+          "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "notification-double-call",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10755,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10755,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10935
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx",
+          "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "notification-double-call",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6883,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6883,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7063
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx",
+          "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "admin-revenue-currency",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11035,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11035,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11215
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx",
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "admin-revenue-currency",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 7062,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 7062,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7242
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx",
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "exact-path-control",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11315,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11315,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11495
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "exact-path-control",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 11089,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11089,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11269
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "b2b-tax-invoice",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11595,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11595,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11775
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx",
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "b2b-tax-invoice",
+      "repetition": 1,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 7421,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 7421,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7601
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx",
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "storefront-shipping-status",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9150,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9150,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9330
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx",
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "storefront-shipping-status",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 5856,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 5856,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6036
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx",
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "profile-cache-invalidation",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9430,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9430,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9610
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts",
+          "apps/storefront/src/features/profile-editor/api/profileApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "profile-cache-invalidation",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6035,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6035,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6215
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts",
+          "apps/storefront/src/features/profile-editor/api/profileApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "logout-cart-reset",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9710,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9710,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9890
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "packages/session/src/logout.ts",
+          "apps/storefront/src/features/cart/model/cartStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "logout-cart-reset",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6214,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6214,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6394
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "packages/session/src/logout.ts",
+          "apps/storefront/src/features/cart/model/cartStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "admin-assignee-url-filter",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9990,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9990,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10170
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx",
+          "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "admin-assignee-url-filter",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6394,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6394,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6574
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx",
+          "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "checkout-coupon-validation",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10270,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10270,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10450
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx",
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "checkout-coupon-validation",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6573,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6573,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6753
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx",
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "search-url-state",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10550,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10550,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10730
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/product-search/ui/SearchPage.tsx",
+          "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "search-url-state",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6752,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6752,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6932
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/product-search/ui/SearchPage.tsx",
+          "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "notification-double-call",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10830,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10830,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11010
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx",
+          "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "notification-double-call",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6931,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6931,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7111
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx",
+          "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "admin-revenue-currency",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11110,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11110,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11290
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx",
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "admin-revenue-currency",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 7110,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 7110,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7290
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx",
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "exact-path-control",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11390,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11390,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11570
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "exact-path-control",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 11162,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11162,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11342
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "b2b-tax-invoice",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11670,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11670,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11850
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx",
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "b2b-tax-invoice",
+      "repetition": 2,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 7469,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 7469,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7649
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx",
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "storefront-shipping-status",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9225,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9225,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9405
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx",
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "storefront-shipping-status",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 5904,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 5904,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6084
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx",
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "profile-cache-invalidation",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9505,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9505,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9685
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts",
+          "apps/storefront/src/features/profile-editor/api/profileApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "profile-cache-invalidation",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6083,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6083,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6263
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts",
+          "apps/storefront/src/features/profile-editor/api/profileApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "logout-cart-reset",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 9785,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 9785,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 9965
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "packages/session/src/logout.ts",
+          "apps/storefront/src/features/cart/model/cartStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "logout-cart-reset",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6262,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6262,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6442
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "packages/session/src/logout.ts",
+          "apps/storefront/src/features/cart/model/cartStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "admin-assignee-url-filter",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10065,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10065,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10245
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx",
+          "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "admin-assignee-url-filter",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6442,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6442,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6622
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx",
+          "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "checkout-coupon-validation",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10345,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10345,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10525
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx",
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "checkout-coupon-validation",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6621,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6621,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6801
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx",
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "search-url-state",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10625,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10625,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 10805
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/product-search/ui/SearchPage.tsx",
+          "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "search-url-state",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6800,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6800,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 6980
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/product-search/ui/SearchPage.tsx",
+          "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "notification-double-call",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 10905,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 10905,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11085
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx",
+          "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "notification-double-call",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 6979,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 6979,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7159
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx",
+          "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "admin-revenue-currency",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11185,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11185,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11365
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx",
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "admin-revenue-currency",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 7158,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 7158,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7338
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx",
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "exact-path-control",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11465,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11465,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11645
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "exact-path-control",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 11236,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11236,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11416
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "baseline",
+      "caseId": "b2b-tax-invoice",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 6000,
+      "usage": {
+        "input_tokens": 11745,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 11745,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 11925
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx",
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    },
+    {
+      "variant": "indexed",
+      "caseId": "b2b-tax-invoice",
+      "repetition": 3,
+      "model": "mock-model",
+      "durationMs": 4300,
+      "usage": {
+        "input_tokens": 7517,
+        "cached_input_tokens": 0,
+        "uncached_input_tokens": 7517,
+        "output_tokens": 180,
+        "reasoning_output_tokens": 60,
+        "total_tokens": 7697
+      },
+      "scoring": {
+        "pass": true,
+        "score": 100,
+        "returned": [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx",
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ],
+        "forbiddenHits": []
+      }
+    }
+  ]
+}

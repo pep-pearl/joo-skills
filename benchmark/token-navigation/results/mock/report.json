@@ -1,0 +1,147 @@
+{
+  "input": "/mnt/data/joo-token-benchmark/results/mock/runs.json",
+  "model": "mock-model",
+  "repeat": 3,
+  "summary": {
+    "baseline": {
+      "runs": 30,
+      "passRate": 1,
+      "averageScore": 100,
+      "durationMedianMs": 6000,
+      "usageMedian": {
+        "input_tokens": 10410,
+        "uncached_input_tokens": 10410,
+        "cached_input_tokens": 0,
+        "output_tokens": 180,
+        "total_tokens": 10590
+      }
+    },
+    "indexed": {
+      "runs": 30,
+      "passRate": 1,
+      "averageScore": 100,
+      "durationMedianMs": 4300,
+      "usageMedian": {
+        "input_tokens": 6662.5,
+        "uncached_input_tokens": 6662.5,
+        "cached_input_tokens": 0,
+        "output_tokens": 180,
+        "total_tokens": 6842.5
+      }
+    }
+  },
+  "paired": {
+    "input_tokens": {
+      "baselineMedian": 10410,
+      "indexedMedian": 6662.5,
+      "medianPairReductionPct": 36,
+      "aggregateMedianReductionPct": 35.99903938520653
+    },
+    "uncached_input_tokens": {
+      "baselineMedian": 10410,
+      "indexedMedian": 6662.5,
+      "medianPairReductionPct": 36,
+      "aggregateMedianReductionPct": 35.99903938520653
+    },
+    "cached_input_tokens": {
+      "baselineMedian": 0,
+      "indexedMedian": 0,
+      "medianPairReductionPct": null,
+      "aggregateMedianReductionPct": null
+    },
+    "output_tokens": {
+      "baselineMedian": 180,
+      "indexedMedian": 180,
+      "medianPairReductionPct": 0,
+      "aggregateMedianReductionPct": 0
+    },
+    "total_tokens": {
+      "baselineMedian": 10590,
+      "indexedMedian": 6842.5,
+      "medianPairReductionPct": 35.36854298599964,
+      "aggregateMedianReductionPct": 35.387157695939564
+    }
+  },
+  "byCase": [
+    {
+      "caseId": "storefront-shipping-status",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 9150,
+      "indexedInputMedian": 5856,
+      "inputReductionPct": 36
+    },
+    {
+      "caseId": "profile-cache-invalidation",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 9430,
+      "indexedInputMedian": 6035,
+      "inputReductionPct": 36.00212089077412
+    },
+    {
+      "caseId": "logout-cart-reset",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 9710,
+      "indexedInputMedian": 6214,
+      "inputReductionPct": 36.00411946446962
+    },
+    {
+      "caseId": "admin-assignee-url-filter",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 9990,
+      "indexedInputMedian": 6394,
+      "inputReductionPct": 35.995995995996
+    },
+    {
+      "caseId": "checkout-coupon-validation",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 10270,
+      "indexedInputMedian": 6573,
+      "inputReductionPct": 35.99805258033106
+    },
+    {
+      "caseId": "search-url-state",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 10550,
+      "indexedInputMedian": 6752,
+      "inputReductionPct": 36
+    },
+    {
+      "caseId": "notification-double-call",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 10830,
+      "indexedInputMedian": 6931,
+      "inputReductionPct": 36.00184672206833
+    },
+    {
+      "caseId": "admin-revenue-currency",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 11110,
+      "indexedInputMedian": 7110,
+      "inputReductionPct": 36.003600360036
+    },
+    {
+      "caseId": "exact-path-control",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 11390,
+      "indexedInputMedian": 11162,
+      "inputReductionPct": 2.0017559262510973
+    },
+    {
+      "caseId": "b2b-tax-invoice",
+      "baselinePassRate": 1,
+      "indexedPassRate": 1,
+      "baselineInputMedian": 11670,
+      "indexedInputMedian": 7469,
+      "inputReductionPct": 35.99828620394173
+    }
+  ]
+}

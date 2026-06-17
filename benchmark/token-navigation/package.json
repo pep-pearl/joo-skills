@@ -1,0 +1,15 @@
+{
+  "name": "joo-token-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "check": "node scripts/self-check.mjs",
+    "materialize": "node scripts/materialize.mjs",
+    "benchmark:codex": "node scripts/run-codex-benchmark.mjs",
+    "benchmark:mock": "node scripts/mock-results.mjs && node scripts/report.mjs",
+    "report": "node scripts/report.mjs",
+    "regenerate:joo": "node scripts/regenerate-with-joo.mjs"
+  }
+}
