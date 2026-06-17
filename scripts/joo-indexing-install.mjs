@@ -10,6 +10,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 
@@ -21,7 +22,7 @@ function getArg(name, fallback) {
 
 const target = path.resolve(getArg("--target", "."));
 const force = args.includes("--force");
-const sourceRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const copies = [
   ["templates/project/AGENTS.template.md", "AGENTS.md"],

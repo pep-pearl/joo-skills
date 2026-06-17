@@ -1,6 +1,6 @@
 .work/
-results/*.json
-results/*.jsonl
-results/*.md
-!results/.gitkeep
 node_modules/
+
+results/**
+!results/mock/
+!results/mock/.gitkeep
