@@ -14,12 +14,16 @@ Keep short, factual, path-first. Put detailed maps in `.ai/indexing/maps/*`.
 - routing: React Router or framework route files
 - main app: `TODO`
 
+## Task Concern Rule
+
+Concrete task anchors beat generic route/page roles. Cover only the required `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns and stop when they are covered.
+
 ## Navigation Order
 
 1. Exact files first.
 2. Read this router.
 3. Read at most one map shard.
-4. Follow imports downward:
+4. Follow imports only for unresolved concerns:
    - pages -> widgets -> features -> entities -> shared
 5. Read one companion shard only when a coupling signal exists.
 6. Read tests when behavior matters.
@@ -33,6 +37,7 @@ This router and map shards are navigation hints, not source of truth. Source/imp
 
 - route/page/screen: `.ai/indexing/maps/routes.md`
 - vague product wording: `.ai/indexing/maps/root.md`
+- label/formatter/validation/UI actions: `.ai/indexing/maps/behavior.md`
 - API/query/backend: `.ai/indexing/maps/api.md`
 - state/store/cache: `.ai/indexing/maps/state.md`
 - package/build/config: `.ai/indexing/maps/packages.md`

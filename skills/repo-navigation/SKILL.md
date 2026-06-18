@@ -5,13 +5,14 @@
 - Exact files, changed files, and error anchors beat `AI_INDEX.md`.
 - Run `npm run diff:impact` for existing changes; if unavailable, inspect changed files directly.
 - Read at most one map shard before source; use a second shard only for coupling.
-- After source is found, follow imports/callers/tests instead of more maps.
+- Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
+- After source is found, follow only imports/callers/tests that can cover an unresolved task concern; stop when required concerns are covered.
 - Source/imports/tests beat AI metadata. Never edit code to satisfy stale metadata.
 - Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
 
 ## Purpose
 
-Choose the minimum file set needed for a development task.
+Choose the minimum source file set that directly covers every distinct concern in a development task.
 
 This skill prevents token waste by using `AI_INDEX.md` as a small router, reading at most one map shard before source files, and then following imports.
 
@@ -83,27 +84,29 @@ Classify the request before opening many files:
 7. Pick one likely map shard only when needed:
    - route/page/screen: `.ai/indexing/maps/routes.md`
    - vague natural language: `.ai/indexing/maps/root.md`
+   - concrete label/formatter/validation/UI action: `.ai/indexing/maps/behavior.md`
    - API/backend/query: `.ai/indexing/maps/api.md`
    - state/store/cache: `.ai/indexing/maps/state.md`
    - package/build/config: `.ai/indexing/maps/packages.md`
    - domain-specific: `.ai/indexing/maps/domains/<domain>.md`
-8. Identify:
-   - domain
-   - entry point
-   - likely route/page
-   - state/API dependencies
-   - relevant tests
-9. Read the first likely source file.
-10. Follow imports downward.
-11. Prefer targeted search over directory scans.
-12. Broader search or scan only if:
-   - index is missing
-   - index is stale
-   - import-following is blocked
-   - task truly requires cross-repo audit
+8. Decompose the task into 1-3 required concerns and concrete anchors:
+   - surface: page, screen, route, visible UI area
+   - behavior-owner: label, mapping, formatter, validation, state transition, or event handler
+   - state-boundary: store, cache, session, URL state
+   - data-boundary: API, query, mutation, mapper
+   - failure-anchor: exact failing source, test, or stack frame
+9. Read the source file most likely to own the strongest concrete anchor. A behavior owner beats a generic route/page.
+10. Follow an import, caller, or test only when a required concern remains uncovered and the current file delegates that concern.
+11. Stop when every required concern has direct source evidence. Do not continue merely because imports exist.
+12. Prefer targeted search over directory scans.
+13. Broader search or scan only if:
+
+- index is missing
+- index is stale
+- import-following is blocked
+- task truly requires cross-repo audit
 
 If broader scanning is unavoidable, scan filenames first and open only narrowed file contents.
-
 
 ## Diff Navigation
 
@@ -167,7 +170,7 @@ For vague product requests:
 2. Read `.ai/indexing/maps/root.md` if present.
 3. Choose one likely route/domain/task map.
 4. Do not read all map shards.
-5. Once a source entry is found, imports beat more maps.
+5. Once a source entry is found, follow only imports that can cover an unresolved concern; otherwise stop.
 
 ## Cheap Escalation Rule
 
@@ -208,7 +211,6 @@ Escalated:
 Skipped:
 - broad search: imports provided enough context
 ```
-
 
 ## Stale Metadata Recovery
 
@@ -270,14 +272,15 @@ Avoid these failure modes:
 
 ## Stop Rule
 
-After one map and three source files, decide one of:
+After one map and up to three source files, run a coverage check:
 
-- enough context to edit
-- follow one import chain
-- cheap-escalate to one companion shard because a coupling signal exists
-- run targeted search
-- report stale/missing metadata
-- ask only if the task is blocked by real ambiguity
+- list the concrete task anchors
+- map each required concern to the source file that owns it
+- reject a generic route/page substitute when a concrete behavior owner is available
+- follow one import chain only for an uncovered concern
+- stop immediately when all required concerns are covered
+- cheap-escalate to one companion shard only for a real coupling signal
+- run targeted search or report stale metadata only when coverage remains incomplete
 
 ## Output
 
@@ -307,12 +310,41 @@ Uncertain:
 - Index beats search.
 - One map shard beats directory browsing.
 - One companion shard is allowed only for coupling signals.
-- Imports beat reading more maps after a source file is found.
-- Tests are read when behavior matters.
+- Unresolved-concern imports beat reading more maps after a source file is found; unrelated imports are skipped.
+- Concrete behavior owners beat generic parent routes/pages.
+- Tests are read when behavior or regression risk matters.
 - Never read generated or huge files unless needed.
 - Do not force code to match stale metadata.
-
 
 ## Exact Path Lookup Rule
 
 When the user names an exact source file, open that file first. If the task is not trivial, lookup only that exact path in `.ai/indexing/file-map.candidate.json` or the relevant map shard. Do not read a whole map for one known path.
+
+## Task Concern Coverage
+
+Before selecting files, decompose the task into 1-3 required concerns.
+
+Common concerns:
+
+- `surface`: page, screen, layout, or visible UI composition explicitly requested
+- `behavior`: file that directly owns a label, mapping, formatter, validation, event, or state transition
+- `state`: store, cache, session, URL state, or invalidation boundary
+- `data`: API, query, mutation, client, mapper, or endpoint boundary
+- `route`: URL, navigation, route definition, guard, or loader
+- `failure`: exact failing source, test, command, or userland stack frame
+
+Concrete task anchors beat generic entry-point roles. Anchors include exact symbols, enum/status values, visible labels, URL parameters, cache/query keys, endpoint names, and error messages.
+
+Selection rules:
+
+1. A behavior owner beats a generic route or application entry.
+2. Include a page/route only when the task explicitly requests that concern or behavior crosses that boundary.
+3. Do not substitute a parent page for the file containing the requested label, mapping, state transition, endpoint, or formatter.
+4. Follow imports only for unresolved concerns.
+5. A result is complete only when every required concern has at least one owning source file.
+
+Examples:
+
+- "Change the `DELIVERING` label" -> behavior owner only.
+- "Change the order-detail screen and its shipping label" -> surface entry plus behavior owner.
+- "Fix category filter persistence after refresh" -> URL-state owner; include the page only when the page boundary is explicitly part of the task.

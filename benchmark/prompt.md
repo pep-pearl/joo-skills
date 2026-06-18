@@ -35,7 +35,7 @@ Antigravity가 요청을 받았는데 Codex CLI를 검색하거나 실행하면 
 
 ```bash
 node -v
-npm run benchmark:doctor
+npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner agy --model "<model>"
 npm run benchmark -- --runner agy --model "<model>"
@@ -50,6 +50,7 @@ npm run benchmark -- --runner agy --model "<model>"
 
 ```bash
 node -v
+npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner codex --model "<model>"
 npm run benchmark -- --runner codex --model "<model>"
@@ -59,6 +60,18 @@ Codex에서만 reasoning 기본값 `medium`을 사용한다. 사용자가 값을
 
 ```bash
 npm run benchmark -- --runner codex --model "<model>" --reasoning "<setting>" --repeat <count>
+```
+
+If a Codex run is interrupted by the host timeout, resume the latest compatible result directory instead of starting over:
+
+```bash
+npm run benchmark -- --runner codex --model "<model>" --reasoning "<setting>" --repeat <count> --resume latest
+```
+
+If it cannot be continued, finalize the partial report:
+
+```bash
+npm run benchmark:finalize -- --dir latest
 ```
 
 ## 실행기가 보장해야 하는 조건

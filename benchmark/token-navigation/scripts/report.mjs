@@ -99,6 +99,27 @@ for (const caseId of [...new Set(validRuns.map((run) => run.caseId))]) {
   });
 }
 
+function binomialCoefficient(n, k) {
+  const edge = Math.min(k, n - k);
+  let value = 1;
+  for (let i = 1; i <= edge; i += 1) value = (value * (n - edge + i)) / i;
+  return value;
+}
+
+function exactMcNemar(baselineOnly, indexedOnly) {
+  const discordant = baselineOnly + indexedOnly;
+  if (!discordant) return { baselineOnly, indexedOnly, discordant, pValue: 1 };
+  const lower = Math.min(baselineOnly, indexedOnly);
+  let tail = 0;
+  for (let k = 0; k <= lower; k += 1) tail += binomialCoefficient(discordant, k) / (2 ** discordant);
+  return { baselineOnly, indexedOnly, discordant, pValue: Math.min(1, tail * 2) };
+}
+
+const pairedPass = exactMcNemar(
+  pairs.filter((pair) => pair.baseline.scoring.pass && !pair.indexed.scoring.pass).length,
+  pairs.filter((pair) => !pair.baseline.scoring.pass && pair.indexed.scoring.pass).length
+);
+
 const expectedRunCount = Number(data.plannedRuns ?? (Number(data.repeat ?? 0) * Number(data.cases?.length ?? new Set(allRuns.map((run) => run.caseId)).size) * 2));
 let status = "FAILED";
 if (data.status === "DRY_RUN") status = "DRY_RUN";
@@ -107,17 +128,27 @@ else if (failedRuns.length === 0 && validRuns.length > 0 && validRuns.length ===
 else if (validRuns.length > 0) status = "PARTIAL";
 
 let verdict = "NOT_EVALUATED";
+let qualityVerdict = "NOT_EVALUATED";
+let efficiencyVerdict = "NOT_EVALUATED";
 if (status === "VALID") {
-  const passNotWorse = Number.isFinite(summary.baseline.passRate)
-    && Number.isFinite(summary.indexed.passRate)
-    && summary.indexed.passRate >= summary.baseline.passRate;
-  const inputComparable = paired.input_tokens.pairs === pairs.length && pairs.length > 0;
-  const inputReduced = inputComparable && Number.isFinite(paired.input_tokens.aggregateMedianReductionPct)
-    && paired.input_tokens.aggregateMedianReductionPct > 0;
+  const baselinePass = summary.baseline.passRate;
+  const indexedPass = summary.indexed.passRate;
+  if (Number.isFinite(baselinePass) && Number.isFinite(indexedPass)) {
+    if (indexedPass < baselinePass) qualityVerdict = "QUALITY_REGRESSION";
+    else if (indexedPass > baselinePass) qualityVerdict = "QUALITY_IMPROVED";
+    else qualityVerdict = "QUALITY_NON_INFERIOR";
+  }
 
-  if (!passNotWorse) verdict = "REGRESSION";
-  else if (inputComparable && inputReduced) verdict = "IMPROVED";
-  else if (!inputComparable) verdict = "ACCURACY_ONLY";
+  const inputComparable = paired.input_tokens.pairs === pairs.length && pairs.length > 0;
+  const inputReduction = paired.input_tokens.aggregateMedianReductionPct;
+  if (!inputComparable) efficiencyVerdict = "EFFICIENCY_UNAVAILABLE";
+  else if (inputReduction > 0) efficiencyVerdict = "EFFICIENCY_GAIN";
+  else if (inputReduction < 0) efficiencyVerdict = "EFFICIENCY_REGRESSION";
+  else efficiencyVerdict = "EFFICIENCY_NEUTRAL";
+
+  if (qualityVerdict === "QUALITY_REGRESSION") verdict = "REGRESSION";
+  else if (efficiencyVerdict === "EFFICIENCY_GAIN") verdict = "IMPROVED";
+  else if (efficiencyVerdict === "EFFICIENCY_UNAVAILABLE") verdict = "ACCURACY_ONLY";
   else verdict = "NO_CONFIRMED_IMPROVEMENT";
 }
 
@@ -125,6 +156,9 @@ const result = {
   input,
   status,
   verdict,
+  qualityVerdict,
+  efficiencyVerdict,
+  pairedPass,
   runner: data.runner ?? "unverified",
   requestedModel: data.requestedModel ?? null,
   actualModel: data.actualModel ?? null,
@@ -159,6 +193,8 @@ const lines = [
   "# joo-skills navigation A/B benchmark", "",
   `- Status: ${status}`,
   `- Verdict: ${verdict}`,
+  `- Quality verdict: ${qualityVerdict}`,
+  `- Efficiency verdict: ${efficiencyVerdict}`,
   `- Runner: \`${data.runner ?? "unverified"}\``,
   `- Requested model: \`${data.requestedModel ?? "unverified"}\``,
   `- Actual model: \`${data.actualModel ?? "unverified"}\``,
@@ -178,12 +214,17 @@ const lines = [
   `| Median output tokens | ${num(paired.output_tokens.baselineMedian)} | ${num(paired.output_tokens.indexedMedian)} | ${pct(paired.output_tokens.aggregateMedianReductionPct)} |`,
   `| Median reasoning tokens | ${num(paired.reasoning_output_tokens.baselineMedian)} | ${num(paired.reasoning_output_tokens.indexedMedian)} | ${pct(paired.reasoning_output_tokens.aggregateMedianReductionPct)} |`,
   `| Median duration | ${num(paired.duration_ms.baselineMedian)} ms | ${num(paired.duration_ms.indexedMedian)} ms | ${pct(paired.duration_ms.aggregateMedianReductionPct)} |`, "",
+  "## Paired accuracy check", "",
+  `- Baseline-only passes: ${pairedPass.baselineOnly}`,
+  `- Indexed-only passes: ${pairedPass.indexedOnly}`,
+  `- Exact McNemar two-sided p-value: ${Number.isFinite(pairedPass.pValue) ? pairedPass.pValue.toFixed(4) : "n/a"}`,
+  "- The quality verdict is a benchmark gate, not a claim of statistical significance.", "",
   "## By case", "",
   "| Case | Base pass | Index pass | Base score | Index score | Base input | Index input | Reduction |",
   "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
   ...byCase.map((row) => `| ${row.caseId} | ${pct(ratioPct(row.baselinePassRate))} | ${pct(ratioPct(row.indexedPassRate))} | ${num(row.baselineScore)} | ${num(row.indexedScore)} | ${num(row.baselineInputMedian)} | ${num(row.indexedInputMedian)} | ${pct(row.inputReductionPct)} |`),
   "", "## Method", "",
-  "The requested model performs the repository-navigation task through the selected native CLI. Scoring is deterministic: expected file groups, forbidden prefixes, path validity, duplicate paths, returned-set precision, and unauthorized workspace changes are checked by code. No LLM judge, token estimate, mock result, or previous report is used.",
+  "The requested model performs the repository-navigation task through the selected native CLI. Scoring is deterministic: required concern groups, optional context groups, forbidden prefixes, path validity, duplicate paths, returned-set precision, and unauthorized workspace changes are checked by code. Optional context can improve the score but is never required to pass. No LLM judge, token estimate, mock result, or previous report is used.",
   "",
   "A performance conclusion is emitted only for a fully valid run. Missing token metadata is left as `n/a`; it is never replaced with zero or an estimate.", ""
 ];

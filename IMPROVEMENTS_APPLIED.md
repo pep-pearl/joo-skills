@@ -1,5 +1,37 @@
 # Improvements Applied
 
+## 2026-06-18 — Concern-aware navigation and benchmark rubric
+
+### Navigation behavior
+
+- Added task-concern decomposition: concrete behavior anchors, surface/page context, state, data, route, config, and exact-file concerns are selected separately.
+- Behavior-owner files now outrank generic route/page files when the request names a label, status value, URL parameter, cache key, endpoint, or other concrete anchor.
+- Import/caller/test traversal now happens only for unresolved concerns and stops once all required concerns are covered.
+- Structured map hints now support `role`, `concern`/`concerns`, `anchors`, `related`, `domain`, and `confidence`.
+- Fixed state detection so paths such as `apps/storefront/...` are not misclassified merely because they contain the substring `store`.
+
+### Lookup and indexing
+
+- Reworked `scripts/joo-indexing-lookup.mjs` to preserve full phrases alongside tokens, normalize Korean particles, detect exact paths embedded in prompts, and select a minimal concern-covering file set.
+- Added `scripts/joo-indexing-lookup-self-check.mjs`, covering every token-navigation benchmark case.
+- Added a generated `behavior.md` shard for badges, labels, formatters, validators, buttons, fields, toggles, mappers, and other direct behavior owners.
+
+### Benchmark correctness
+
+- Split benchmark expectations into `requiredGroups` and `optionalGroups` while keeping backward compatibility with `expectedGroups`.
+- Corrected `storefront-shipping-status`: `ShippingStatusBadge.tsx` is required; `OrderDetailPage.tsx` is optional context.
+- Separated quality and efficiency verdicts and added an exact paired McNemar check so a quality gate is not presented as statistical significance.
+- Historical result directories remain immutable snapshots of the rubric used when they were generated.
+
+### Validation
+
+- `npm test` passes: benchmark self-check plus all 10 concern-aware lookup cases.
+- All JavaScript module files pass `node --check`.
+- Scanner smoke test generates and queries the new behavior shard successfully.
+- Historical 60-run data was temporarily re-scored under the corrected rubric for verification only; no historical report was overwritten and no fresh Codex benchmark was run as part of this patch.
+
+---
+
 This archive includes the practical improvements requested for `joo-skills`.
 
 ## Added scripts

@@ -81,6 +81,7 @@ Typical files:
 - manifest.json
 - maps/root.md
 - maps/routes.md
+- maps/behavior.md
 - maps/api.md
 - maps/state.md
 - maps/packages.md
@@ -91,7 +92,7 @@ Typical files:
 
 Do not treat generated candidates as final truth. Review before applying.
 
-Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports. Use one companion shard only when a coupling signal exists. When failure output is present, use error anchors and rules/failure-triage.md before normal map routing; keyword search is a fallback. Treat generated metadata as a hint, not truth. If metadata is stale, source/imports/tests win and only affected metadata should be updated. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in. Prefer scripts/joo-indexing-lookup.mjs for exact-path or keyword lookup instead of reading full maps. When code is already changed, run scripts/joo-diff-impact.mjs before normal router navigation and update only required/maybe metadata shards.
+Runtime rule: AI_INDEX.md is the small router. Read at most one map shard before source files, then follow imports only for unresolved task concerns and stop when required concerns are covered. Concrete behavior owners beat generic route/page entries. Use one companion shard only when a coupling signal exists. When failure output is present, use error anchors and rules/failure-triage.md before normal map routing; keyword search is a fallback. Treat generated metadata as a hint, not truth. If metadata is stale, source/imports/tests win and only affected metadata should be updated. Store AI file hints in sidecar maps by default; do not add source-level @ai-* headers unless the project explicitly opts in. Prefer scripts/joo-indexing-lookup.mjs for exact-path or keyword lookup instead of reading full maps. When code is already changed, run scripts/joo-diff-impact.mjs before normal router navigation and update only required/maybe metadata shards.
 `,
     "utf8"
   );

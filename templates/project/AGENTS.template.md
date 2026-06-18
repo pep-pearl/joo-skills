@@ -9,16 +9,18 @@ These rules are intentionally short for weak agents. Follow them before any long
 3. If an error log, failing test, stack trace, CI/build/type/lint/runtime failure exists, use the file/line/test/userland stack anchor first. Do not start with keyword search.
 4. Read `AI_INDEX.md` before broad search only when there is no stronger exact/diff/error anchor.
 5. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
-6. After a likely source file is found, follow imports/callers/tests instead of reading more maps.
-7. Treat `AI_INDEX.md`, map shards, and file hints as navigation hints, never as truth.
-8. Source/imports/tests beat AI metadata. Never change runtime code to satisfy stale metadata.
-9. Do not edit generated, lock, snapshot, build output, `.env*`, secret, credential, or private config files unless explicitly requested.
-10. Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
-11. Before editing source, name the exact files to change.
-12. After editing, list changed files, verification, skipped checks, and whether AI metadata changed.
-13. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
-14. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
-15. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
+6. Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
+7. Decompose the task into required concerns (`surface`, `behavior`, `state`, `data`, `route`, `failure`) and select source owners for each.
+8. Follow imports/callers/tests only for unresolved concerns. Stop when every required concern is covered.
+9. Treat `AI_INDEX.md`, map shards, and file hints as navigation hints, never as truth.
+10. Source/imports/tests beat AI metadata. Never change runtime code to satisfy stale metadata.
+11. Do not edit generated, lock, snapshot, build output, `.env*`, secret, credential, or private config files unless explicitly requested.
+12. Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+13. Before editing source, name the exact files to change.
+14. After editing, list changed files, verification, skipped checks, and whether AI metadata changed.
+15. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
+16. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
+17. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
 
 ## Core
 
@@ -29,6 +31,7 @@ These rules are intentionally short for weak agents. Follow them before any long
 - Read `AI_INDEX.md` before broad search.
 - Treat `AI_INDEX.md` as a small router, not a full architecture document.
 - Read at most one `.ai/indexing/maps/*` shard before source files unless the task is explicitly repo-wide. Use one companion shard only when a coupling signal exists.
+- Concrete behavior owners beat generic routes/pages. Follow imports only for unresolved concerns and stop when required concerns are covered.
 - Do not load `docs/prompts/*` unless the user explicitly references one.
 - Prefer small, targeted edits.
 - If user names files, start there.
@@ -91,10 +94,10 @@ Default order:
 6. `AI_INDEX.md`.
 7. Exact path/keyword lookup when the target is narrow.
 8. One relevant `.ai/indexing/maps/*` shard if needed.
-9. Relevant source files.
-10. Imports from the first relevant source file.
-11. One companion shard only when a coupling signal exists.
-12. Relevant tests.
+9. Source files that directly own the required task concerns.
+10. Imports/callers/tests only for unresolved concerns.
+11. Stop when every required concern is covered.
+12. One companion shard only when a coupling signal exists.
 13. Targeted search only when blocked.
 
 ## Write Safety Contract

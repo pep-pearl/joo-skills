@@ -24,27 +24,53 @@
         "expectedEntryFiles"
       ],
       "properties": {
-        "id": { "type": "string" },
-        "prompt": { "type": "string" },
-        "path": { "type": "string" },
-        "intent": { "type": "string" },
-        "domain": { "type": "string" },
+        "id": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
         "keywords": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
-        "query": { "type": "object" },
+        "query": {
+          "type": "object"
+        },
         "expectedEntryFiles": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "allowedShards": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "forbiddenStarts": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
+        },
+        "optionalEntryFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "additionalProperties": false

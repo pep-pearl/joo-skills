@@ -22,8 +22,11 @@
     "benchmark": "npm --prefix benchmark/token-navigation run benchmark --",
     "benchmark:check": "npm --prefix benchmark/token-navigation run check",
     "benchmark:dry-run": "npm --prefix benchmark/token-navigation run benchmark:dry-run --",
-    "benchmark:doctor": "npm --prefix benchmark/token-navigation run doctor",
-    "setup:agy:git-bash": "bash scripts/setup-agy-git-bash.sh"
+    "benchmark:finalize": "npm --prefix benchmark/token-navigation run finalize --",
+    "benchmark:doctor": "npm --prefix benchmark/token-navigation run doctor --",
+    "setup:agy:git-bash": "bash scripts/setup-agy-git-bash.sh",
+    "test:lookup": "node scripts/joo-indexing-lookup-self-check.mjs",
+    "test": "npm run benchmark:check && npm run test:lookup"
   },
   "keywords": [
     "ai-skills",

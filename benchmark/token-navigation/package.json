@@ -11,6 +11,7 @@
     "materialize": "node scripts/materialize.mjs",
     "benchmark": "node scripts/run-benchmark.mjs",
     "benchmark:dry-run": "node scripts/run-benchmark.mjs --dry-run",
+    "finalize": "node scripts/finalize.mjs",
     "report": "node scripts/report.mjs",
     "doctor": "node scripts/doctor.mjs"
   }

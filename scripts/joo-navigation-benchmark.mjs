@@ -76,11 +76,13 @@ function runLookup(testCase) {
 
 function scoreCase(testCase, lookup) {
   const expected = (testCase.expectedEntryFiles || []).map(normalize);
+  const optional = (testCase.optionalEntryFiles || []).map(normalize);
   const forbidden = (testCase.forbiddenStarts || []).map(normalize);
   const matches = (lookup.matches || []).map((item) => normalize(item.path));
   const top = matches.slice(0, topN);
   const expectedHits = expected.filter((file) => top.includes(file));
   const allExpectedHits = expected.filter((file) => matches.includes(file));
+  const optionalHits = optional.filter((file) => top.includes(file));
   const firstHitIndexes = expected
     .map((file) => matches.indexOf(file))
     .filter((index) => index >= 0)
@@ -88,7 +90,9 @@ function scoreCase(testCase, lookup) {
   const firstHitAt = firstHitIndexes.length ? Math.min(...firstHitIndexes) : null;
   const forbiddenHit = matches.find((file) => forbidden.some((bad) => file === bad || file.startsWith(`${bad}/`))) || null;
 
-  let score = expected.length ? Math.round((expectedHits.length / expected.length) * 70) : 70;
+  const requiredWeight = optional.length ? 65 : 70;
+  let score = expected.length ? Math.round((expectedHits.length / expected.length) * requiredWeight) : requiredWeight;
+  if (optional.length) score += Math.round((optionalHits.length / optional.length) * 5);
   if (firstHitAt === 1) score += 20;
   else if (firstHitAt && firstHitAt <= topN) score += 12;
   else if (firstHitAt) score += 5;
@@ -101,9 +105,11 @@ function scoreCase(testCase, lookup) {
     score,
     firstHitAt,
     expected,
+    optional,
     topMatches: top,
     expectedHits,
     allExpectedHits,
+    optionalHits,
     forbiddenHit,
     status: score >= 80 ? "pass" : score >= 60 ? "warn" : "fail",
   };

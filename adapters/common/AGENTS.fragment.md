@@ -4,6 +4,8 @@ Use the local AI navigation system before broad repository exploration.
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
 
+Concrete task anchors (labels, enum/status values, URL parameters, cache keys, endpoints, error text) beat generic route/page roles. Decompose the task into `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns and cover only those required concerns.
+
 Default order:
 
 1. If user names exact files, start there.
@@ -12,7 +14,7 @@ Default order:
 4. Read `rules/context-navigation.md` if present.
 5. Read `AI_INDEX.md` if present.
 6. Read at most one relevant `.ai/indexing/maps/*` shard if needed.
-7. Follow imports downward after finding a likely source file.
+7. Follow imports/callers/tests only for unresolved concerns; stop when all required concerns are covered.
 8. Read one companion shard only when a coupling signal exists.
 9. Search broadly only when targeted navigation fails.
 

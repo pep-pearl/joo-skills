@@ -22,7 +22,7 @@ Use the CLI belonging to the agent environment that received the request.
 Antigravity command sequence:
 
 ```bash
-npm run benchmark:doctor
+npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner agy --model "<model>"
 npm run benchmark -- --runner agy --model "<model>"
@@ -31,9 +31,22 @@ npm run benchmark -- --runner agy --model "<model>"
 Codex command sequence:
 
 ```bash
+npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner codex --model "<model>"
 npm run benchmark -- --runner codex --model "<model>"
+```
+
+If the Codex benchmark command is interrupted by the host timeout but the latest result directory contains `runs.partial.json`, continue the same benchmark instead of starting over:
+
+```bash
+npm run benchmark -- --runner codex --model "<model>" --resume latest
+```
+
+If continuation is not possible, finalize the partial result for reporting:
+
+```bash
+npm run benchmark:finalize -- --dir latest
 ```
 
 Do not substitute another model or another provider's CLI. Do not use mock results, past reports, estimated tokens, manual sub-agent scoring, or a separate LLM judge. If the native CLI or requested model cannot run, report `NOT_RUN` instead of inventing a benchmark result.

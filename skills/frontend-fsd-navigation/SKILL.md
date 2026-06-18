@@ -27,7 +27,7 @@ If not FSD-like:
 
 - use `repo-navigation`
 - start from route/framework entry
-- follow imports
+- follow imports only for unresolved concerns; stop when coverage is complete
 - do not force `app -> pages -> widgets -> features -> entities -> shared`
 
 ## Layer Direction

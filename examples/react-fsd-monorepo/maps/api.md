@@ -12,4 +12,4 @@ API client, query provider, domain API functions.
 
 ## Read Rule
 
-After finding an API function, follow imports to types or generated clients only when needed.
+After finding an API function, follow imports to types or generated clients only for an unresolved concern.

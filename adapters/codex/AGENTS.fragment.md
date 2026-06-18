@@ -15,6 +15,8 @@ Command aliases:
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
 
+Concrete task anchors (labels, enum/status values, URL parameters, cache keys, endpoints, error text) beat generic route/page roles. Decompose the task into `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns and cover only those required concerns.
+
 Before large code work:
 
 1. If code is already changed, run `npm run diff:impact` before normal repo navigation; if unavailable, inspect changed files directly.
@@ -23,7 +25,7 @@ Before large code work:
 4. If an error log/failing test/build/type/lint/runtime failure is present, use failure anchors first and avoid keyword search.
 5. Read `AI_INDEX.md` as the router when normal navigation is needed.
 6. Read at most one relevant `.ai/indexing/maps/*` shard before source files; use one companion shard only for coupling signals.
-7. Follow imports after finding a likely source file.
+7. Follow imports only for unresolved task concerns and stop when all required concerns are covered.
 8. Keep a compact task ledger.
 9. After code changes, check AI metadata maintenance, stale metadata recovery, and known failure pattern promotion.
 

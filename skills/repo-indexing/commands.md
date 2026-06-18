@@ -32,7 +32,7 @@ Rules:
 - no trivial components
 - no runtime logic changes
 - keep source files unchanged unless source headers are explicitly enabled
-- prefer sidecar fields: path, role, scope, domain, keywords, related, confidence, lastVerified
+- prefer sidecar fields: path, role, concern, scope, domain, anchors, keywords, related, confidence, lastVerified
 - use extended fields only when they save future reads
 
 ## `/indexing audit`

@@ -11,7 +11,7 @@
 ## Antigravity agent
 
 ```bash
-npm run benchmark:doctor
+npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner agy --model "YOUR_MODEL"
 npm run benchmark -- --runner agy --model "YOUR_MODEL"
@@ -32,6 +32,7 @@ agy models
 ## Codex agent
 
 ```bash
+npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner codex --model "YOUR_MODEL"
 npm run benchmark -- --runner codex --model "YOUR_MODEL"
@@ -66,7 +67,8 @@ NOT_RUN
 
 스크립트가 다음을 확인합니다.
 
-- 필요한 정답 그룹 충족
+- 필수 concern 그룹(`requiredGroups`) 충족
+- 선택 문맥 그룹(`optionalGroups`) 커버리지 — 점수 보너스만 제공하며 통과 필수는 아님
 - legacy/archive/example/generated 금지 경로 선택 여부
 - 반환 경로의 실제 존재 여부
 - 중복 경로
@@ -82,4 +84,4 @@ NOT_RUN
 benchmark/token-navigation/results/<timestamp>/report.md
 ```
 
-`PARTIAL` 또는 `FAILED` 결과로 개선을 주장하지 않습니다. 저장소에는 과거 실벤치 결과나 예시 성능 수치를 포함하지 않습니다.
+`PARTIAL` 또는 `FAILED` 결과로 개선을 주장하지 않습니다. `REGRESSION`은 품질 게이트 판정이며 곧바로 통계적 유의성을 뜻하지 않습니다. 보고서의 paired exact McNemar p-value를 별도로 확인합니다. 저장소에는 과거 실벤치 결과나 예시 성능 수치를 포함하지 않습니다.

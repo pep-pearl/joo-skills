@@ -3,14 +3,6 @@
     {
       "id": "storefront-shipping-status",
       "prompt": "현재 스토어프론트 주문 상세 화면에서 배송 상태가 DELIVERING일 때 '배송 중' 라벨을 만드는 코드의 진입 파일을 찾아줘.",
-      "expectedGroups": [
-        [
-          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx"
-        ],
-        [
-          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
-        ]
-      ],
       "forbiddenPrefixes": [
         "legacy/",
         "archive/",
@@ -18,168 +10,178 @@
         "apps/playground/",
         "packages/ui/src/stories/",
         "packages/generated-openapi/"
+      ],
+      "requiredGroups": [
+        [
+          "apps/storefront/src/features/order-detail/ui/ShippingStatusBadge.tsx"
+        ]
+      ],
+      "optionalGroups": [
+        [
+          "apps/storefront/src/features/order-detail/ui/OrderDetailPage.tsx"
+        ]
       ]
     },
     {
       "id": "profile-cache-invalidation",
       "prompt": "프로필 저장 뒤 헤더의 사용자 이름이 갱신되지 않는다. 저장 API와 viewer-profile 캐시 무효화 흐름의 진입 파일을 찾아줘.",
-      "expectedGroups": [
+      "forbiddenPrefixes": [
+        "legacy/",
+        "archive/",
+        "examples/",
+        "apps/playground/",
+        "packages/ui/src/stories/"
+      ],
+      "requiredGroups": [
         [
           "apps/storefront/src/features/profile-editor/model/useProfileEditor.ts"
         ],
         [
           "apps/storefront/src/features/profile-editor/api/profileApi.ts"
         ]
-      ],
-      "forbiddenPrefixes": [
-        "legacy/",
-        "archive/",
-        "examples/",
-        "apps/playground/",
-        "packages/ui/src/stories/"
       ]
     },
     {
       "id": "logout-cart-reset",
       "prompt": "로그아웃 직후 다른 사용자로 전환하면 이전 사용자의 장바구니가 잠깐 남는다. 세션 종료와 장바구니 초기화의 진입 파일을 찾아줘.",
-      "expectedGroups": [
+      "forbiddenPrefixes": [
+        "legacy/",
+        "archive/",
+        "examples/",
+        "apps/playground/"
+      ],
+      "requiredGroups": [
         [
           "packages/session/src/logout.ts"
         ],
         [
           "apps/storefront/src/features/cart/model/cartStore.ts"
         ]
-      ],
-      "forbiddenPrefixes": [
-        "legacy/",
-        "archive/",
-        "examples/",
-        "apps/playground/"
       ]
     },
     {
       "id": "admin-assignee-url-filter",
-      "prompt": "관리자 주문 배정 큐에서 담당자 필터가 URL query와 동기화되지 않는다. 현재 admin 앱의 진입 파일을 찾아줘.",
-      "expectedGroups": [
+      "prompt": "관리자 주문 배정 큐에서 담당자 필터가 URL query와 동기화되지 않는다. 현재 admin 화면의 진입 파일과 URL 상태 동기화를 직접 소유하는 파일을 각각 찾아줘.",
+      "forbiddenPrefixes": [
+        "legacy/",
+        "archive/",
+        "examples/",
+        "apps/playground/",
+        "packages/ui/src/stories/"
+      ],
+      "requiredGroups": [
         [
           "apps/admin/src/features/order-queue/ui/OrderQueuePage.tsx"
         ],
         [
           "apps/admin/src/features/order-queue/model/useAssigneeFilter.ts"
         ]
-      ],
-      "forbiddenPrefixes": [
-        "legacy/",
-        "archive/",
-        "examples/",
-        "apps/playground/",
-        "packages/ui/src/stories/"
       ]
     },
     {
       "id": "checkout-coupon-validation",
       "prompt": "체크아웃 쿠폰 입력란과 쿠폰 유효성 검사 API 연결을 수정하려고 한다. 가장 작은 진입 파일 세트를 찾아줘.",
-      "expectedGroups": [
-        [
-          "apps/storefront/src/features/coupon/ui/CouponField.tsx"
-        ],
-        [
-          "apps/storefront/src/features/coupon/api/couponApi.ts"
-        ]
-      ],
       "forbiddenPrefixes": [
         "legacy/",
         "archive/",
         "examples/",
         "apps/playground/",
         "packages/generated-openapi/"
+      ],
+      "requiredGroups": [
+        [
+          "apps/storefront/src/features/coupon/ui/CouponField.tsx"
+        ],
+        [
+          "apps/storefront/src/features/coupon/api/couponApi.ts"
+        ]
       ]
     },
     {
       "id": "search-url-state",
       "prompt": "상품 검색의 category 필터가 새로고침 후 사라진다. 화면과 URL 상태 동기화 코드의 진입 파일을 찾아줘.",
-      "expectedGroups": [
+      "forbiddenPrefixes": [
+        "legacy/",
+        "archive/",
+        "examples/",
+        "apps/playground/"
+      ],
+      "requiredGroups": [
         [
           "apps/storefront/src/features/product-search/ui/SearchPage.tsx"
         ],
         [
           "apps/storefront/src/features/product-search/model/useSearchUrlState.ts"
         ]
-      ],
-      "forbiddenPrefixes": [
-        "legacy/",
-        "archive/",
-        "examples/",
-        "apps/playground/"
       ]
     },
     {
       "id": "notification-double-call",
       "prompt": "알림 설정에서 이메일 토글을 한 번 바꾸면 API가 두 번 호출되는 문제를 추적하려 한다. 페이지와 mutation 진입 파일을 찾아줘.",
-      "expectedGroups": [
+      "forbiddenPrefixes": [
+        "legacy/",
+        "archive/",
+        "examples/",
+        "apps/playground/"
+      ],
+      "requiredGroups": [
         [
           "apps/storefront/src/features/notification-preferences/ui/NotificationPreferencesPage.tsx"
         ],
         [
           "apps/storefront/src/features/notification-preferences/model/useNotificationPreferenceMutation.ts"
         ]
-      ],
-      "forbiddenPrefixes": [
-        "legacy/",
-        "archive/",
-        "examples/",
-        "apps/playground/"
       ]
     },
     {
       "id": "admin-revenue-currency",
       "prompt": "관리자 매출 대시보드 카드의 KRW 금액 포맷을 바꾸려 한다. 현재 화면과 포맷 렌더링 진입 파일을 찾아줘.",
-      "expectedGroups": [
-        [
-          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx"
-        ],
-        [
-          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
-        ]
-      ],
       "forbiddenPrefixes": [
         "legacy/",
         "archive/",
         "examples/",
         "apps/playground/",
         "packages/ui/src/stories/"
+      ],
+      "requiredGroups": [
+        [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueDashboardPage.tsx"
+        ],
+        [
+          "apps/admin/src/features/revenue-dashboard/ui/RevenueTrendCard.tsx"
+        ]
       ]
     },
     {
       "id": "exact-path-control",
       "prompt": "정확히 apps/storefront/src/features/theme/model/themeStore.ts 파일을 검토할 예정이다. 이 작업의 진입 파일을 반환해줘.",
-      "expectedGroups": [
-        [
-          "apps/storefront/src/features/theme/model/themeStore.ts"
-        ]
-      ],
       "forbiddenPrefixes": [
         ".ai/",
         "AI_INDEX.md"
+      ],
+      "requiredGroups": [
+        [
+          "apps/storefront/src/features/theme/model/themeStore.ts"
+        ]
       ]
     },
     {
       "id": "b2b-tax-invoice",
       "prompt": "현재 B2B 주문 상세에서 세금계산서 다운로드 버튼과 API를 수정하려 한다. business 앱의 진입 파일을 찾아줘.",
-      "expectedGroups": [
-        [
-          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx"
-        ],
-        [
-          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
-        ]
-      ],
       "forbiddenPrefixes": [
         "legacy/",
         "archive/",
         "examples/",
         "apps/playground/",
         "apps/storefront/"
+      ],
+      "requiredGroups": [
+        [
+          "apps/b2b/src/features/tax-invoice/ui/InvoiceDownloadButton.tsx"
+        ],
+        [
+          "apps/b2b/src/features/tax-invoice/api/taxInvoiceApi.ts"
+        ]
       ]
     }
   ]

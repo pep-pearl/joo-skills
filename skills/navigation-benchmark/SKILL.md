@@ -35,7 +35,7 @@ An Antigravity agent must not call `Get-Command codex`, `codex --version`, or `c
 From the repository root:
 
 ```bash
-npm run benchmark:doctor
+npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner agy --model "<model>"
 npm run benchmark -- --runner agy --model "<model>"
@@ -46,6 +46,7 @@ The runner resolves AGY from `PATH`, `AGY_BIN`, or the official Windows location
 ## Run in Codex
 
 ```bash
+npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner codex --model "<model>"
 npm run benchmark -- --runner codex --model "<model>"
@@ -59,6 +60,23 @@ npm run benchmark -- \
   --model "<model>" \
   --reasoning "<setting>" \
   --repeat <count>
+```
+
+If the host interrupts a long Codex run, do not discard completed runs. Resume the latest compatible result directory:
+
+```bash
+npm run benchmark -- \
+  --runner codex \
+  --model "<model>" \
+  --reasoning "<setting>" \
+  --repeat <count> \
+  --resume latest
+```
+
+If the run cannot be continued, finalize the partial report:
+
+```bash
+npm run benchmark:finalize -- --dir latest
 ```
 
 ## Validation
@@ -84,4 +102,4 @@ Read the newly created:
 benchmark/token-navigation/results/<timestamp>/report.md
 ```
 
-Report the status, runner, requested model, valid/failed run counts, accuracy comparison, token comparison only when complete, and result directory.
+Report the status, overall verdict, separate quality/efficiency verdicts, paired exact McNemar p-value, runner, requested model, valid/failed run counts, accuracy comparison, token comparison only when complete, and result directory. Clarify that the quality gate is not itself a statistical-significance claim.

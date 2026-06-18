@@ -19,6 +19,8 @@ Supported commands:
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
 
+Concrete task anchors (labels, enum/status values, URL parameters, cache keys, endpoints, error text) beat generic route/page roles. Decompose the task into `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns and cover only those required concerns.
+
 General behavior:
 
 - path-first
@@ -26,7 +28,7 @@ General behavior:
 - when code is already changed, run `npm run diff:impact`; if unavailable, inspect changed files directly before normal `AI_INDEX.md` routing
 - when failure output is present, create a temporary failure card and use file/line/test/userland stack anchors before maps or keyword search
 - read at most one `.ai/indexing/maps/*` shard before source files; use one companion shard only for coupling signals
-- follow imports after the first relevant source file
+- follow imports only for unresolved task concerns; stop when all required concerns are covered
 - no full scan by default
 - update navigation metadata only when repo navigation changed, metadata is stale, or a repeated/expensive failure pattern should be promoted by root cause
 - when benchmarking is requested with a model, use the checked-in benchmark runner only; if Codex CLI is unavailable, report `NOT_RUN` and do not simulate the run

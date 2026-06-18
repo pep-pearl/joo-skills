@@ -7,7 +7,7 @@ alwaysApply: false
 
 # Joo Navigation
 
-Project safety rules beat AI navigation rules. Treat `AI_INDEX.md`, map shards, sidecar file hints, and optional source-header exceptions as hints, not truth.
+Project safety rules beat AI navigation rules. Treat `AI_INDEX.md`, map shards, sidecar file hints, and optional source-header exceptions as hints, not truth. Concrete labels, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
 
 Read order:
 
@@ -19,10 +19,10 @@ Read order:
 6. `AI_INDEX.md`
 7. at most one relevant `.ai/indexing/maps/*` shard
 8. sidecar file hints
-9. relevant source files
-10. imports from the first relevant source file
-11. one companion shard only when a coupling signal exists
-12. relevant tests
+9. source owners for the required `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns
+10. imports/callers/tests only for unresolved concerns
+11. stop when all required concerns are covered
+12. one companion shard only when a coupling signal exists
 13. targeted search only if needed
 
 For already-changed code, changed files beat `AI_INDEX.md`; read exact changed files, direct imports, and matching tests before map shards. Do not read every map shard. For failures, file/line/test/userland stack anchors beat keyword search and generated files are never first-read files. Hard cap before edit: 2 map shards, 5 source files, then decide or search targeted.

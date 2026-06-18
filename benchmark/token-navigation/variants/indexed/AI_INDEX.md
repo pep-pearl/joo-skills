@@ -1,6 +1,6 @@
 # AI Navigation Index
 
-Disposable routing hints only. Source/imports/tests are the truth.
+Disposable routing hints only. Source/imports/tests are the truth. Map entries use `role`, `concern`, `anchors`, and `related` so concrete behavior owners can be selected before generic routes.
 
 | Request keywords or intent | Read one map shard |
 | --- | --- |
@@ -14,4 +14,4 @@ Disposable routing hints only. Source/imports/tests are the truth.
 | admin revenue dashboard, revenue currency | `.ai/indexing/maps/admin.md` |
 | B2B order detail, tax invoice | `.ai/indexing/maps/b2b.md` |
 
-Exact file paths should be opened directly without reading a map.
+Exact file paths should be opened directly without reading a map. After reading one shard, cover only the task's unresolved concerns and stop.

@@ -10,6 +10,7 @@ Good:
 
 ```md
 - route/page/screen work: `.ai/indexing/maps/routes.md`
+- concrete behavior work: `.ai/indexing/maps/behavior.md`
 - API work: `.ai/indexing/maps/api.md`
 - Auth domain: `.ai/indexing/maps/domains/auth.md`
 - First route root: `src/app/routes.tsx`
@@ -107,7 +108,7 @@ Rules:
 - keep each shard path-first and capped
 - one-line purpose per file
 - include natural-language aliases only when useful
-- once source entry is found, follow imports
+- once a source entry is found, follow only imports that can cover unresolved concerns; stop when all required concerns are covered
 
 ## 7. Source Headers Are Disabled By Default
 
@@ -162,6 +163,7 @@ Update only affected metadata:
 
 - router changed -> `AI_INDEX.md`
 - route/page changed -> `maps/routes.md`
+- concrete label/formatter/validation/UI action ownership changed -> `maps/behavior.md`
 - API/query changed -> `maps/api.md`
 - store/cache changed -> `maps/state.md`
 - package/build changed -> `maps/packages.md`

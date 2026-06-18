@@ -23,6 +23,7 @@ Map shards hold optional detail:
 
 - `.ai/indexing/maps/root.md`: top-level repo areas and ambiguous-request fallback
 - `.ai/indexing/maps/routes.md`: route/page/screen starting points
+- `.ai/indexing/maps/behavior.md`: concrete label/formatter/validation/UI action owners
 - `.ai/indexing/maps/api.md`: API/query/client/OpenAPI starting points
 - `.ai/indexing/maps/state.md`: store/cache/session starting points
 - `.ai/indexing/maps/packages.md`: package/workspace/build/config starting points
@@ -160,9 +161,11 @@ Sidecar entry shape:
 ```json
 {
   "path": "src/pages/order/detail.tsx",
-  "role": "route-or-page",
+  "role": "surface-entry",
+  "concern": "surface",
   "scope": "order detail page",
   "domain": "order",
+  "anchors": ["order detail", "shipping status"],
   "keywords": ["order-detail", "shipment"],
   "related": ["src/features/order/useOrderDetail.ts"],
   "confidence": "manual-reviewed",
@@ -252,8 +255,10 @@ Allowed sidecar fields:
 
 - `path`
 - `role`
+- `concern`
 - `scope`
 - `domain`
+- `anchors`
 - `keywords`
 - `related`
 - `confidence`

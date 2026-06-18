@@ -15,6 +15,7 @@ AI_INDEX.md
   -> choose one companion shard only when a coupling signal exists
 .ai/indexing/maps/root.md
 .ai/indexing/maps/routes.md
+.ai/indexing/maps/behavior.md
 .ai/indexing/maps/api.md
 .ai/indexing/maps/state.md
 .ai/indexing/maps/packages.md
@@ -61,6 +62,10 @@ Use when the user says things like:
 ### `maps/routes.md`
 
 Routes, pages, screens, layouts, route guards.
+
+### `maps/behavior.md`
+
+Concrete labels, badges, formatters, mappers, validation, buttons, fields, toggles, and UI action owners. Concrete behavior anchors beat generic route/page entries.
 
 ### `maps/api.md`
 

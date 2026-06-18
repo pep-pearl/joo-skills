@@ -13,6 +13,7 @@
  * - manifest.json
  * - maps/root.md
  * - maps/routes.md
+ * - maps/behavior.md
  * - maps/api.md
  * - maps/state.md
  * - maps/packages.md
@@ -162,7 +163,8 @@ const HEADER_CANDIDATE_PATTERNS = [
   /(^|\/)main\.(tsx|ts|jsx|js)$/,
   /(^|\/).*routes?\.(tsx|ts|jsx|js)$/,
   /(^|\/).*provider.*\.(tsx|ts|jsx|js)$/,
-  /(^|\/).*store.*\.(tsx|ts|jsx|js)$/,
+  /(^|\/)(store|state|session|cache)\.(tsx|ts|jsx|js)$/i,
+  /(^|\/)[^/]*(Store|State|Session|Cache)\.(tsx|ts|jsx|js)$/,
   /(^|\/).*api.*\.(tsx|ts|jsx|js)$/,
   /(^|\/).*client.*\.(tsx|ts|jsx|js)$/,
   /(^|\/)pages\/[^/]+\/(index|ui|page)\.(tsx|ts|jsx|js)$/,
@@ -290,36 +292,69 @@ function truncateByTokenBudget(lines, tokenBudget) {
   };
 }
 
-function keywordsFor(file, kind = "file") {
+function hasStateSignal(file) {
+  const expanded = String(file).replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  return /(^|[\/_.-])(store|state|session|cache|atom|redux|zustand|jotai|recoil|url-state)([\/_.-]|$)/.test(expanded);
+}
+
+function pathTerms(file, kind = "file") {
   const pieces = new Set([kind]);
-  for (const part of file.split(/[\/_.-]+/)) {
+  const expanded = file.replace(/([a-z0-9])([A-Z])/g, "$1-$2");
+  for (const part of expanded.split(/[\/_.-]+/)) {
     const cleaned = part.trim().toLowerCase();
     if (cleaned && cleaned.length >= 2 && !/^(src|app|index|tsx|jsx|ts|js|md|json)$/.test(cleaned)) pieces.add(cleaned);
   }
+  return [...pieces];
+}
+
+function keywordsFor(file, kind = "file") {
+  const pieces = new Set(pathTerms(file, kind));
   if (/query|mutation/i.test(file)) pieces.add("query");
   if (/routes?|router/i.test(file)) pieces.add("route");
-  if (/store|session|cache/i.test(file)) pieces.add("state");
-  return [...pieces].slice(0, 8);
+  if (hasStateSignal(file)) pieces.add("state");
+  if (/badge|label|formatter|format|mapper|button|field|toggle|card/i.test(file)) pieces.add("behavior");
+  return [...pieces].slice(0, 10);
+}
+
+function anchorsFor(file, kind = "file") {
+  return pathTerms(path.basename(file), kind)
+    .filter((item) => !["file", "domain", "candidate", "tsx", "ts", "jsx", "js"].includes(item))
+    .slice(0, 8);
 }
 
 function roleFor(file, kind = "file") {
-  if (/routes?|router|appRoutes/i.test(path.basename(file))) return "route-map";
-  if (/(page|screen|view|layout)\.(tsx|ts|jsx|js)$/i.test(file) || /(^|\/)(pages|app|routes)\//.test(file)) return "route-or-page";
-  if (/query|mutation/i.test(file)) return "query-or-mutation";
-  if (/api|client|openapi|swagger|endpoint/i.test(file)) return "api-boundary";
-  if (/store|zustand|redux|atom|jotai|recoil|session|cache/i.test(file)) return "state-boundary";
+  const base = path.basename(file);
+  if (/routes?|router|appRoutes/i.test(base)) return "route-entry";
+  if (/(page|screen|view|layout)\.(tsx|ts|jsx|js)$/i.test(base)) return "surface-entry";
+  if (/query|mutation/i.test(file)) return "data-boundary";
+  if (/api|client|openapi|swagger|endpoint/i.test(file)) return "data-boundary";
+  if (hasStateSignal(file)) return "state-boundary";
+  if (/badge|label|formatter|format|mapper|button|field|toggle|card/i.test(base)) return "behavior-candidate";
   if (/provider/i.test(file)) return "provider";
   if (/package\.json|workspace|turbo|nx|vite|next\.config|tsconfig/i.test(file)) return "package-or-config";
   if (/main\.(tsx|ts|jsx|js)$|App\.(tsx|ts|jsx|js)$/i.test(file)) return "app-bootstrap";
-  return kind;
+  return kind === "file" ? "domain-candidate" : kind;
+}
+
+function concernFor(file, role = roleFor(file)) {
+  if (/behavior/.test(role)) return "behavior";
+  if (/surface/.test(role)) return "surface";
+  if (/route/.test(role)) return "route";
+  if (/state/.test(role)) return "state";
+  if (/data|api|query|mutation/.test(role)) return "data";
+  if (/package|config|workspace|build/.test(role)) return "config";
+  return "domain";
 }
 
 function toFileHint(file, kind = "file") {
+  const role = roleFor(file, kind);
   return {
     path: file,
-    role: roleFor(file, kind),
+    role,
+    concern: concernFor(file, role),
     scope: describeFile(file, kind),
     domain: extractDomain(file),
+    anchors: anchorsFor(file, kind),
     keywords: keywordsFor(file, kind),
     related: [],
     confidence: confidenceFor(file),
@@ -345,8 +380,9 @@ function asFileMap(items, kind, limit = maxFilesPerMap, tokenBudget = maxMapToke
   const rawLines = items.slice(0, limit).map((f) => {
     const hint = toFileHint(f, kind);
     const domain = hint.domain ? `; domain: ${hint.domain}` : "";
+    const anchors = hint.anchors.length ? `; anchors: ${hint.anchors.join(", ")}` : "";
     const keywords = hint.keywords.length ? `; keywords: ${hint.keywords.join(", ")}` : "";
-    return `- \`${f}\`: role: ${hint.role}; scope: ${hint.scope}${domain}${keywords}; confidence: ${hint.confidence}`;
+    return `- \`${f}\`; role: ${hint.role}; concern: ${hint.concern}; scope: ${hint.scope}${domain}${anchors}${keywords}; confidence: ${hint.confidence}`;
   });
   const packed = truncateByTokenBudget(rawLines, tokenBudget);
   const lines = packed.lines;
@@ -358,9 +394,10 @@ function asFileMap(items, kind, limit = maxFilesPerMap, tokenBudget = maxMapToke
 function describeFile(file, kind = "file") {
   const base = path.basename(file);
   if (/routes?|router|appRoutes/i.test(base)) return "routing entry or route map";
-  if (/(page|screen|view|layout)\.(tsx|ts|jsx|js)$/i.test(base) || /(^|\/)(pages|app|routes)\//.test(file)) return "page or screen area";
-  if (/api|client|openapi|swagger|query|mutation/i.test(file)) return "API/query/client candidate";
-  if (/store|zustand|redux|atom|jotai|recoil|session/i.test(file)) return "state/cache/session candidate";
+  if (/(page|screen|view|layout)\.(tsx|ts|jsx|js)$/i.test(base)) return "page or screen surface";
+  if (/api|client|openapi|swagger|query|mutation/i.test(file)) return "data/API boundary candidate";
+  if (hasStateSignal(file)) return "state/cache/session boundary candidate";
+  if (/badge|label|formatter|format|mapper|button|field|toggle|card/i.test(base)) return "concrete UI behavior candidate";
   if (/package\.json|workspace|turbo|nx|vite|next\.config|tsconfig/i.test(file)) return "package/build/config candidate";
   if (/provider/i.test(file)) return "provider/bootstrap candidate";
   if (/main\.(tsx|ts|jsx|js)$|App\.(tsx|ts|jsx|js)$/i.test(file)) return "app bootstrap candidate";
@@ -449,11 +486,15 @@ const topLevelDirs = fs
 
 const importantFiles = allFiles.filter((f) => matchAny(f, IMPORTANT_FILE_PATTERNS)).sort();
 const entryCandidates = files.filter((f) => matchAny(f, ENTRY_CANDIDATE_PATTERNS)).sort();
-const fileHintCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
-const sourceHeaderExceptionCandidates = allowSourceHeaders ? fileHintCandidates : [];
+const baseFileHintCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
 
 const routeCandidates = files
   .filter((f) => /routes?|router|appRoutes/i.test(path.basename(f)) || /(^|\/)(pages|app|routes)\//.test(f))
+  .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
+  .sort();
+
+const behaviorCandidates = files
+  .filter((f) => /badge|label|formatter|format|mapper|button|field|toggle|card|validator|validation|handler/i.test(path.basename(f)))
   .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
   .sort();
 
@@ -463,13 +504,16 @@ const apiCandidates = files
   .sort();
 
 const stateCandidates = files
-  .filter((f) => /store|zustand|redux|atom|jotai|recoil|session|cache/i.test(f))
+  .filter((f) => hasStateSignal(f))
   .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
   .sort();
 
 const packageCandidates = allFiles
   .filter((f) => /package\.json|pnpm-workspace|turbo\.json|nx\.json|vite\.config|next\.config|tsconfig|eslint|prettier|vitest|jest|playwright/i.test(f))
   .sort();
+
+const fileHintCandidates = [...new Set([...baseFileHintCandidates, ...behaviorCandidates])].sort();
+const sourceHeaderExceptionCandidates = allowSourceHeaders ? fileHintCandidates : [];
 
 const pageDirs = files
   .filter((f) => /(^|\/)(pages|app|routes)\//.test(f))
@@ -512,6 +556,14 @@ const maps = [
     scope: ["routes", "pages", "screens"],
     keywords: ["route", "router", "page", "screen", "url", "라우트", "페이지", "화면"],
     tokenBudget: 1600,
+    ...baseMapMeta,
+  },
+  {
+    id: "behavior",
+    path: ".ai/indexing/maps/behavior.md",
+    scope: ["behavior", "labels", "formatters", "validation", "ui-actions"],
+    keywords: ["label", "badge", "format", "mapping", "button", "field", "toggle", "validation", "라벨", "포맷", "검증"],
+    tokenBudget: 1400,
     ...baseMapMeta,
   },
   {
@@ -578,6 +630,7 @@ const report = {
   importantFiles,
   entryCandidates,
   routeCandidates: routeCandidates.slice(0, 160),
+  behaviorCandidates: behaviorCandidates.slice(0, 160),
   apiCandidates: apiCandidates.slice(0, 160),
   stateCandidates: stateCandidates.slice(0, 160),
   packageCandidates: packageCandidates.slice(0, 160),
@@ -634,6 +687,7 @@ Keep \`AI_INDEX.md\` short. It should route tasks to one shard, then source file
 
 - route/page/screen work: \`.ai/indexing/maps/routes.md\`
 - vague product wording: \`.ai/indexing/maps/root.md\`
+- concrete labels/formatters/validation/UI actions: \`.ai/indexing/maps/behavior.md\`
 - API/backend/query work: \`.ai/indexing/maps/api.md\`
 - state/store/cache work: \`.ai/indexing/maps/state.md\`
 - package/build/config work: \`.ai/indexing/maps/packages.md\`
@@ -662,6 +716,10 @@ ${asList(entryCandidates)}
 ## Route Candidates
 
 ${asList(routeCandidates)}
+
+## Behavior Candidates
+
+${asList(behaviorCandidates)}
 
 ## API / Query Candidates
 
@@ -697,6 +755,7 @@ const fileMapCandidate = {
   maps: {
     root: entryCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "entry")),
     routes: routeCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "route/page")),
+    behavior: behaviorCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "behavior")),
     api: apiCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "API/query")),
     state: stateCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "state")),
     packages: packageCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "package/config")),
@@ -723,7 +782,7 @@ Use this file as review input. Do not copy blindly.
 - Source files must not fail lint or max-lines rules because of AI metadata.
 - File hints are navigation hints, not documentation and not instructions.
 - Prefer exact path lookup in the sidecar map when the user names a file.
-- Keep map entries compact: path, role, scope, domain, keywords, related, confidence, lastVerified.
+- Keep map entries compact: path, role, concern, scope, domain, anchors, keywords, related, confidence, lastVerified.
 - Do not put agent commands inside map entries.
 
 ## Candidate Entries
@@ -733,7 +792,8 @@ ${fileHintCandidates
   .map((f) => {
     const hint = toFileHint(f, "file");
     const domain = hint.domain ? `; domain: ${hint.domain}` : "";
-    return `- \`${f}\`: role: ${hint.role}; scope: ${hint.scope}${domain}; confidence: ${hint.confidence}`;
+    const anchors = hint.anchors.length ? `; anchors: ${hint.anchors.join(", ")}` : "";
+    return `- \`${f}\`; role: ${hint.role}; concern: ${hint.concern}; scope: ${hint.scope}${domain}${anchors}; confidence: ${hint.confidence}`;
   })
   .join("\n") || "- none detected"}
 `;
@@ -843,7 +903,7 @@ ${asFileMap(entryCandidates, "entry")}
 
 Read one likely shard next. Do not read all shards.
 
-If a likely source file is found, follow imports instead of reading more maps.
+If a likely source file is found, follow only imports that can cover unresolved concerns. Stop when required concerns are covered instead of reading more maps.
 
 Use one companion shard only when a coupling signal exists.
 `);
@@ -884,6 +944,35 @@ ${asFileMap(routeCandidates, "route/page")}
 - route-to-page mapping changed
 `);
 
+  writeFile("maps/behavior.md", `${mapHeader("Behavior Owners Map")}
+## Scope
+
+Concrete labels, badges, formatters, mappers, validation, buttons, fields, toggles, and UI action handlers.
+
+## First Read
+
+${asFileMap(behaviorCandidates.slice(0, 20), "behavior", 20)}
+
+## File Map
+
+${asFileMap(behaviorCandidates, "behavior")}
+
+## Read Rule
+
+Concrete behavior anchors beat generic route/page entries. Follow related imports only when another required concern remains uncovered.
+
+## Do Not Start Here
+
+- generic shared UI atoms without a matching concrete anchor
+- parent routes when the task asks for a label, mapping, formatter, validation, or UI action
+
+## Staleness Triggers
+
+- visible label/status mapping moved
+- formatter/validator ownership changed
+- UI action handler moved to a hook or state boundary
+`);
+
   writeFile("maps/api.md", `${mapHeader("API / Query Map")}
 ## Scope
 
@@ -899,7 +988,7 @@ ${asFileMap(apiCandidates, "API/query")}
 
 ## Read Rule
 
-After finding the API/query entry, follow imports to types, generated clients, or domain services only when needed.
+After finding the API/query entry, follow imports to types, generated clients, or domain services only for unresolved concerns.
 
 Inspect generated clients only at the exact operation/type boundary.
 
@@ -936,7 +1025,7 @@ ${asFileMap(stateCandidates, "state")}
 
 ## Read Rule
 
-After finding the state entry, follow imports to selectors, actions, persistence, or API calls only when needed.
+After finding the state entry, follow imports to selectors, actions, persistence, or API calls only for unresolved concerns.
 
 ## Cheap Escalation
 
@@ -1022,7 +1111,7 @@ ${asFileMap(domainFiles, "domain")}
 
 Use this shard only when the user request clearly maps to \`${domain}\` or root/routes/api/state maps point here.
 
-After finding a source entry, follow imports instead of reading other domain maps.
+After finding a source entry, follow only imports that can cover unresolved concerns; stop when coverage is complete instead of reading other domain maps.
 
 Use one companion shard only when a route/API/state coupling signal exists.
 
@@ -1045,6 +1134,7 @@ if (emitMaps) {
   console.log(`- manifest.json`);
   console.log(`- maps/root.md`);
   console.log(`- maps/routes.md`);
+  console.log(`- maps/behavior.md`);
   console.log(`- maps/api.md`);
   console.log(`- maps/state.md`);
   console.log(`- maps/packages.md`);

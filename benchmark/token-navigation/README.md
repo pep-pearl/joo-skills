@@ -5,12 +5,12 @@
 - **baseline:** navigation metadata 없음
 - **indexed:** `AI_INDEX.md`, `AGENTS.md`, `.ai/indexing/maps/*`만 추가
 
-별도 LLM judge는 없습니다. 지정 모델은 파일을 찾고, 정답 여부는 스크립트가 결정론적으로 채점합니다.
+별도 LLM judge는 없습니다. 지정 모델은 파일을 찾고, 정답 여부는 스크립트가 결정론적으로 채점합니다. `requiredGroups`는 통과에 필수이고 `optionalGroups`는 문맥 보너스만 주며 누락돼도 실패하지 않습니다.
 
 ## Antigravity에서 실행
 
 ```bash
-npm run benchmark:doctor
+npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner agy --model "EXACT_MODEL_NAME"
 npm run benchmark -- --runner agy --model "EXACT_MODEL_NAME"
@@ -35,6 +35,7 @@ source scripts/setup-agy-git-bash.sh
 ## Codex에서 실행
 
 ```bash
+npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
 npm run benchmark:dry-run -- --runner codex --model "EXACT_MODEL_NAME"
 npm run benchmark -- --runner codex --model "EXACT_MODEL_NAME"
@@ -101,11 +102,18 @@ benchmark/token-navigation/results/<timestamp>/
 - `FAILED`: 유효 실행 없음 또는 첫 검증 쌍 실패
 - `DRY_RUN`: 명령 구성만 확인
 
+판정:
+
+- `Quality verdict`: indexed pass rate의 비열등/개선/회귀 게이트
+- `Efficiency verdict`: paired median input token의 개선/회귀/측정 불가
+- `Verdict`: 위 두 게이트를 합친 보수적 종합 판정
+- exact McNemar p-value: paired pass/fail 차이의 참고용 통계 검정. 게이트 판정 자체가 통계적 유의성을 뜻하지는 않음
+
 ## fixture 구성
 
 - `fixture/`: baseline source
 - `variants/indexed/`: indexed에만 덮어쓰는 compact metadata
-- `benchmark/cases.json`: prompt와 외부 채점용 answer key
+- `benchmark/cases.json`: prompt와 외부 채점용 answer key (`requiredGroups`, 선택적 `optionalGroups`)
 - `benchmark/output-schema.json`: 모델 최종 응답 형식
 
 Finder workspace에는 answer key가 복사되지 않습니다. 이 fixture는 navigation 단계만 측정하며 실제 코드 수정, 테스트, 장기 대화 성능 전체를 대표하지 않습니다.

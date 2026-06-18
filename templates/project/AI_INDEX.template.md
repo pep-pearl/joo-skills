@@ -5,10 +5,11 @@
 1. Exact files, changed files, and error anchors beat this router.
 2. Read this file only to choose the smallest next context file.
 3. Read at most one map shard before source; use a second shard only for a coupling signal.
-4. After source is found, follow imports/callers/tests instead of more maps.
-5. Metadata is a hint. Source/imports/tests are truth.
-6. Never edit runtime code to match stale metadata.
-7. Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
+4. Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
+5. After source is found, follow imports/callers/tests only for unresolved concerns; stop when all required concerns are covered.
+6. Metadata is a hint. Source/imports/tests are truth.
+7. Never edit runtime code to match stale metadata.
+8. Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
 
 ## Purpose
 
@@ -31,10 +32,11 @@ Use this file to choose the smallest next context file. Do not turn it into an a
 3. Otherwise use this file as the router.
 4. If the target is exact or narrow, use exact path/keyword lookup before reading a whole shard.
 5. Read at most one `.ai/indexing/maps/*` shard before source files.
-6. Once a likely source file is found, prefer import-following over more map reading.
-7. Read one companion shard only when a coupling signal exists.
-8. Read relevant tests when behavior matters.
-9. Use targeted search only when router, lookup, map shard, and imports are insufficient.
+6. Decompose the task into required concerns: surface, behavior, state, data, route, or failure.
+7. Read the source owner of the strongest concrete anchor first.
+8. Follow imports/callers/tests only for unresolved concerns and stop when all required concerns are covered.
+9. Read one companion shard only when a coupling signal exists.
+10. Use targeted search only when router, lookup, map shard, and concern-driven imports are insufficient.
 
 ## Metadata Trust
 
@@ -46,6 +48,7 @@ Trust source/imports/tests over metadata. If source contradicts the index, sourc
 
 - route/page/screen work: `.ai/indexing/maps/routes.md`
 - vague product wording: `.ai/indexing/maps/root.md`
+- concrete label/formatter/validation/UI action work: `.ai/indexing/maps/behavior.md`
 - API/backend/query/OpenAPI work: `.ai/indexing/maps/api.md`
 - state/store/cache work: `.ai/indexing/maps/state.md`
 - package/build/config work: `.ai/indexing/maps/packages.md`
@@ -104,7 +107,7 @@ For vague natural-language requests:
 1. Read `.ai/indexing/maps/root.md`.
 2. Pick one likely task/domain map.
 3. Do not read all maps.
-4. If the first source file is found, follow imports.
+4. If the first source file is found, follow imports only for unresolved concerns and stop when coverage is complete.
 
 ## Map Shards
 
@@ -133,9 +136,11 @@ Recommended sidecar shape:
 ```json
 {
   "path": "src/pages/order/detail.tsx",
-  "role": "route-or-page",
+  "role": "surface-entry",
+  "concern": "surface",
   "scope": "order detail page",
   "domain": "order",
+  "anchors": ["order detail", "shipping status"],
   "keywords": ["order-detail"],
   "related": [],
   "confidence": "manual-reviewed",

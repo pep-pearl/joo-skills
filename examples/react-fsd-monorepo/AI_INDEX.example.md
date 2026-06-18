@@ -14,12 +14,16 @@ Detailed file maps live in `.ai/indexing/maps/*`.
 - routing: React Router
 - main app: `apps/web`
 
+## Task Concern Rule
+
+Concrete task anchors beat generic route/page roles. Cover only the required `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns and stop when they are covered.
+
 ## Navigation Order
 
 1. Exact files first.
 2. Read this router.
 3. Read at most one relevant map shard.
-4. Follow imports downward.
+4. Follow imports only for unresolved concerns; stop when all required concerns are covered.
 5. Read one companion shard only when a coupling signal exists.
 6. Read tests when behavior matters.
 7. Use targeted search only when blocked.

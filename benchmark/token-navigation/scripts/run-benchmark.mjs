@@ -14,8 +14,10 @@ import {
   resetDir,
   writeJson
 } from "./lib.mjs";
+import { scoreAnswer } from "./scoring.mjs";
 
 const args = parseArgs();
+const invocationCwd = process.env.INIT_CWD || process.cwd();
 const model = String(args.model ?? process.env.BENCHMARK_MODEL ?? "").trim();
 if (!model) {
   console.error('BENCHMARK_NOT_RUN: Model is required. Example: npm run benchmark -- --model "YOUR_MODEL"');
@@ -35,6 +37,7 @@ const maxCases = args["max-cases"] ? Number(args["max-cases"]) : null;
 const dryRun = Boolean(args["dry-run"]);
 const keepWork = Boolean(args["keep-work"]);
 const skipCliCheck = Boolean(args["skip-cli-check"]);
+const resumeArg = args.resume ?? process.env.BENCHMARK_RESUME ?? null;
 const baselineTemplate = path.resolve(String(args["baseline-workspace"] ?? path.join(ROOT, "fixture")));
 const indexedTemplate = path.resolve(String(args["indexed-workspace"] ?? path.join(ROOT, "variants", "indexed")));
 const casesFile = path.resolve(String(args.cases ?? path.join(ROOT, "benchmark", "cases.json")));
@@ -65,8 +68,12 @@ function spawnProgram(bin, programArgs, options = {}) {
   };
 
   if (process.platform === "win32" && String(bin).toLowerCase().endsWith(".cmd")) {
-    const commandLine = [quoteCmd(bin), ...programArgs.map(quoteCmd)].join(" ");
-    return spawnSync(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", commandLine], spawnOptions);
+    const commandLine = ["call", quoteCmd(bin), ...programArgs.map(quoteCmd)].join(" ");
+    return spawnSync(
+      process.env.ComSpec ?? "cmd.exe",
+      ["/d", "/s", "/c", commandLine],
+      { ...spawnOptions, windowsVerbatimArguments: true }
+    );
   }
   return spawnSync(bin, programArgs, spawnOptions);
 }
@@ -222,9 +229,42 @@ if (caseFilter) cases = cases.filter((item) => caseFilter.has(item.id));
 if (Number.isFinite(maxCases)) cases = cases.slice(0, maxCases);
 if (!cases.length) fail("No benchmark cases selected");
 
-const runStamp = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
-const resultDir = path.join(ROOT, "results", runStamp);
-const workRoot = path.join(os.tmpdir(), "joo-token-navigation-benchmark", runStamp);
+function latestResultDir() {
+  const resultsRoot = path.join(ROOT, "results");
+  if (!fs.existsSync(resultsRoot)) return null;
+  const dirs = fs.readdirSync(resultsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(resultsRoot, entry.name))
+    .filter((dir) => fs.existsSync(path.join(dir, "runs.partial.json")) || fs.existsSync(path.join(dir, "runs.json")))
+    .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  const partial = dirs.filter((dir) => fs.existsSync(path.join(dir, "runs.partial.json")));
+  if (partial.length) return partial[0];
+  return dirs[0] ?? null;
+}
+
+function loadResumeResults(dir) {
+  if (!dir) return [];
+  const source = fs.existsSync(path.join(dir, "runs.partial.json"))
+    ? path.join(dir, "runs.partial.json")
+    : path.join(dir, "runs.json");
+  if (!fs.existsSync(source)) fail(`Resume directory has no runs.partial.json or runs.json: ${dir}`);
+  const data = readJson(source);
+  if (data.runner !== runnerName) fail(`Resume runner mismatch: expected ${runnerName}, found ${data.runner ?? "unknown"}`);
+  if (data.requestedModel !== model) fail(`Resume model mismatch: expected ${model}, found ${data.requestedModel ?? "unknown"}`);
+  if ((data.reasoningSetting ?? null) !== reasoningSetting) {
+    fail(`Resume reasoning mismatch: expected ${reasoningSetting ?? "n/a"}, found ${data.reasoningSetting ?? "n/a"}`);
+  }
+  return Array.isArray(data.results) ? data.results : [];
+}
+
+const resumeDir = resumeArg
+  ? (String(resumeArg) === "latest" ? latestResultDir() : path.resolve(invocationCwd, String(resumeArg)))
+  : null;
+if (resumeArg && !resumeDir) fail("No previous benchmark result directory found for --resume");
+
+const runStamp = resumeDir ? path.basename(resumeDir) : new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
+const resultDir = resumeDir ?? path.join(ROOT, "results", runStamp);
+const workRoot = path.join(os.tmpdir(), "joo-token-navigation-benchmark", `${runStamp}-${process.pid}`);
 ensureDir(resultDir);
 ensureDir(workRoot);
 
@@ -251,7 +291,9 @@ function buildPrompt(testCase, answerFileName = null) {
   const lines = [
     "You are running a repository navigation benchmark.",
     "Do not use the network. Do not inspect parent directories or benchmark answer data.",
-    "Find the smallest useful set of 1-4 current production source files that are the best entry points for the task.",
+    "Find the smallest useful set of 1-4 current production source files that directly cover the task's distinct concerns.",
+    "Concrete behavior owners (labels, mappings, state transitions, URL state, API calls) beat generic parent routes or pages.",
+    "Include a parent page/route only when the task explicitly requires that screen/routing concern or the behavior crosses that boundary.",
     "Return repository-relative file paths only. Do not return directories.",
     "Prefer active app code over legacy, archive, examples, playground, Storybook, generated clients, or tests unless explicitly requested.",
     'The answer object must have exactly this shape: {"entryFiles":["relative/path"],"explanation":"brief reason"}.',
@@ -313,41 +355,6 @@ function extractExecutionMetrics(events) {
     failedCommandCount: commands.filter((item) => Number(item.exit_code) !== 0).length,
     toolOutputChars: commands.reduce((sum, item) => sum + String(item.aggregated_output ?? "").length, 0),
     agentMessageCount: completedItems.filter((item) => item?.type === "agent_message").length
-  };
-}
-
-function score(testCase, answer, workspace, policyValid = true) {
-  const returned = (answer?.entryFiles ?? []).map(normalizePath);
-  const uniqueReturned = [...new Set(returned)];
-  const groups = testCase.expectedGroups ?? [];
-  const expectedSet = new Set(groups.flat().map(normalizePath));
-  const groupHits = groups.map((group) => group.some((file) => uniqueReturned.includes(normalizePath(file))));
-  const forbidden = (testCase.forbiddenPrefixes ?? []).map(normalizePath);
-  const forbiddenHits = uniqueReturned.filter((file) => forbidden.some((prefix) => file === prefix || file.startsWith(`${prefix}/`)));
-  const invalidPaths = uniqueReturned.filter((file) => {
-    if (!file || file === "." || path.isAbsolute(file) || file.startsWith("../") || file.includes("/../")) return true;
-    const absolute = path.join(workspace, file);
-    return !fs.existsSync(absolute) || !fs.statSync(absolute).isFile();
-  });
-  const duplicateCount = returned.length - uniqueReturned.length;
-  const hitCount = groupHits.filter(Boolean).length;
-  const recall = groups.length ? hitCount / groups.length : 1;
-  const precision = uniqueReturned.length ? uniqueReturned.filter((file) => expectedSet.has(file)).length / uniqueReturned.length : 0;
-  const rawScore = Math.round((recall * 0.8 + precision * 0.2) * 100);
-  const structurallyValid = returned.length >= 1 && returned.length <= 4 && duplicateCount === 0 && invalidPaths.length === 0;
-  const pass = policyValid && structurallyValid && hitCount === groups.length && forbiddenHits.length === 0;
-  return {
-    returned: uniqueReturned,
-    groupHits,
-    forbiddenHits,
-    invalidPaths,
-    duplicateCount,
-    recall,
-    precision,
-    score: forbiddenHits.length || invalidPaths.length || !policyValid ? 0 : rawScore,
-    structurallyValid,
-    policyValid,
-    pass
   };
 }
 
@@ -521,7 +528,7 @@ function runOne(variant, testCase, repetition) {
   }
 
   const policyValid = (run.sideEffectPaths ?? []).length === 0;
-  const scoring = score(testCase, run.answer, workspace, policyValid);
+  const scoring = scoreAnswer(testCase, run.answer, workspace, policyValid);
   if (!keepWork) fs.rmSync(workspace, { recursive: true, force: true });
   return {
     id,
@@ -572,15 +579,23 @@ function finish(results, status) {
   process.exit(report.status ?? (status === "COMPLETED" ? 0 : 1));
 }
 
-const results = [];
+const results = loadResumeResults(resumeDir);
+const currentRunCompleted = new Map(
+  results
+    .filter((run) => Boolean(run.dryRun) === dryRun)
+    .map((run) => [run.id, run])
+);
 for (let repetition = 1; repetition <= repeat; repetition += 1) {
   const order = repetition % 2 === 1 ? ["baseline", "indexed"] : ["indexed", "baseline"];
   for (let caseIndex = 0; caseIndex < cases.length; caseIndex += 1) {
     const testCase = cases[caseIndex];
     const pair = [];
     for (const variant of order) {
-      const result = runOne(variant, testCase, repetition);
-      results.push(result);
+      const id = `${String(repetition).padStart(2, "0")}-${variant}-${testCase.id}`;
+      const existing = currentRunCompleted.get(id);
+      const result = existing ?? runOne(variant, testCase, repetition);
+      if (existing) console.log(`[resume/${runner.kind}/${variant}] ${testCase.id} (repeat ${repetition}/${repeat})`);
+      else results.push(result);
       pair.push(result);
       writeProgress(results);
     }

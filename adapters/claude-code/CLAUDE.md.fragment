@@ -4,6 +4,8 @@ When working in this repository, use the Joo Skills navigation rules.
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
 
+Concrete task anchors (labels, enum/status values, URL parameters, cache keys, endpoints, error text) beat generic route/page roles. Decompose the task into `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns and cover only those required concerns.
+
 ## Auto-load
 
 Read these first when navigating unfamiliar code:
@@ -21,7 +23,7 @@ Use these conditionally:
 - API integration rules when connecting UI to backend/OpenAPI
 - `navigation-benchmark` when the user supplies a benchmark model; run the local benchmark command only if Codex CLI is available, otherwise report `NOT_RUN`
 
-After a likely source file is found, prefer import-following over reading more maps. Use one companion shard only when a coupling signal exists.
+After a likely source file is found, follow only imports that can cover unresolved concerns. Concrete behavior owners beat generic route/page entries. Stop when all required concerns are covered. Use one companion shard only when a coupling signal exists.
 
 ## Commands
 

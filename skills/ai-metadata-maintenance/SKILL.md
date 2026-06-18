@@ -215,7 +215,7 @@ Each maintained shard should include compact metadata when practical:
 
 Prefer sidecar metadata in `.ai/indexing/maps/*` and `.ai/indexing/file-map.candidate.json`.
 
-Update sidecar entries when file purpose, domain, role, keywords, related files, or confidence changed.
+Update sidecar entries when file purpose, domain, role, concern, concrete anchors, keywords, related files, or confidence changed.
 
 Do not add source-level headers by default. Source headers are allowed only when the project explicitly opts in and they do not violate max-lines lint rules.
 

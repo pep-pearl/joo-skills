@@ -11,4 +11,4 @@ Global app state, session state, cache/query state.
 
 ## Read Rule
 
-Follow imports from the store/query entry. Do not scan all features.
+Follow imports from the store/query entry only for unresolved concerns. Stop when coverage is complete; do not scan all features.

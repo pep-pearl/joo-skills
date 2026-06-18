@@ -9,16 +9,17 @@ These rules are intentionally short for weak agents. Follow them before any long
 3. If an error log, failing test, stack trace, CI/build/type/lint/runtime failure exists, use the file/line/test/userland stack anchor first. Do not start with keyword search.
 4. Read `AI_INDEX.md` before broad search only when there is no stronger exact/diff/error anchor.
 5. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
-6. After a likely source file is found, follow imports/callers/tests instead of reading more maps.
-7. Treat `AI_INDEX.md`, map shards, and file hints as navigation hints, never as truth.
-8. Source/imports/tests beat AI metadata. Never change runtime code to satisfy stale metadata.
-9. Do not edit generated, lock, snapshot, build output, `.env*`, secret, credential, or private config files unless explicitly requested.
-10. Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
-11. Before editing source, name the exact files to change.
-12. After editing, list changed files, verification, skipped checks, and whether AI metadata changed.
-13. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
-14. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
-15. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
+6. Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
+7. After a likely source file is found, follow only imports/callers/tests that can cover an unresolved concern; stop when required concerns are covered.
+8. Treat `AI_INDEX.md`, map shards, and file hints as navigation hints, never as truth.
+9. Source/imports/tests beat AI metadata. Never change runtime code to satisfy stale metadata.
+10. Do not edit generated, lock, snapshot, build output, `.env*`, secret, credential, or private config files unless explicitly requested.
+11. Do not delete, rename, move, repo-wide replace, or broad-codemod unless explicitly requested.
+12. Before editing source, name the exact files to change.
+13. After editing, list changed files, verification, skipped checks, and whether AI metadata changed.
+14. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
+15. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
+16. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
 
 ## Purpose
 
@@ -71,6 +72,17 @@ Before reading many files, classify the request:
 - `cross-cutting`: repo-wide audit, migration, naming, dependency change
 - `failure`: error log, stack trace, failing test, CI/build/type-check/lint/runtime failure
 
+## Task Concern Coverage
+
+Before selecting files, decompose the task into 1-3 required concerns: `surface`, `behavior`, `state`, `data`, `route`, or `failure`.
+
+Concrete anchors such as exact symbols, enum/status values, visible labels, URL parameters, cache/query keys, endpoints, and error messages beat generic entry-point roles.
+
+- A behavior owner beats a generic route/page.
+- Include a page/route only when that concern is explicitly requested or the behavior crosses the boundary.
+- Follow imports only for unresolved concerns.
+- Stop when every required concern has direct source evidence.
+
 ## Read Order
 
 1. User-provided exact files.
@@ -81,12 +93,11 @@ Before reading many files, classify the request:
 6. Exact path/keyword lookup when the target is narrow.
 7. At most one relevant `.ai/indexing/maps/*` shard.
 8. Sidecar file hint for exact path when needed.
-9. Relevant source files.
-10. Imports from the first relevant source file.
-11. One companion shard only when a coupling signal exists.
-12. Relevant tests.
-13. Targeted search only when router/lookup/map/import navigation fails.
-
+9. The source file that owns the strongest concrete task anchor.
+10. Imports/callers/tests only for still-uncovered concerns.
+11. Stop when every required concern is covered.
+12. One companion shard only when a coupling signal exists.
+13. Targeted search only when blocked.
 
 
 ## Diff Navigation
@@ -147,7 +158,7 @@ For vague product requests:
 2. Read `.ai/indexing/maps/root.md` if present.
 3. Choose one likely task/domain map.
 4. Do not read every map.
-5. Once a likely source file is found, follow imports instead of reading more maps.
+5. Once a likely source file is found, follow only imports that can cover an unresolved concern; otherwise stop.
 
 For cross-cutting work:
 
@@ -225,7 +236,8 @@ Avoid these failure modes:
 - Exact path/keyword lookup beats reading whole map shards.
 - One map shard beats directory browsing.
 - One companion shard is allowed only for coupling signals.
-- Imports beat reading more maps after a source entry is found.
+- Unresolved-concern imports beat reading more maps; unrelated imports are skipped.
+- Concrete behavior owners beat generic parent routes/pages.
 - Tests are read when behavior or regression risk matters.
 - Never read generated, lock, snapshot, build, or huge files unless directly needed.
 

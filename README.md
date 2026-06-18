@@ -33,7 +33,7 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 exact files / changed files / error anchors beat AI_INDEX
 run npm run diff:impact for existing changes; fallback to changed files directly
 read at most one map shard before source
-after source is found, follow imports/callers/tests
+after source is found, follow imports/callers/tests only for unresolved concerns and stop when required concerns are covered
 source/imports/tests beat metadata
 no full repo scan by default; if unavoidable, scan filenames before contents
 ```
@@ -167,6 +167,7 @@ node /path/to/joo-skills/scripts/joo-indexing-scan.mjs \
 .ai/indexing/manifest.json
 .ai/indexing/maps/root.md
 .ai/indexing/maps/routes.md
+.ai/indexing/maps/behavior.md
 .ai/indexing/maps/api.md
 .ai/indexing/maps/state.md
 .ai/indexing/maps/packages.md
@@ -612,6 +613,7 @@ Antigravity에서 실행할 때는 `--runner agy`, Codex에서 실행할 때는 
 | `.ai/indexing/manifest.json` | scan summary와 shard 목록 | scan 범위, mode, 파일 수, warnings를 확인합니다. |
 | `.ai/indexing/maps/root.md` | 모호한 요청의 top-level fallback | 자연어/기획식 요청이 route/API/state로 안 좁혀질 때만 봅니다. |
 | `.ai/indexing/maps/routes.md` | route/page/screen 시작점 | 화면, URL, navigation, layout 작업에서 봅니다. |
+| `.ai/indexing/maps/behavior.md` | label/formatter/validation/UI action 소유 파일 | 구체적인 동작 앵커를 route/page보다 먼저 찾을 때 봅니다. |
 | `.ai/indexing/maps/api.md` | API/query/client/OpenAPI 시작점 | backend 연동, query/mutation, generated client 경계 확인 때 봅니다. |
 | `.ai/indexing/maps/state.md` | store/cache/session 시작점 | auth/session/cache/global state 작업에서 봅니다. |
 | `.ai/indexing/maps/packages.md` | package/workspace/build/test config 시작점 | dependency, build, lint, test, monorepo 설정 변경 때 봅니다. |

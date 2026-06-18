@@ -20,6 +20,9 @@
       "forbiddenStarts": [
         "src/shared/ui",
         "src/generated"
+      ],
+      "optionalEntryFiles": [
+        "src/pages/orders/detail/OrderErrorState.tsx"
       ]
     }
   ]
