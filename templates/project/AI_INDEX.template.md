@@ -120,7 +120,7 @@ Prefer exact path or keyword lookup over reading a whole map when the target is 
 node scripts/joo-indexing-lookup.mjs --target . --keyword "domain term"
 ```
 
-Representative cases may live in `.ai/indexing/benchmarks/navigation-cases.json` and can be checked with `joo-navigation-benchmark.mjs`. Include `baseline` and `optimized` token/read metrics when available so token savings are measured, not guessed.
+Representative cases may live in `.ai/indexing/benchmarks/navigation-cases.json` and can be checked with `joo-navigation-benchmark.mjs`. This local check measures deterministic lookup quality only; it does not estimate model tokens or claim token savings.
 
 ## File-Level AI Hints
 

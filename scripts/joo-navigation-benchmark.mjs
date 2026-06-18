@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Lightweight benchmark for AI navigation metadata.
+ * Deterministic lookup-quality check for AI navigation metadata.
  *
- * This does not call an LLM. It measures whether current metadata can surface expected
- * entry files for representative prompts using the lookup index. When cases include
- * baseline/optimized read or token metrics, it also reports estimated token savings.
+ * This script does not call a model and does not estimate token savings. It only
+ * checks whether the current lookup index surfaces expected entry files and avoids
+ * forbidden starts for representative cases.
  *
- * Case file default: .ai/indexing/benchmarks/navigation-cases.json
+ * Default case file: .ai/indexing/benchmarks/navigation-cases.json
  */
 
 import fs from "node:fs";
@@ -32,48 +32,10 @@ const lookupScript = path.resolve(target, getArg("--lookup-script", path.join("s
 const mapsArg = getArg("--maps", null);
 const fileMapArg = getArg("--file-map", null);
 const jsonOnly = hasFlag("--json");
-const topN = Number(getArg("--top-n", "5"));
+const topN = Math.max(1, Number(getArg("--top-n", "5")));
 
 function normalize(file) {
   return String(file || "").trim().replace(/^\.\//, "").replaceAll(path.sep, "/");
-}
-
-
-function numberOrNull(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-}
-
-function readMetric(source, names) {
-  if (!source || typeof source !== "object") return null;
-  for (const name of names) {
-    if (source[name] !== undefined) return numberOrNull(source[name]);
-  }
-  return null;
-}
-
-function savingsMetrics(testCase) {
-  const baseline = testCase.baseline || {};
-  const optimized = testCase.optimized || testCase.joo || {};
-  const baselineTokens = readMetric(baseline, ["estimatedTokens", "tokens", "estTokens"]);
-  const optimizedTokens = readMetric(optimized, ["estimatedTokens", "tokens", "estTokens"]);
-  const baselineFiles = readMetric(baseline, ["filesRead", "readFiles", "fileCount"]);
-  const optimizedFiles = readMetric(optimized, ["filesRead", "readFiles", "fileCount"]);
-  const tokenSavings = baselineTokens !== null && optimizedTokens !== null ? baselineTokens - optimizedTokens : null;
-  const tokenSavingsPct = tokenSavings !== null && baselineTokens > 0 ? Math.round((tokenSavings / baselineTokens) * 100) : null;
-  const fileSavings = baselineFiles !== null && optimizedFiles !== null ? baselineFiles - optimizedFiles : null;
-  const fileSavingsPct = fileSavings !== null && baselineFiles > 0 ? Math.round((fileSavings / baselineFiles) * 100) : null;
-
-  return {
-    baselineTokens,
-    optimizedTokens,
-    tokenSavings,
-    tokenSavingsPct,
-    baselineFiles,
-    optimizedFiles,
-    fileSavings,
-    fileSavingsPct,
-  };
 }
 
 function loadCases() {
@@ -126,13 +88,11 @@ function scoreCase(testCase, lookup) {
   const firstHitAt = firstHitIndexes.length ? Math.min(...firstHitIndexes) : null;
   const forbiddenHit = matches.find((file) => forbidden.some((bad) => file === bad || file.startsWith(`${bad}/`))) || null;
 
-  let score = 0;
-  if (!expected.length) score += 40;
-  else score += Math.round((expectedHits.length / expected.length) * 60);
-  if (firstHitAt === 1) score += 25;
-  else if (firstHitAt && firstHitAt <= topN) score += 15;
-  else if (firstHitAt) score += 8;
-  if (!forbiddenHit) score += 15;
+  let score = expected.length ? Math.round((expectedHits.length / expected.length) * 70) : 70;
+  if (firstHitAt === 1) score += 20;
+  else if (firstHitAt && firstHitAt <= topN) score += 12;
+  else if (firstHitAt) score += 5;
+  if (!forbiddenHit) score += 10;
   score = Math.max(0, Math.min(100, score));
 
   return {
@@ -145,7 +105,6 @@ function scoreCase(testCase, lookup) {
     expectedHits,
     allExpectedHits,
     forbiddenHit,
-    savings: savingsMetrics(testCase),
     status: score >= 80 ? "pass" : score >= 60 ? "warn" : "fail",
   };
 }
@@ -164,15 +123,6 @@ for (const testCase of loaded.cases) {
 }
 
 const averageScore = results.length ? Math.round(results.reduce((sum, item) => sum + item.score, 0) / results.length) : 0;
-const savingsResults = results.filter((item) => item.savings.tokenSavingsPct !== null || item.savings.fileSavingsPct !== null);
-const tokenSavingsResults = results.filter((item) => item.savings.tokenSavingsPct !== null);
-const fileSavingsResults = results.filter((item) => item.savings.fileSavingsPct !== null);
-const averageTokenSavingsPct = tokenSavingsResults.length
-  ? Math.round(tokenSavingsResults.reduce((sum, item) => sum + item.savings.tokenSavingsPct, 0) / tokenSavingsResults.length)
-  : null;
-const averageFileSavingsPct = fileSavingsResults.length
-  ? Math.round(fileSavingsResults.reduce((sum, item) => sum + item.savings.fileSavingsPct, 0) / fileSavingsResults.length)
-  : null;
 const result = {
   target,
   casesPath: path.relative(target, casesPath).replaceAll(path.sep, "/"),
@@ -186,10 +136,7 @@ const result = {
     warn: results.filter((item) => item.status === "warn").length,
     fail: results.filter((item) => item.status === "fail").length,
     error: errors.length,
-    withSavingsMetrics: savingsResults.length,
   },
-  averageTokenSavingsPct,
-  averageFileSavingsPct,
   results,
   errors,
   missingCasesFile: loaded.missing || false,
@@ -199,22 +146,16 @@ const result = {
 if (jsonOnly) {
   console.log(JSON.stringify(result, null, 2));
 } else {
-  console.log("[AI_NAVIGATION_BENCHMARK]");
+  console.log("[AI_NAVIGATION_LOOKUP_CHECK]");
   if (result.message) console.log(`Note: ${result.message}`);
   console.log(`Cases: ${result.counts.total}, average_score=${averageScore}`);
   for (const item of results) {
     console.log(`${item.status.toUpperCase()}: ${item.id} | score=${item.score} | first_hit_at=${item.firstHitAt ?? "none"}`);
     console.log(`  top: ${item.topMatches.join(", ") || "none"}`);
-    if (item.savings.tokenSavingsPct !== null) {
-      console.log(`  token_savings: ${item.savings.tokenSavingsPct}% (${item.savings.baselineTokens} -> ${item.savings.optimizedTokens})`);
-    }
-    if (item.savings.fileSavingsPct !== null) {
-      console.log(`  file_savings: ${item.savings.fileSavingsPct}% (${item.savings.baselineFiles} -> ${item.savings.optimizedFiles})`);
-    }
     if (item.forbiddenHit) console.log(`  forbidden_hit: ${item.forbiddenHit}`);
   }
   for (const error of errors) console.log(`ERROR: ${error.id} | ${error.message}`);
-  console.log("\n[AI_NAVIGATION_BENCHMARK_JSON]");
+  console.log("\n[AI_NAVIGATION_LOOKUP_CHECK_JSON]");
   console.log(JSON.stringify(result, null, 2));
 }
 

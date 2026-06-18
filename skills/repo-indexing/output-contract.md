@@ -116,10 +116,10 @@ Warnings:
 - metadata path / source change / action
 ```
 
-## Navigation Benchmark Summary
+## Navigation Lookup Check Summary
 
 ```txt
-[AI_NAVIGATION_BENCHMARK]
+[AI_NAVIGATION_LOOKUP_CHECK]
 
 Cases:
 - total/pass/warn/fail

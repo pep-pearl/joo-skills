@@ -1,108 +1,111 @@
-# joo-skills token A/B benchmark fixture
+# joo-skills navigation A/B benchmark
 
-`joo-skills` 방식의 navigation metadata가 실제 coding-agent 입력 토큰을 줄이는지 비교하기 위한 합성 프론트엔드 모노레포입니다.
+동일한 합성 프론트엔드 저장소를 두 조건으로 실행해 navigation metadata의 효과를 비교합니다.
 
-## 포함 내용
+- **baseline:** navigation metadata 없음
+- **indexed:** `AI_INDEX.md`, `AGENTS.md`, `.ai/indexing/maps/*`만 추가
 
-- **동일한 소스 코드**를 사용하는 baseline / indexed 변형
-- 현재 production 파일과 이름·키워드가 겹치는 legacy/archive/example/generated 디코이
-- 정답 파일 그룹과 금지 경로가 정의된 10개 탐색 과제
-- Codex CLI JSONL의 `turn.completed.usage`를 읽는 자동 토큰 집계
-- 성공률, 입력 토큰, uncached 입력 토큰, 출력 토큰, 실행 시간 비교 리포트
-- 실제 `joo-skills` clone으로 인덱스를 다시 생성하는 선택 스크립트
+별도 LLM judge는 없습니다. 지정 모델은 파일을 찾고, 정답 여부는 스크립트가 결정론적으로 채점합니다.
 
-## 요구 사항
-
-- Node.js 20 이상
-- 실제 측정 시 Codex CLI 설치 및 로그인
-- 같은 모델과 설정으로 baseline / indexed를 실행할 수 있는 계정
-
-## 먼저 검증
+## Antigravity에서 실행
 
 ```bash
-npm run check
-npm run benchmark:mock
+npm run benchmark:doctor
+npm run benchmark:check
+npm run benchmark:dry-run -- --runner agy --model "EXACT_MODEL_NAME"
+npm run benchmark -- --runner agy --model "EXACT_MODEL_NAME"
 ```
 
-`benchmark:mock`은 과금 없이 리포터가 정상 작동하는지만 확인합니다. 실제 토큰 측정값이 아닙니다.
-
-## 실제 Codex A/B 실행
+사용 가능한 모델 이름:
 
 ```bash
-npm run benchmark:codex -- --model gpt-5.5 --repeat 3
+agy models
 ```
 
-비용을 줄여 먼저 한 과제만 확인할 수 있습니다.
+반드시 출력된 이름을 정확히 사용합니다. Antigravity 모델의 reasoning 수준은 모델 이름에 포함되므로 `--reasoning`을 전달하지 않습니다.
+
+Windows 공식 설치 경로는 `%LOCALAPPDATA%\agy\bin\agy.exe`입니다. 러너는 이 경로를 직접 확인하므로 Git Bash의 `PATH`가 깨져 있어도 벤치를 실행할 수 있습니다.
+
+Git Bash에서 `agy` 명령 자체도 사용하려면 저장소 루트에서:
 
 ```bash
-npm run benchmark:codex --   --model gpt-5.5   --repeat 1   --case storefront-shipping-status
+source scripts/setup-agy-git-bash.sh
 ```
 
-명령만 확인하려면:
+## Codex에서 실행
 
 ```bash
-npm run benchmark:codex -- --dry-run --repeat 1 --max-cases 1
+npm run benchmark:check
+npm run benchmark:dry-run -- --runner codex --model "EXACT_MODEL_NAME"
+npm run benchmark -- --runner codex --model "EXACT_MODEL_NAME"
 ```
 
-실행 순서는 반복마다 `baseline → indexed`, `indexed → baseline`으로 교차합니다. 각 실행은 새 작업 디렉터리와 ephemeral 세션을 사용하며 read-only sandbox에서 동작합니다.
-
-결과는 `results/<timestamp>/`에 저장됩니다.
-
-- `runs.json`: 모든 실행의 usage와 채점 결과
-- `report.md`: 사람이 읽는 비교표
-- `report.json`: 후처리용 데이터
-- `*.jsonl`: Codex 원본 이벤트 로그
-- `*.answer.json`: 모델이 반환한 진입 파일
-
-## 해석 기준
-
-인덱스가 유효하다고 보려면 최소한 다음을 함께 만족해야 합니다.
-
-1. indexed 성공률이 baseline보다 낮지 않다.
-2. navigation-heavy 과제 다수에서 input 또는 uncached input token이 감소한다.
-3. `exact-path-control`에서는 차이가 작다. 사용자가 정확한 파일을 줬을 때는 index가 필요 없기 때문이다.
-4. 한 번이 아니라 3회 이상 반복한 중앙값으로 판단한다.
-
-## 실제 joo-skills 출력으로 재생성
-
-먼저 별도로 clone한 뒤:
+Codex 전용 옵션:
 
 ```bash
-git clone https://github.com/pep-pearl/joo-skills.git ../joo-skills
-npm run regenerate:joo -- --path ../joo-skills
+npm run benchmark -- \
+  --runner codex \
+  --model "EXACT_MODEL_NAME" \
+  --reasoning high \
+  --repeat 3
 ```
 
-이 명령은 `.work/joo-generated`에 fixture를 복사하고 다음을 실행합니다.
+## 직접 실행과 자동 선택
+
+중립적인 일반 터미널에서만 `--runner auto`를 사용할 수 있습니다.
 
 ```bash
-node <joo-skills>/scripts/joo-indexing-install.mjs --target <workspace> --force
-node <joo-skills>/scripts/joo-indexing-scan.mjs --target <workspace> --out <workspace>/.ai/indexing
+npm run benchmark -- --runner auto --model "EXACT_MODEL_NAME"
 ```
 
-생성된 candidate를 `AI_INDEX.md`로 승격하지만, 실제 프로젝트에서는 사람이 검토하거나 `/indexing init`으로 다듬는 편이 낫습니다. 기본 A/B 벤치마크는 재현성을 위해 `variants/indexed`의 고정된 작은 router/map overlay를 사용합니다.
+`auto`는 요청 모델이 `agy models`에 정확히 있으면 AGY를 사용하고, 그렇지 않으면 설치된 Codex를 확인합니다. Agent 환경에서는 모호성을 피하기 위해 native runner를 명시해야 합니다.
 
-생성 결과 자체를 Codex A/B의 indexed 쪽으로 사용하려면:
+## 부분 실행
 
 ```bash
-npm run benchmark:codex -- \
-  --model gpt-5.5 \
-  --repeat 3 \
-  --indexed-workspace .work/joo-generated
+npm run benchmark -- \
+  --runner agy \
+  --model "EXACT_MODEL_NAME" \
+  --repeat 1 \
+  --case storefront-shipping-status
 ```
 
-`--baseline-workspace`도 지정할 수 있으며, 지정하지 않으면 `fixture/`를 사용합니다.
+여러 case는 쉼표로 구분합니다.
 
-## 다른 에이전트에서 사용
+## AGY 실행 방식
 
-`fixture/`가 baseline이고, 여기에 `variants/indexed/`를 덮어쓴 것이 indexed입니다.
+AGY Windows 비대화형 출력이 항상 stdout으로 전달된다고 가정하지 않습니다. 모델은 격리된 임시 workspace 안에 `.benchmark-answer.json` 하나만 생성합니다.
 
-```bash
-node scripts/materialize.mjs --variant baseline --out /tmp/joo-base
-node scripts/materialize.mjs --variant indexed --out /tmp/joo-index
+- 원본 fixture는 수정되지 않습니다.
+- 임시 answer 파일 외의 변경이 있으면 해당 실행은 실패로 채점합니다.
+- AGY가 token usage를 제공하지 않으면 token 값은 `null`/`n/a`입니다.
+- 다른 CLI의 수치나 추정값으로 채우지 않습니다.
+
+## 결과
+
+```text
+benchmark/token-navigation/results/<timestamp>/
 ```
 
-같은 프롬프트를 새 세션에서 각각 실행하고, `benchmark/cases.json`의 정답과 비교하면 됩니다. 해당 CLI가 usage를 제공하지 않으면 실제 토큰 절감이 아니라 파일 탐색 정확도만 확인할 수 있습니다.
+- `runs.json`: 실행별 정규화 데이터
+- `report.json`: 결정론적 집계
+- `report.md`: 비교표
+- Codex: `*.jsonl`
+- AGY: `*.stdout.txt`
+- `*.answer.json`: 최종 응답 JSON
 
-## 주의
+상태:
 
-이 fixture는 navigation 단계의 토큰 차이를 보기 위한 것입니다. 실제 코드 수정, 테스트 실행, 장기 대화, prompt cache, 사용자 전역 설정에서는 결과가 달라질 수 있습니다. 토큰 감소만 보고 판단하지 말고 성공률을 함께 보세요.
+- `VALID`: 예정 실행 전부 정상
+- `PARTIAL`: 일부 실행 실패
+- `FAILED`: 유효 실행 없음 또는 첫 검증 쌍 실패
+- `DRY_RUN`: 명령 구성만 확인
+
+## fixture 구성
+
+- `fixture/`: baseline source
+- `variants/indexed/`: indexed에만 덮어쓰는 compact metadata
+- `benchmark/cases.json`: prompt와 외부 채점용 answer key
+- `benchmark/output-schema.json`: 모델 최종 응답 형식
+
+Finder workspace에는 answer key가 복사되지 않습니다. 이 fixture는 navigation 단계만 측정하며 실제 코드 수정, 테스트, 장기 대화 성능 전체를 대표하지 않습니다.

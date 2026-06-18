@@ -18,7 +18,12 @@
     "diff:fix-plan": "node scripts/joo-diff-impact.mjs --target . --base main --fix-plan --include-imports",
     "diff-check": "node scripts/joo-indexing-diff-check.mjs --target . --base main --warn-only",
     "diff-check:strict": "node scripts/joo-indexing-diff-check.mjs --target . --base main",
-    "benchmark:navigation": "node scripts/joo-navigation-benchmark.mjs --target ."
+    "benchmark:navigation": "node scripts/joo-navigation-benchmark.mjs --target .",
+    "benchmark": "npm --prefix benchmark/token-navigation run benchmark --",
+    "benchmark:check": "npm --prefix benchmark/token-navigation run check",
+    "benchmark:dry-run": "npm --prefix benchmark/token-navigation run benchmark:dry-run --",
+    "benchmark:doctor": "npm --prefix benchmark/token-navigation run doctor",
+    "setup:agy:git-bash": "bash scripts/setup-agy-git-bash.sh"
   },
   "keywords": [
     "ai-skills",

@@ -20,17 +20,7 @@
       "forbiddenStarts": [
         "src/shared/ui",
         "src/generated"
-      ],
-      "baseline": {
-        "filesRead": 34,
-        "estimatedTokens": 42000,
-        "notes": "naive broad repo/search based navigation estimate"
-      },
-      "optimized": {
-        "filesRead": 6,
-        "estimatedTokens": 8500,
-        "notes": "AI_INDEX + one route shard + source/import reads estimate"
-      }
+      ]
     }
   ]
 }

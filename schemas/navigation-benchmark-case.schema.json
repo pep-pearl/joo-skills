@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.com/joo-skills/navigation-benchmark-case.schema.json",
-  "title": "Joo Skills Navigation Benchmark Cases",
+  "title": "Joo Skills Navigation Lookup Check Cases",
   "type": "object",
   "properties": {
     "cases": {
@@ -14,6 +14,7 @@
   "required": [
     "cases"
   ],
+  "additionalProperties": false,
   "$defs": {
     "case": {
       "type": "object",
@@ -23,91 +24,30 @@
         "expectedEntryFiles"
       ],
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "intent": {
-          "type": "string"
-        },
-        "domain": {
-          "type": "string"
-        },
+        "id": { "type": "string" },
+        "prompt": { "type": "string" },
+        "path": { "type": "string" },
+        "intent": { "type": "string" },
+        "domain": { "type": "string" },
         "keywords": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
-        "query": {
-          "type": "object"
-        },
+        "query": { "type": "object" },
         "expectedEntryFiles": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "allowedShards": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string" }
         },
         "forbiddenStarts": {
           "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "baseline": {
-          "type": "object",
-          "properties": {
-            "filesRead": {
-              "type": "number"
-            },
-            "estimatedTokens": {
-              "type": "number"
-            },
-            "notes": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": true
-        },
-        "optimized": {
-          "type": "object",
-          "properties": {
-            "filesRead": {
-              "type": "number"
-            },
-            "estimatedTokens": {
-              "type": "number"
-            },
-            "notes": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": true
-        },
-        "joo": {
-          "type": "object",
-          "properties": {
-            "filesRead": {
-              "type": "number"
-            },
-            "estimatedTokens": {
-              "type": "number"
-            },
-            "notes": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": true
+          "items": { "type": "string" }
         }
-      }
+      },
+      "additionalProperties": false
     }
   }
 }

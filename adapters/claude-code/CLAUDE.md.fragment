@@ -19,6 +19,7 @@ Use these conditionally:
 - `rules/ai-navigation-maintenance.md` when maintaining `AI_INDEX.md`, map shards, manifest, sidecar file hints / optional `@ai-*` metadata, stale metadata, or promoted known failure patterns
 - screen spec rules when official screen specs are referenced
 - API integration rules when connecting UI to backend/OpenAPI
+- `navigation-benchmark` when the user supplies a benchmark model; run the local benchmark command only if Codex CLI is available, otherwise report `NOT_RUN`
 
 After a likely source file is found, prefer import-following over reading more maps. Use one companion shard only when a coupling signal exists.
 

@@ -62,6 +62,7 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 
 ```txt
 .
+├─ AGENTS.md                         # 모델 지정 벤치 요청 자동 라우팅
 ├─ skills/
 │  ├─ repo-indexing/                 # /indexing 계열 핵심 스킬
 │  ├─ repo-navigation/               # 최소 파일 읽기 / intent classification / import-following
@@ -72,6 +73,7 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 │  ├─ frontend-next-app-navigation/  # Next.js App Router 탐색
 │  ├─ screen-spec-alignment/         # 화면설계서 기반 구현/감사
 │  ├─ api-integration-planning/      # Swagger/OpenAPI ↔ FE 연결 계획
+│  ├─ navigation-benchmark/          # 모델 지정 navigation A/B 벤치 실행 계약
 │  └─ agent-operating-loop/          # 계획-실행-검증 loop
 ├─ adapters/
 │  ├─ common/                        # AGENTS.md 공통 fragment
@@ -92,6 +94,9 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 │  ├─ joo-indexing-diff-check.mjs    # PR diff 기반 metadata 갱신 필요성 점검
 │  ├─ lib/joo-path-classifier.mjs    # diff/check 공통 path classifier
 │  └─ joo-navigation-benchmark.mjs   # navigation benchmark case 측정
+├─ benchmark/
+│  ├─ prompt.md                      # “벤치마킹 해줘. 모델: …” 자동 실행 계약
+│  └─ token-navigation/              # isolated baseline/indexed fixture와 runner
 ├─ docs/
 │  ├─ skill-map.md
 │  ├─ install-targets.md
@@ -255,7 +260,8 @@ Only use AI_INDEX.md if the error anchor is not enough.
 | `/diff review` | 변경 파일과 직접 import/matching test 중심으로 리뷰합니다. | PR 리뷰에서 unrelated shard를 읽지 않고 싶을 때 | review focus, targeted tests, stale metadata risk |
 | `/diff fix-plan` | 기존 diff를 고치기 위한 최소 수정 계획을 만듭니다. | 이미 변경된 코드에서 무엇만 고칠지 정리할 때 | patch targets, verification, metadata decision |
 | `/diff-check` | 변경된 source가 metadata 갱신을 요구하는지 확인합니다. | PR에서 `AI_INDEX.md`/maps 갱신 누락을 잡고 싶을 때 | routes/api/state/packages/domain별 갱신 필요 경고 |
-| `/benchmark navigation` | 저장된 navigation case로 lookup 품질과 선택적 토큰/파일 절감 추정치를 측정합니다. | index 구조를 바꾼 뒤 회귀나 토큰 절감 효과를 보고 싶을 때 | pass/warn/fail, first hit position, average score, token/file savings |
+| `/benchmark navigation` | 저장된 navigation case로 deterministic lookup 품질을 검사합니다. | index 구조를 바꾼 뒤 lookup 회귀를 확인할 때 | pass/warn/fail, first hit position, average score |
+| `벤치마킹 해줘. 모델: <model>` | 합성 fixture의 baseline/indexed를 지정 모델로 A/B 실행합니다. | 실제 모델의 navigation 정확도·토큰·시간을 비교할 때 | `benchmark/token-navigation/results/<timestamp>/report.md` |
 
 ## Command Guide: 사용자가 직접 실행하는 Node scripts
 
@@ -442,7 +448,7 @@ node /path/to/joo-skills/scripts/joo-indexing-diff-check.mjs --target . --base m
 
 ### `joo-navigation-benchmark.mjs`
 
-대표 navigation case를 저장해두고 lookup 결과가 기대 entry file을 잘 찾는지 측정합니다. case에 `baseline`/`optimized` metric을 넣으면 예상 file/token 절감률도 같이 출력합니다.
+대표 navigation case를 저장해두고 lookup 결과가 기대 entry file을 잘 찾는지 결정론적으로 검사합니다. 이 명령은 모델을 호출하지 않고 token 절감률을 추정하지 않습니다.
 
 ```bash
 node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
@@ -456,7 +462,6 @@ node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
 - `AI_INDEX.md`나 map shard 구조를 바꾼 뒤 품질 회귀를 확인할 때
 - 팀에서 자주 하는 작업 요청을 benchmark case로 고정하고 싶을 때
 - “AI가 처음 읽는 파일”이 실제로 좋아졌는지 수치로 보고 싶을 때
-- broad 탐색 대비 예상 token/file read 절감률을 케이스별로 기록하고 싶을 때
 
 자주 쓰는 옵션:
 
@@ -581,14 +586,22 @@ node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
   --top-n 5
 ```
 
-토큰 절감도 보고 싶으면 case에 아래처럼 추정치를 넣습니다. 이 값은 benchmark가 LLM을 호출해 자동 측정하는 값이 아니라, 대표 작업에서 baseline 탐색과 optimized 탐색을 비교하기 위한 기록값입니다.
 
-```json
-{
-  "baseline": { "filesRead": 34, "estimatedTokens": 42000 },
-  "optimized": { "filesRead": 6, "estimatedTokens": 8500 }
-}
+## 실제 모델 navigation A/B 벤치마크
+
+저장소 루트에서 다음처럼 실행합니다.
+
+```bash
+npm run benchmark -- --runner agy --model "YOUR_MODEL"
 ```
+
+사용자가 coding agent에게 `벤치마킹 해줘. 모델: YOUR_MODEL`이라고 요청하면 `skills/navigation-benchmark/SKILL.md`와 `benchmark/prompt.md`를 따라 같은 명령을 실행합니다. 기본 반복은 3회이며, Antigravity는 모델 이름에 포함된 reasoning variant를 사용하고 Codex에서만 reasoning 기본값 medium을 사용합니다.
+
+이 벤치는 별도 LLM judge나 추정 토큰을 사용하지 않습니다. 지정 모델은 파일 탐색만 수행하고, 정답 그룹·금지 경로·경로 유효성·중복·precision은 스크립트가 결정론적으로 채점합니다. 현재 agent의 native CLI(예: Antigravity의 `agy`, Codex의 `codex`) 또는 요청 모델을 실행할 수 없으면 다른 provider로 대체하지 않고 `NOT_RUN`으로 보고합니다.
+
+과거 실벤치 결과와 예시 성능 수치는 저장소에 포함하지 않습니다. 새 결과는 `benchmark/token-navigation/results/<timestamp>/`에만 로컬로 생성되며 Git에서 제외됩니다.
+
+Antigravity에서 실행할 때는 `--runner agy`, Codex에서 실행할 때는 `--runner codex`를 반드시 지정합니다. Windows Git Bash에서 `agy`가 PATH에 없으면 `source scripts/setup-agy-git-bash.sh`로 고칠 수 있으며, 벤치 러너는 `%LOCALAPPDATA%\agy\bin\agy.exe`도 직접 탐색합니다.
 
 ## Output Files: 무엇을 어떻게 읽어야 하나
 

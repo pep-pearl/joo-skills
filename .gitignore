@@ -3,3 +3,8 @@ dist/
 coverage/
 .DS_Store
 *.log
+
+# Local benchmark artifacts
+benchmark/token-navigation/.work/
+benchmark/token-navigation/results/*
+!benchmark/token-navigation/results/.gitkeep

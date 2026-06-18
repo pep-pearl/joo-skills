@@ -14,6 +14,7 @@ Supported commands:
 /diff impact
 /diff review
 /diff fix-plan
+/benchmark model:<model>
 ```
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
@@ -28,6 +29,7 @@ General behavior:
 - follow imports after the first relevant source file
 - no full scan by default
 - update navigation metadata only when repo navigation changed, metadata is stale, or a repeated/expensive failure pattern should be promoted by root cause
+- when benchmarking is requested with a model, use the checked-in benchmark runner only; if Codex CLI is unavailable, report `NOT_RUN` and do not simulate the run
 
 If metadata is stale, source/imports/tests win. Recover with exact lookup/import/test/targeted search and update only affected metadata.
 

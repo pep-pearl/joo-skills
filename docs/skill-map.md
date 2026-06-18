@@ -10,6 +10,7 @@
 | `failure-triage` | 에러 로그, failing test, CI/build/type/lint/runtime failure에서 시작할 때 | temporary failure routing card, anchor-first read plan, known-pattern promotion decision |
 | `ai-metadata-maintenance` | route/domain/API/state/package 변경 후 metadata 갱신 판단 | maintenance summary for router/maps/file hints |
 | `agent-operating-loop` | 큰 작업을 계획→실행→검증 loop로 진행할 때 | task ledger, verification gates |
+| `navigation-benchmark` | “벤치마킹 해줘. 모델: …”처럼 navigation A/B 실벤치를 요청할 때 | Codex CLI 실행, 결정론적 report, 실패 시 NOT_RUN |
 
 ## Frontend Skills
 
@@ -39,6 +40,7 @@
 /diff fix-plan
 /diff-check
 /benchmark navigation
+/benchmark model:<model>
 ```
 
 

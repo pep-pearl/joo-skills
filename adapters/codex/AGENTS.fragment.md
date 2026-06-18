@@ -11,6 +11,7 @@ Command aliases:
 - `/diff impact`: classify changed files and choose read-next/skip/metadata targets
 - `/diff review`: review changed files, direct imports, and matching tests only
 - `/diff fix-plan`: plan the smallest fix path for an existing diff
+- `벤치마킹 해줘. 모델: <model>`: run `npm run benchmark -- --model "<model>"`; use no fallback or fabricated result
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
 

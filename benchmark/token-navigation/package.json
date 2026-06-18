@@ -1,15 +1,17 @@
 {
-  "name": "joo-token-benchmark",
+  "name": "joo-token-navigation-benchmark",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "check": "node scripts/self-check.mjs",
     "materialize": "node scripts/materialize.mjs",
-    "benchmark:codex": "node scripts/run-codex-benchmark.mjs",
-    "benchmark:mock": "node scripts/mock-results.mjs && node scripts/report.mjs",
+    "benchmark": "node scripts/run-benchmark.mjs",
+    "benchmark:dry-run": "node scripts/run-benchmark.mjs --dry-run",
     "report": "node scripts/report.mjs",
-    "regenerate:joo": "node scripts/regenerate-with-joo.mjs"
+    "doctor": "node scripts/doctor.mjs"
   }
 }

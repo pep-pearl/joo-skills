@@ -166,8 +166,9 @@ Known failure patterns should be promoted by root cause, not error code, when an
 - Added explicit full-scan rules to `AI_INDEX.template.md`, `context-navigation.md`, repo navigation skill, and adapter fragments.
 - A full scan is now treated as an exception: user-requested repo-wide work or failure of exact/diff/error/router/lookup/import navigation. Filename-only scan must happen before content reads.
 
-### Token savings measurement added
+### Benchmark workflow hardened
 
-- `joo-navigation-benchmark.mjs` now reports estimated token/file savings when benchmark cases include `baseline` and `optimized` metrics.
-- `schemas/navigation-benchmark-case.schema.json` now accepts `baseline`, `optimized`, and `joo` metric objects.
-- The example benchmark case now includes baseline vs optimized file/token estimates.
+- `joo-navigation-benchmark.mjs` is now a deterministic lookup-quality check only; it does not call a model or accept estimated token metrics.
+- Added a separate isolated baseline/indexed model benchmark under `benchmark/token-navigation`.
+- Added native-runner benchmark routing: Antigravity uses `--runner agy`, Codex uses `--runner codex`, and neutral shells may use `--runner auto`.
+- Removed mock results, manual LLM judging, historical reports, and checked-in runtime artifacts. Added Windows AGY path discovery and a Git Bash PATH repair helper.

@@ -24,6 +24,7 @@ Conditional skills:
 - Use metadata maintenance after changes that affect routes, page structure, domain ownership, API/data flow, state, map/GIS, packages, first-read files, map shards, stale metadata, or promoted known failure patterns.
 - Use screen-spec alignment when official screen specs, PDFs, prototypes, or screenshots are referenced.
 - Use API integration planning when connecting frontend UI to Swagger/OpenAPI/backend endpoints.
+- Use navigation-benchmark when the user asks for benchmarking with a model. Run the repository benchmark scripts; never fabricate results when the CLI cannot run.
 
 Do not auto-load `docs/prompts/*` unless the user explicitly references them.
 

@@ -1,6 +1,4 @@
 .work/
 node_modules/
-
-results/**
-!results/mock/
-!results/mock/.gitkeep
+results/*
+!results/.gitkeep
