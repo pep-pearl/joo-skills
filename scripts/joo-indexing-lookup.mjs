@@ -162,12 +162,12 @@ function inferQueryConcerns() {
   const concerns = [];
 
   if (intent === "route-page" || /(route|router|routing|navigation|라우트|경로|내비게이션)/u.test(text)) concerns.push("route");
-  if (/(화면과|페이지와|화면의 진입|페이지 진입|screen and|page and|screen entry|page entry|layout shell)/u.test(text)) concerns.push("surface");
+  if (/(화면과|페이지와|화면의 진입|페이지 진입|붾㈃|쒕낫|screen and|page and|screen entry|page entry|layout shell)/u.test(text)) concerns.push("surface");
   const hasUrlQuery = /(url state|url query|query string|쿼리스트링|url 상태)/u.test(text);
-  if (intent === "api" || /(api|endpoint|mutation|client|swagger|openapi|backend|server request|서버|요청|응답)/u.test(text) || (!hasUrlQuery && /(^|\s)query(\s|$)/u.test(text))) concerns.push("data");
-  if (intent === "state" || /(cache|store|state management|session|invalidate|invalidation|url state|url query|filter|reset|캐시|세션|필터|초기화|무효화|상태 관리|상태 동기화)/u.test(text)) concerns.push("state");
+  if (intent === "api" || /(api|endpoint|mutation|client|swagger|openapi|backend|server request|寃|醫륁뒞|서버|요청|응답)/u.test(text) || (!hasUrlQuery && /(^|\s)query(\s|$)/u.test(text))) concerns.push("data");
+  if (intent === "state" || /(cache|store|state management|session|invalidate|invalidation|url state|url query|filter|reset|몄뀡|λ컮援|珥덇린|캐시|세션|필터|초기화|무효화|상태 관리|상태 동기화)/u.test(text)) concerns.push("state");
   if (intent === "config" || /(config|package|workspace|build|lint|tsconfig|프로젝트 설정|빌드 설정)/u.test(text)) concerns.push("config");
-  if (/(label|badge|render|format|formatter|mapping|mapper|button|toggle|validation|status|field|form|input|라벨|배지|렌더|포맷|매핑|버튼|토글|검증|상태값|입력란|입력 필드|폼)/u.test(text)) concerns.push("behavior");
+  if (/(label|badge|render|format|formatter|mapping|mapper|button|toggle|validation|status|field|form|input|荑좏룿|낅젰|湲덉븸|щ㎎|krw|곹깭|delivering|라벨|배지|렌더|포맷|매핑|버튼|토글|검증|상태값|입력란|입력 필드|폼)/u.test(text)) concerns.push("behavior");
 
   if (!concerns.length) concerns.push(intent || "domain");
   return unique(concerns);
@@ -288,7 +288,10 @@ function scoreRecord(record) {
   }
   if (queryTokens.length && matchedTokens === queryTokens.length) score += 100;
   else if (queryTokens.length) score += Math.round((matchedTokens / queryTokens.length) * 60);
-  if (rawQueryPhrases.length && matchedTokens === 0 && !exactPath && !intent && !domain) score -= 400;
+  if (rawQueryPhrases.length && matchedTokens === 0 && !exactPath && !intent && !domain) {
+    const concernMatch = concernsForRecord(record).some((concern) => requiredConcerns.includes(concern));
+    score -= concernMatch ? 80 : 400;
+  }
 
   score += roleScore(record);
   if (record.confidence && /manual-reviewed|high/i.test(record.confidence)) score += 30;

@@ -1,5 +1,14 @@
 # Navigation Benchmark Skill
 
+## Adaptive Indexing Benchmark Rule
+
+Separate two questions:
+
+1. Index efficacy: run the normal A/B benchmark with `--indexing-mode force`, even for a small fixture.
+2. Activation quality: run the deterministic activation self-check or an explicit `--indexing-mode auto` experiment.
+
+Never detect a benchmark by path name. Record recommended auto level, actual indexed level, forced status, and the indexed artifact byte size. Budget-policy validation is a separate deterministic test; a small efficacy fixture must not silently disable indexing.
+
 ## Trigger
 
 Use this skill when the user asks for repository navigation benchmarking, especially with wording such as:
@@ -37,8 +46,8 @@ From the repository root:
 ```bash
 npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner agy --model "<model>"
-npm run benchmark -- --runner agy --model "<model>"
+npm run benchmark:dry-run -- --runner agy --model "<model>" --indexing-mode force
+npm run benchmark -- --runner agy --model "<model>" --indexing-mode force
 ```
 
 The runner resolves AGY from `PATH`, `AGY_BIN`, or the official Windows location `%LOCALAPPDATA%\agy\bin\agy.exe`. It validates the exact model through `agy models` before starting.
@@ -48,8 +57,8 @@ The runner resolves AGY from `PATH`, `AGY_BIN`, or the official Windows location
 ```bash
 npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner codex --model "<model>"
-npm run benchmark -- --runner codex --model "<model>"
+npm run benchmark:dry-run -- --runner codex --model "<model>" --indexing-mode force
+npm run benchmark -- --runner codex --model "<model>" --indexing-mode force
 ```
 
 Optional Codex-only settings:
@@ -79,6 +88,17 @@ If the run cannot be continued, finalize the partial report:
 npm run benchmark:finalize -- --dir latest
 ```
 
+## Budget Policy Check
+
+Before claiming that adaptive indexing is production-ready, also run:
+
+```bash
+npm run test:assessment
+npm run test:budget
+```
+
+These deterministic checks cover activation levels, ROI-based profile selection, hard byte caps, priority eviction, minimum domain representation, and replacement stability. They are separate from the model navigation A/B result.
+
 ## Validation
 
 The runner must:
@@ -102,4 +122,4 @@ Read the newly created:
 benchmark/token-navigation/results/<timestamp>/report.md
 ```
 
-Report the status, overall verdict, separate quality/efficiency verdicts, paired exact McNemar p-value, runner, requested model, valid/failed run counts, accuracy comparison, token comparison only when complete, and result directory. Clarify that the quality gate is not itself a statistical-significance claim.
+Report the status, overall verdict, separate quality/efficiency verdicts, paired exact McNemar p-value, runner, requested model, valid/failed run counts, accuracy comparison, token comparison only when complete, indexing mode, forced status, indexed artifact byte size, and result directory. Clarify that the quality gate is not itself a statistical-significance claim.

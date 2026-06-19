@@ -1,5 +1,31 @@
 # Repo Indexing Output Contract
 
+## Assessment Summary
+
+```txt
+[INDEXING_ASSESSMENT]
+
+Mode:
+- auto / force / off
+
+Recommended level:
+- 0 / 1 / 2 / 3
+
+Actual level:
+- 0 / 1 / 2 / 3
+
+Signals:
+- metric: contribution
+
+Artifact budget:
+- budget bytes:
+- actual bytes:
+- exceeded: yes/no
+
+Decision:
+- direct navigation / router only / bounded shards / lookup-enabled index
+```
+
 ## Init Summary
 
 ```txt

@@ -21,6 +21,8 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 /diff impact        -> 이미 변경된 diff에서 read next / skip / metadata shard 판정
 /diff review        -> changed files + direct imports + matching tests 중심 리뷰
 /diff fix-plan      -> 기존 diff를 고치기 위한 최소 수정 계획
+/feedback review     -> 검증된 사용자 정정을 임시 incident와 advisory lesson 후보로 정리
+/feedback promote    -> 반복·고비용 후보의 승격/폐기/재검증 검토
 ```
 
 `AI_INDEX.md`와 `.ai/indexing/maps/*`는 architecture 문서가 아니라 **AI가 다음에 읽을 파일을 고르는 disposable navigation hint**입니다. 실제 truth는 항상 source, import, test, runtime behavior입니다.
@@ -33,7 +35,7 @@ AI가 새 프로젝트를 만났을 때 바로 전체 repo를 훑지 않고, 먼
 exact files / changed files / error anchors beat AI_INDEX
 run npm run diff:impact for existing changes; fallback to changed files directly
 read at most one map shard before source
-after source is found, follow imports/callers/tests only for unresolved concerns and stop when required concerns are covered
+after source is found, follow imports/callers/tests
 source/imports/tests beat metadata
 no full repo scan by default; if unavoidable, scan filenames before contents
 ```
@@ -50,11 +52,13 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 - route/API/state/package/domain 구조가 바뀐 PR에서 AI navigation metadata도 같이 갱신해야 하는지 확인하고 싶을 때
 - “주문 상세 화면 고쳐줘”처럼 자연어 요청이 들어왔을 때, 가장 작은 first-read 파일 후보를 빠르게 찾고 싶을 때
 - 반복되는 failure triage나 screen/API 작업에서 agent가 같은 실수를 반복하지 않게 하고 싶을 때
+- 사용자 정정이 반복되지만 감정·사과문이 아니라 검증된 future-task 교훈으로만 남기고 싶을 때
 
 굳이 쓰지 않아도 되는 경우:
 
 - 파일 수가 적고 진입점이 명확한 작은 repo
 - 한두 파일만 고치는 단순 수정
+- 단순 불만·욕설을 장기 학습 신호로 저장하려는 경우
 - index를 최신 상태로 유지할 사람이 전혀 없는 repo
 - source보다 metadata를 더 신뢰하게 만드는 방식의 문서화
 
@@ -68,6 +72,7 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 │  ├─ repo-navigation/               # 최소 파일 읽기 / intent classification / import-following
 │  ├─ pr-diff-impact/                # PR/diff/staged 변경 기반 영향 범위 / review / fix-plan
 │  ├─ failure-triage/                # 에러 로그 기반 임시 라우팅 / known failure 승격 기준
+│  ├─ feedback-compound/             # 사용자 정정 검증 / 현재 수정 / future advisory lesson 후보
 │  ├─ ai-metadata-maintenance/       # AI_INDEX, map shards, sidecar file hints 유지보수
 │  ├─ frontend-fsd-navigation/       # FE/FSD/React Router 탐색
 │  ├─ frontend-next-app-navigation/  # Next.js App Router 탐색
@@ -87,7 +92,10 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 │  └─ reports/                       # audit/maintenance report 템플릿
 ├─ scripts/
 │  ├─ joo-indexing-install.mjs       # 대상 프로젝트 bootstrap 파일 복사
-│  ├─ joo-indexing-scan.mjs          # repo 구조 scan + candidate/map shard 생성
+│  ├─ joo-indexing-scan.mjs          # adaptive scan + budgeted priority eviction
+│  ├─ joo-indexing-assess.mjs        # Level 0~3 필요성 평가
+│  ├─ joo-indexing-observe.mjs       # 로컬 사용/오류/ROI 신호 기록
+│  ├─ lib/joo-indexing-budget.mjs    # profile, priority, retention, eviction
 │  ├─ joo-indexing-validate.mjs      # stale path/source header/security-looking path 검증
 │  ├─ joo-indexing-lookup.mjs        # exact path/keyword/intent lookup
 │  ├─ joo-diff-impact.mjs            # PR/diff/staged 기반 영향 범위와 read plan
@@ -96,12 +104,14 @@ no full repo scan by default; if unavoidable, scan filenames before contents
 │  └─ joo-navigation-benchmark.mjs   # navigation benchmark case 측정
 ├─ benchmark/
 │  ├─ prompt.md                      # “벤치마킹 해줘. 모델: …” 자동 실행 계약
-│  └─ token-navigation/              # isolated baseline/indexed fixture와 runner
+│  ├─ token-navigation/              # isolated baseline/indexed fixture와 runner
+│  └─ feedback-compound/             # baseline/skilled incident 판단 A/B runner
 ├─ docs/
 │  ├─ skill-map.md
 │  ├─ install-targets.md
 │  ├─ borrowed-patterns.md
 │  ├─ design-principles.md
+│  ├─ feedback-compound-design.md
 │  └─ indexing-shards.md
 └─ examples/
    └─ react-fsd-monorepo/
@@ -159,19 +169,14 @@ node /path/to/joo-skills/scripts/joo-indexing-scan.mjs \
 생성되는 후보 파일:
 
 ```txt
-.ai/indexing/AI_INDEX.candidate.md
-.ai/indexing/indexing-report.json
-.ai/indexing/file-map.candidate.json
-.ai/indexing/file-hints.candidate.md
-.ai/indexing/source-header-exceptions.md
-.ai/indexing/manifest.json
-.ai/indexing/maps/root.md
-.ai/indexing/maps/routes.md
-.ai/indexing/maps/behavior.md
-.ai/indexing/maps/api.md
-.ai/indexing/maps/state.md
-.ai/indexing/maps/packages.md
-.ai/indexing/maps/domains/*.md
+.ai/indexing/assessment-report.json
+.ai/indexing/AI_INDEX.candidate.md              # Level 1+
+.ai/indexing/manifest.json                     # Level 2+
+.ai/indexing/maps/*.md                         # 선택된 shard만, Level 2+
+.ai/indexing/file-map.candidate.json           # byte-capped, Level 3
+.ai/indexing/indexing-report.json              # maintenance summary
+.ai/indexing/priority-state.json               # local stability state; runtime에서 읽지 않음
+.ai/indexing/priority-report.json              # opt-in maintenance diagnostics
 ```
 
 이 단계는 source runtime logic을 고치지 않습니다. 생성된 candidate를 사람이 리뷰하거나 AI에게 “candidate를 보고 `AI_INDEX.md` router로 정리해줘”라고 맡기면 됩니다.
@@ -261,6 +266,9 @@ Only use AI_INDEX.md if the error anchor is not enough.
 | `/diff review` | 변경 파일과 직접 import/matching test 중심으로 리뷰합니다. | PR 리뷰에서 unrelated shard를 읽지 않고 싶을 때 | review focus, targeted tests, stale metadata risk |
 | `/diff fix-plan` | 기존 diff를 고치기 위한 최소 수정 계획을 만듭니다. | 이미 변경된 코드에서 무엇만 고칠지 정리할 때 | patch targets, verification, metadata decision |
 | `/diff-check` | 변경된 source가 metadata 갱신을 요구하는지 확인합니다. | PR에서 `AI_INDEX.md`/maps 갱신 누락을 잡고 싶을 때 | routes/api/state/packages/domain별 갱신 필요 경고 |
+| `/feedback review` | 명시적 사용자 정정이나 검증 가능한 지시/범위 위반을 현재 수정과 임시 incident로 정리합니다. | 사용자 정정이 실제 요구와 결과의 불일치인지 확인할 때 | correction, evidence, promotion=no/candidate, next-task isolation |
+| `/feedback promote` | 기존 lesson 후보를 반복 root cause·환경 유효성·비용 기준으로 검토합니다. | candidate를 keep/revise/archive/supersede할 때 | promotion review, stale action, advisory-only decision |
+| `/benchmark feedback` | baseline/skilled feedback 판단 A/B 벤치를 실행합니다. | skill이 오탐·과잉 승격 없이 개선되는지 볼 때 | `benchmark/feedback-compound/results/<timestamp>/report.md` |
 | `/benchmark navigation` | 저장된 navigation case로 deterministic lookup 품질을 검사합니다. | index 구조를 바꾼 뒤 lookup 회귀를 확인할 때 | pass/warn/fail, first hit position, average score |
 | `벤치마킹 해줘. 모델: <model>` | 합성 fixture의 baseline/indexed를 지정 모델로 A/B 실행합니다. | 실제 모델의 navigation 정확도·토큰·시간을 비교할 때 | `benchmark/token-navigation/results/<timestamp>/report.md` |
 
@@ -288,6 +296,7 @@ node /path/to/joo-skills/scripts/joo-indexing-install.mjs --target .
 | --- | --- |
 | `--target <dir>` | 파일을 설치할 대상 프로젝트 root |
 | `--force` | 기존 파일도 덮어쓰기 |
+| `--with-feedback-compound` | 선택적으로 `rules/feedback-compound.md` 설치 |
 
 ### `joo-indexing-scan.mjs`
 
@@ -493,6 +502,8 @@ npm run diff:fix-plan
 npm run diff-check
 npm run diff-check:strict
 npm run benchmark:navigation
+npm run benchmark:feedback:check
+npm run benchmark:feedback -- --runner codex --model "MODEL" --reasoning medium --repeat 3
 ```
 
 주의할 점:
@@ -588,12 +599,111 @@ node /path/to/joo-skills/scripts/joo-navigation-benchmark.mjs \
 ```
 
 
+## Verified Feedback Compound: 반성문이 아니라 증거 기반 future-task 학습
+
+상세 설계는 [`docs/feedback-compound-design.md`](docs/feedback-compound-design.md), 실행 계약은 [`skills/feedback-compound/SKILL.md`](skills/feedback-compound/SKILL.md)에 있습니다.
+
+핵심 원칙:
+
+```txt
+사용자 정정/지시 위반
+-> expected vs actual 검증
+-> 현재 작업부터 최소 수정
+-> root cause는 기본 hypothesis
+-> 반복·고비용·고위험일 때만 advisory candidate
+-> 새 lesson은 다음 task부터
+```
+
+기본 설치에는 포함하지 않습니다. 대상 프로젝트가 필요할 때만:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-install.mjs \
+  --target . \
+  --with-feedback-compound
+```
+
+학습 강도는 `observe`, `advisory`, `promotion-review` 세 단계만 사용합니다. 러프한 프로젝트에서는 `observe`로 즉시 수정만 하고, 공용 API·다른 팀 ownership·운영·데이터·보안 경계는 어떤 모드에서도 느슨하게 만들지 않습니다.
+
+자연어 lesson은 권한이 아니라 advisory hint입니다. 테스트, lint, schema, CI, permission 같은 executable control로 별도 승격되기 전에는 작업을 차단하지 않습니다.
+
+피드백 벤치:
+
+```bash
+npm run benchmark:feedback:doctor -- --runner codex
+npm run benchmark:feedback:check
+npm run benchmark:feedback:dry-run -- --runner codex --model "MODEL"
+npm run benchmark:feedback -- --runner codex --model "MODEL" --reasoning medium --repeat 3
+```
+
+이 벤치는 profanity, 근거 없는 sarcasm, 사용자의 잘못된 정정, technical-only failure, stale lesson, current-task lesson reuse, policy poisoning 같은 negative/control case를 결정론적으로 채점합니다. `SAFE_TO_SHADOW`는 advisory shadow test만 허용하며 자동 policy mutation을 뜻하지 않습니다.
+
+
+## Adaptive indexing: 인덱스가 소스보다 비싸지지 않게 하기
+
+상세 정책과 명령은 [`ADAPTIVE_INDEXING.md`](ADAPTIVE_INDEXING.md)에 정리돼 있습니다.
+
+인덱스는 문서가 아니라 **용량 제한이 있는 navigation cache**로 취급합니다. `npm run scan`은 먼저 Level 0~3을 판단하고, 그다음 `tight / balanced / retentive` profile로 전체 byte, shard 수, domain shard 수, shard별 entry 수를 제한합니다.
+
+```bash
+npm run assess:index
+npm run scan             # level auto + profile auto
+npm run scan:tight
+npm run scan:balanced
+npm run scan:retentive
+npm run scan:force       # index efficacy 실험용 Level 3; budget은 유지
+npm run scan:off
+```
+
+우선순위는 LLM이 아니라 deterministic Node script가 계산합니다.
+
+- 최근 사용 빈도와 recency
+- 동일 basename 중복과 legacy/archive/generated 혼재
+- file bytes와 import 수를 이용한 저비용 복잡도 proxy
+- 최근 error/failing-test 관찰
+- changed file과 behavior/state/data/route 역할
+- 수동 path/domain/concern pin
+- 기존 entry의 최소 체류 기간과 refresh당 최대 교체 비율
+
+새 entry가 들어와 예산을 넘으면 pin·최근 error·최소 체류 entry를 우선 보호하고, 나머지는 `priority / estimated index bytes`가 낮은 순서로 제외합니다. generated map의 고정 heading 크기도 미리 예약하므로 profile budget이 entry에 전부 소비되지 않습니다.
+
+설정 파일은 `joo-indexing.config.json` 또는 `.joo-indexing.json`입니다. 예시는 `examples/indexing/joo-indexing.config.example.json`에 있습니다.
+
+최근 탐색과 ROI를 반영할 수 있습니다.
+
+```bash
+npm run observe:navigation -- \
+  --commands 9 \
+  --tool-output-chars 18000 \
+  --domain checkout \
+  --concern validation \
+  --file apps/storefront/src/features/coupon/ui/CouponField.tsx \
+  --error \
+  --index-used \
+  --saved-chars 12000 \
+  --index-read-chars 1800 \
+  --maintenance-chars 400
+```
+
+ROI 근거가 없으면 `auto`는 보수적으로 동작합니다. Level 3이라는 이유만으로 `retentive`를 선택하지 않으며, 반복해서 손해가 관측되면 `tight`로 축소합니다.
+
+다음 파일은 runtime navigation context가 아닙니다. 일반 작업 중 읽지 않습니다.
+
+```txt
+.ai/indexing/assessment-report.json
+.ai/indexing/assessment-state.json
+.ai/indexing/priority-report.json
+.ai/indexing/priority-state.json
+.ai/indexing/local-usage.json
+```
+
+벤치마크는 작은 fixture의 자동 비활성화와 index 자체 효능을 섞지 않습니다. index efficacy는 `--indexing-mode force`, activation/budget policy는 `auto`와 deterministic self-check로 별도 측정합니다.
+
 ## 실제 모델 navigation A/B 벤치마크
 
 저장소 루트에서 다음처럼 실행합니다.
 
 ```bash
-npm run benchmark -- --runner agy --model "YOUR_MODEL"
+npm run benchmark -- --runner agy --model "YOUR_MODEL" --indexing-mode force
 ```
 
 사용자가 coding agent에게 `벤치마킹 해줘. 모델: YOUR_MODEL`이라고 요청하면 `skills/navigation-benchmark/SKILL.md`와 `benchmark/prompt.md`를 따라 같은 명령을 실행합니다. 기본 반복은 3회이며, Antigravity는 모델 이름에 포함된 reasoning variant를 사용하고 Codex에서만 reasoning 기본값 medium을 사용합니다.
@@ -609,18 +719,21 @@ Antigravity에서 실행할 때는 `--runner agy`, Codex에서 실행할 때는 
 | File | 역할 | 사람이 볼 때 |
 | --- | --- | --- |
 | `AI_INDEX.md` | 가장 먼저 읽는 작은 router | 길어지면 실패 신호입니다. 상세 tree가 아니라 어느 shard/file로 갈지 알려줘야 합니다. |
+| `.ai/indexing/assessment-report.json` | adaptive activation 판단과 실제 artifact 예산 | Level 0~3, 신호, 권장/실제 level, budget 초과 여부를 확인합니다. |
+| `.ai/indexing/assessment-state.json` | hysteresis용 로컬 상태 | runtime agent가 읽지 않습니다. |
+| `.ai/indexing/priority-state.json` | 최소 체류·교체 제한용 로컬 상태 | runtime agent가 읽지 않습니다. |
+| `.ai/indexing/priority-report.json` | opt-in 우선순위 진단 | 기본 생성하지 않으며 maintenance 때만 봅니다. |
 | `.ai/indexing/AI_INDEX.candidate.md` | scan 결과로 만든 router 후보 | 그대로 복붙하기보다 사람이/AI가 compact하게 정리합니다. |
-| `.ai/indexing/manifest.json` | scan summary와 shard 목록 | scan 범위, mode, 파일 수, warnings를 확인합니다. |
+| `.ai/indexing/manifest.json` | compact shard 목록과 budget profile | runtime에서는 shard 존재 여부만 사용합니다. |
 | `.ai/indexing/maps/root.md` | 모호한 요청의 top-level fallback | 자연어/기획식 요청이 route/API/state로 안 좁혀질 때만 봅니다. |
 | `.ai/indexing/maps/routes.md` | route/page/screen 시작점 | 화면, URL, navigation, layout 작업에서 봅니다. |
-| `.ai/indexing/maps/behavior.md` | label/formatter/validation/UI action 소유 파일 | 구체적인 동작 앵커를 route/page보다 먼저 찾을 때 봅니다. |
 | `.ai/indexing/maps/api.md` | API/query/client/OpenAPI 시작점 | backend 연동, query/mutation, generated client 경계 확인 때 봅니다. |
 | `.ai/indexing/maps/state.md` | store/cache/session 시작점 | auth/session/cache/global state 작업에서 봅니다. |
 | `.ai/indexing/maps/packages.md` | package/workspace/build/test config 시작점 | dependency, build, lint, test, monorepo 설정 변경 때 봅니다. |
 | `.ai/indexing/maps/domains/*.md` | domain별 compact map | 요청이 특정 domain으로 좁혀졌을 때만 1개 정도 봅니다. |
 | `.ai/indexing/file-map.candidate.json` | sidecar file hints | lookup/benchmark의 검색 재료입니다. source truth가 아닙니다. |
 | `.ai/indexing/file-hints.candidate.md` | 사람이 읽기 쉬운 file hint 후보 | 중요한 파일 설명을 sidecar로 남길지 리뷰합니다. |
-| `.ai/indexing/indexing-report.json` | scan 상세 보고서 | generated/sensitive/truncated 경고와 후보 분류를 확인합니다. |
+| `.ai/indexing/indexing-report.json` | compact maintenance summary | runtime agent가 읽지 않습니다. |
 
 ## Runtime Navigation Rule
 

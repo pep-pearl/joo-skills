@@ -189,3 +189,27 @@ This repo borrows ideas from workflow/agent ecosystems:
 - sharded navigation maps
 
 It intentionally keeps the implementation personal, lightweight, optional, and copy-ready.
+
+
+## 11. Advisory Learning, Not Autonomous Policy
+
+Verified user correction can create a temporary incident and a future-task advisory lesson candidate. It does not automatically become policy.
+
+Rules:
+
+- emotion is a trigger, not evidence;
+- correction happens before reflection;
+- root cause stays a hypothesis without independent evidence;
+- a lesson created in Task N starts no earlier than Task N+1;
+- natural-language lessons cannot grant permissions or weaken safety;
+- one-off incidents are not persisted by default;
+- persistent lessons declare repository, branch, architecture, environment, and anchor applicability;
+- stale lessons leave normal retrieval before rebind/generalize/archive;
+- load at most three deduplicated lesson cards;
+- use a test, lint, schema, CI, or permission rule when a repeated lesson can become an executable control.
+
+## 12. Learning Must Fit Inside A Budget
+
+The feedback layer must remain smaller than the correction it manages. Default budget: one analysis pass, zero to three related lessons, zero raw incident expansions, one candidate, and one follow-up skill candidate. If there is no verified mismatch, there should be no feedback-learning output.
+
+Measure false incidents, over-promotion, stale retrieval, user bypass, token overhead, and repeated-error reduction. Disable or shrink the layer when maintenance cost approaches saved rework.

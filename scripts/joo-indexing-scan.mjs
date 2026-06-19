@@ -26,6 +26,18 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { assessRepositoryFiles, resolveIndexingDecision } from "./lib/joo-indexing-assessment.mjs";
+import {
+  buildUsageIndex,
+  chooseShards,
+  createPriorityState,
+  loadPriorityState,
+  previousEntriesForShard,
+  readUsageEvents,
+  resolveBudgetPolicy,
+  scoreIndexEntry,
+  selectEntriesWithinBudget
+} from "./lib/joo-indexing-budget.mjs";
 
 const args = process.argv.slice(2);
 
@@ -49,7 +61,11 @@ function hasFlag(name) {
 
 const target = path.resolve(getArg("--target", "."));
 const outDir = path.resolve(getArg("--out", path.join(target, ".ai", "indexing")));
-const emitMaps = !hasFlag("--no-maps");
+const emitMapsRequested = !hasFlag("--no-maps");
+const indexingMode = String(getArg("--mode", getArg("--indexing-mode", "auto"))).trim().toLowerCase();
+const requestedLevel = getArg("--level", null);
+const requestedProfile = String(getArg("--profile", "auto")).trim().toLowerCase();
+const budgetConfigPath = getArg("--budget-config", null);
 // Safe-by-default scanning. Positive flags are kept as backward-compatible no-ops.
 // Use explicit opt-out flags only for trusted local repos where broader indexing is intentional.
 const respectGitignore = !hasFlag("--no-respect-gitignore");
@@ -58,9 +74,9 @@ const includeGenerated = hasFlag("--include-generated");
 const candidateOnly = hasFlag("--candidate-only");
 const allowSourceHeaders = hasFlag("--source-headers");
 const respectAiIgnore = !hasFlag("--no-respect-ai-ignore");
-const maxFilesPerMap = Number(getArg("--max-files-per-map", "80"));
-const maxMapTokens = Number(getArg("--max-map-tokens", "1600"));
-const maxDomainMaps = Number(getArg("--max-domain-maps", "16"));
+let maxFilesPerMap = Number(getArg("--max-files-per-map", "80"));
+let maxMapTokens = Number(getArg("--max-map-tokens", "1600"));
+let maxDomainMaps = Number(getArg("--max-domain-maps", "16"));
 const maxTotalFiles = Number(getArg("--max-total-files", "0"));
 const maxDepth = Number(getArg("--max-depth", "0"));
 const changedSince = getArg("--changed-since", null);
@@ -128,7 +144,7 @@ const SENSITIVE_PATH_PATTERNS = [
   /(^|\/)(secret|secrets)(\/|\.|$)/i,
   /(^|\/)(credential|credentials)(\/|\.|$)/i,
   /(^|\/)(private|internal-only)(\/|\.|$)/i,
-  /(api[_-]?key|token|password|passwd)/i,
+  /(^|\/)(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd)(\.|\/|$)/i,
 ];
 
 const IMPORTANT_FILE_PATTERNS = [
@@ -313,7 +329,7 @@ function keywordsFor(file, kind = "file") {
   if (/routes?|router/i.test(file)) pieces.add("route");
   if (hasStateSignal(file)) pieces.add("state");
   if (/badge|label|formatter|format|mapper|button|field|toggle|card/i.test(file)) pieces.add("behavior");
-  return [...pieces].slice(0, 10);
+  return [...pieces].slice(0, 3);
 }
 
 function anchorsFor(file, kind = "file") {
@@ -376,14 +392,16 @@ function confidenceFor(file) {
   return "low path-heuristic";
 }
 
+function formatHintLine(file, kind = "file") {
+  const hint = toFileHint(file, kind);
+  const domain = hint.domain ? `; domain: ${hint.domain}` : "";
+  const anchors = hint.anchors.length ? `; anchors: ${hint.anchors.join(", ")}` : "";
+  const keywords = hint.keywords.length ? `; keywords: ${hint.keywords.join(", ")}` : "";
+  return `- \`${file}\`; role: ${hint.role}; concern: ${hint.concern}; scope: ${hint.scope}${domain}${anchors}${keywords}; confidence: ${hint.confidence}`;
+}
+
 function asFileMap(items, kind, limit = maxFilesPerMap, tokenBudget = maxMapTokens) {
-  const rawLines = items.slice(0, limit).map((f) => {
-    const hint = toFileHint(f, kind);
-    const domain = hint.domain ? `; domain: ${hint.domain}` : "";
-    const anchors = hint.anchors.length ? `; anchors: ${hint.anchors.join(", ")}` : "";
-    const keywords = hint.keywords.length ? `; keywords: ${hint.keywords.join(", ")}` : "";
-    return `- \`${f}\`; role: ${hint.role}; concern: ${hint.concern}; scope: ${hint.scope}${domain}${anchors}${keywords}; confidence: ${hint.confidence}`;
-  });
+  const rawLines = items.slice(0, limit).map((f) => formatHintLine(f, kind));
   const packed = truncateByTokenBudget(rawLines, tokenBudget);
   const lines = packed.lines;
   const remaining = Math.max(0, items.length - lines.length);
@@ -433,6 +451,21 @@ function writeFile(rel, content) {
   fs.writeFileSync(abs, content.trimEnd() + "\n", "utf8");
 }
 
+function cleanupManagedArtifacts() {
+  const files = [
+    "AI_INDEX.candidate.md",
+    "assessment-report.json",
+    "indexing-report.json",
+    "file-map.candidate.json",
+    "file-hints.candidate.md",
+    "source-header-exceptions.md",
+    "manifest.json",
+    "priority-report.json"
+  ];
+  for (const rel of files) fs.rmSync(path.join(outDir, rel), { force: true });
+  fs.rmSync(path.join(outDir, "maps"), { recursive: true, force: true });
+}
+
 function getChangedFiles() {
   if (!changedSince) return null;
   try {
@@ -454,8 +487,101 @@ function getChangedFiles() {
 }
 
 const allFiles = walk(target).sort();
+
+const assessmentStatePath = path.join(outDir, "assessment-state.json");
+let previousAssessmentLevel = null;
+try {
+  const previousState = JSON.parse(fs.readFileSync(assessmentStatePath, "utf8"));
+  if (Number.isInteger(Number(previousState.actualLevel))) previousAssessmentLevel = Number(previousState.actualLevel);
+} catch { /* first assessment or unreadable state */ }
+
+const assessment = assessRepositoryFiles({
+  target,
+  files: allFiles,
+  previousLevel: previousAssessmentLevel
+});
+const indexingDecision = resolveIndexingDecision({
+  mode: indexingMode,
+  requestedLevel,
+  recommendedLevel: assessment.recommendedLevel,
+  score: assessment.score,
+  previousLevel: previousAssessmentLevel
+});
+const actualIndexingLevel = indexingDecision.actualLevel;
+const usageEvents = readUsageEvents(target);
+const budgetPolicy = resolveBudgetPolicy({
+  target,
+  level: actualIndexingLevel,
+  assessment,
+  requestedProfile,
+  configPath: budgetConfigPath,
+  usageEvents
+});
+if (budgetPolicy.warning) scanWarnings.push(budgetPolicy.warning);
+if (budgetPolicy.roi.status === "poor" && budgetPolicy.policy.autoShrinkOnPoorRoi) {
+  scanWarnings.push("Measured indexing ROI is poor; the budget profile was tightened to avoid further expansion.");
+}
+const effectiveBudgetBytes = budgetPolicy.limits.totalBytes;
+const emitMaps = emitMapsRequested && actualIndexingLevel >= 2 && !candidateOnly;
+const emitFileMapAllowed = actualIndexingLevel >= 3 && budgetPolicy.limits.poolBytes.fileMap >= 1_000;
+const emitDetailedHints = actualIndexingLevel >= 3 && hasFlag("--detailed-hints");
+
+maxFilesPerMap = Math.min(maxFilesPerMap, budgetPolicy.limits.maxEntriesPerShard);
+maxMapTokens = Math.min(maxMapTokens, budgetPolicy.limits.maxMapTokens);
+maxDomainMaps = Math.min(maxDomainMaps, budgetPolicy.limits.maxDomainShards);
+if (actualIndexingLevel <= 1) maxDomainMaps = 0;
+
+const priorityStatePath = path.join(outDir, "priority-state.json");
+const previousPriorityState = loadPriorityState(priorityStatePath);
+
 const scanTruncated = Boolean(maxTotalFiles && allFiles.length >= maxTotalFiles);
 if (scanTruncated) scanWarnings.push(`File walk reached --max-total-files ${maxTotalFiles}; output is truncated.`);
+
+cleanupManagedArtifacts();
+
+if (actualIndexingLevel === 0) {
+  let actualBytes = 0;
+  const persistLevelZero = () => {
+    writeFile("assessment-report.json", JSON.stringify({
+      ...assessment,
+      decision: indexingDecision,
+      budgetPolicy,
+      artifacts: {
+        actualBytes,
+        budgetBytes: effectiveBudgetBytes,
+        budgetExceeded: actualBytes > effectiveBudgetBytes
+      }
+    }, null, 2));
+    writeFile("assessment-state.json", JSON.stringify({
+      assessedAt: assessment.assessedAt,
+      score: assessment.score,
+      recommendedLevel: assessment.recommendedLevel,
+      actualLevel: 0,
+      mode: indexingMode,
+      budgetProfile: budgetPolicy.resolvedProfile,
+      actualArtifactBytes: actualBytes,
+      artifactBudgetBytes: effectiveBudgetBytes
+    }, null, 2));
+  };
+  persistLevelZero();
+  actualBytes = outputDirectoryBytes(outDir, isNavigationArtifact);
+  persistLevelZero();
+  actualBytes = outputDirectoryBytes(outDir, isNavigationArtifact);
+  persistLevelZero();
+
+  console.log(`Indexing assessment for ${target}`);
+  console.log(`- mode: ${indexingMode}`);
+  console.log(`- recommended auto level: ${assessment.recommendedLevel}`);
+  console.log(`- actual level: 0 (${indexingDecision.reason})`);
+  console.log(`- assessment-report.json`);
+  console.log(`- assessment-state.json`);
+  console.log("- no index generated; direct navigation is currently cheaper");
+  if (scanWarnings.length) {
+    console.log("Warnings:");
+    for (const warning of scanWarnings) console.log(`- ${warning}`);
+  }
+  process.exit(0);
+}
 
 const changedFiles = getChangedFiles();
 const candidateBaseFiles = (changedFiles ?? allFiles).sort();
@@ -485,35 +611,32 @@ const topLevelDirs = fs
   .sort();
 
 const importantFiles = allFiles.filter((f) => matchAny(f, IMPORTANT_FILE_PATTERNS)).sort();
-const entryCandidates = files.filter((f) => matchAny(f, ENTRY_CANDIDATE_PATTERNS)).sort();
+const allEntryCandidates = files.filter((f) => matchAny(f, ENTRY_CANDIDATE_PATTERNS)).sort();
 const baseFileHintCandidates = files.filter((f) => matchAny(f, HEADER_CANDIDATE_PATTERNS)).sort();
 
-const routeCandidates = files
+const allRouteCandidates = files
   .filter((f) => /routes?|router|appRoutes/i.test(path.basename(f)) || /(^|\/)(pages|app|routes)\//.test(f))
   .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
   .sort();
 
-const behaviorCandidates = files
+const allBehaviorCandidates = files
   .filter((f) => /badge|label|formatter|format|mapper|button|field|toggle|card|validator|validation|handler/i.test(path.basename(f)))
   .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
   .sort();
 
-const apiCandidates = files
+const allApiCandidates = files
   .filter((f) => /api|client|openapi|swagger|query|mutation|endpoint/i.test(f))
   .filter((f) => /\.(tsx|ts|jsx|js|json|yaml|yml|md)$/.test(f))
   .sort();
 
-const stateCandidates = files
+const allStateCandidates = files
   .filter((f) => hasStateSignal(f))
   .filter((f) => /\.(tsx|ts|jsx|js|md)$/.test(f))
   .sort();
 
-const packageCandidates = allFiles
+const allPackageCandidates = allFiles
   .filter((f) => /package\.json|pnpm-workspace|turbo\.json|nx\.json|vite\.config|next\.config|tsconfig|eslint|prettier|vitest|jest|playwright/i.test(f))
   .sort();
-
-const fileHintCandidates = [...new Set([...baseFileHintCandidates, ...behaviorCandidates])].sort();
-const sourceHeaderExceptionCandidates = allowSourceHeaders ? fileHintCandidates : [];
 
 const pageDirs = files
   .filter((f) => /(^|\/)(pages|app|routes)\//.test(f))
@@ -521,19 +644,173 @@ const pageDirs = files
   .filter(Boolean);
 const uniquePageDirs = [...new Set(pageDirs)].sort().slice(0, 80);
 
-const domainBuckets = new Map();
+const allDomainBuckets = new Map();
 for (const file of files) {
   const domain = extractDomain(file);
   if (!domain || domain.length < 2) continue;
-  if (!domainBuckets.has(domain)) domainBuckets.set(domain, []);
-  domainBuckets.get(domain).push(file);
+  if (!allDomainBuckets.has(domain)) allDomainBuckets.set(domain, []);
+  allDomainBuckets.get(domain).push(file);
 }
 
-const domainSummaries = [...domainBuckets.entries()]
+const usageIndex = buildUsageIndex(usageEvents);
+const changedSet = new Set((changedFiles ?? []).map((file) => file.replaceAll(path.sep, "/")));
+const duplicateCounts = new Map();
+for (const file of files) {
+  const base = path.basename(file).toLowerCase();
+  duplicateCounts.set(base, (duplicateCounts.get(base) ?? 0) + 1);
+}
+
+const previousSelectedPaths = new Set(
+  (previousPriorityState?.shards ?? []).flatMap((shard) => (shard.entries ?? []).map((entry) => entry.path))
+);
+const pinnedPaths = new Set(budgetPolicy.pins.paths);
+const analysisCandidates = [...new Set([
+  ...allEntryCandidates,
+  ...allRouteCandidates,
+  ...allBehaviorCandidates,
+  ...allApiCandidates,
+  ...allStateCandidates,
+  ...allPackageCandidates,
+  ...[...allDomainBuckets.values()].flat()
+])].sort((a, b) => {
+  const aPreferred = pinnedPaths.has(a) || previousSelectedPaths.has(a) || changedSet.has(a);
+  const bPreferred = pinnedPaths.has(b) || previousSelectedPaths.has(b) || changedSet.has(b);
+  if (aPreferred !== bPreferred) return aPreferred ? -1 : 1;
+  return a.localeCompare(b);
+});
+const importAnalysisSet = new Set(analysisCandidates.slice(0, budgetPolicy.limits.maxAnalyzedFiles));
+const fileMetrics = new Map();
+for (const file of analysisCandidates) {
+  const absolute = path.join(target, file);
+  let fileBytes = 0;
+  let importCount = 0;
+  try {
+    const stat = fs.statSync(absolute);
+    fileBytes = stat.size;
+    if (importAnalysisSet.has(file) && stat.size <= 512_000) {
+      const text = fs.readFileSync(absolute, "utf8");
+      importCount = (text.match(/\bimport\b|\brequire\s*\(|\bfrom\s*["']/g) ?? []).length;
+    }
+  } catch { /* one candidate may disappear during a scan */ }
+  fileMetrics.set(file, { fileBytes, importCount });
+}
+
+function scoreShardEntries(shardId, items, kind) {
+  const previousEntries = previousEntriesForShard(previousPriorityState, shardId);
+  const previousMap = new Map(previousEntries.map((entry) => [entry.path, entry]));
+  return [...new Set(items)].map((file) => {
+    const hint = toFileHint(file, kind);
+    const line = formatHintLine(file, kind);
+    const metrics = fileMetrics.get(file) ?? { fileBytes: 0, importCount: 0 };
+    return scoreIndexEntry({
+      entry: {
+        ...hint,
+        estimatedBytes: Buffer.byteLength(`${line}\n`, "utf8")
+      },
+      usageIndex,
+      duplicateCount: duplicateCounts.get(path.basename(file).toLowerCase()) ?? 1,
+      fileBytes: metrics.fileBytes,
+      importCount: metrics.importCount,
+      recentlyChanged: changedSet.has(file),
+      previous: previousMap.get(file) ?? null,
+      policy: budgetPolicy
+    });
+  });
+}
+
+const rootShard = { id: "root", kind: "entry", required: true, entries: scoreShardEntries("root", allEntryCandidates, "entry") };
+const coreShardCandidates = [
+  { id: "routes", kind: "route/page", entries: scoreShardEntries("routes", allRouteCandidates, "route/page") },
+  { id: "behavior", kind: "behavior", entries: scoreShardEntries("behavior", allBehaviorCandidates, "behavior") },
+  { id: "api", kind: "API/query", entries: scoreShardEntries("api", allApiCandidates, "API/query") },
+  { id: "state", kind: "state", entries: scoreShardEntries("state", allStateCandidates, "state") },
+  { id: "packages", kind: "package/config", entries: scoreShardEntries("packages", allPackageCandidates, "package/config") }
+].filter((shard) => shard.entries.length > 0);
+const domainShardCandidates = [...allDomainBuckets.entries()]
   .filter(([, items]) => items.length >= 2)
-  .map(([domain, items]) => ({ domain, files: items.slice(0, maxFilesPerMap), count: items.length }))
-  .sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain))
-  .slice(0, maxDomainMaps);
+  .map(([domain, items]) => ({
+    id: `domain:${domain}`,
+    domain,
+    kind: "domain",
+    count: items.length,
+    entries: scoreShardEntries(`domain:${domain}`, items, "domain")
+  }))
+  .filter((shard) => shard.entries.length > 0);
+
+const previousShardIds = (previousPriorityState?.shards ?? []).map((shard) => shard.id);
+const maxShardCount = actualIndexingLevel >= 2 ? budgetPolicy.limits.maxShards : 0;
+const domainSlotLimit = Math.min(maxDomainMaps, Math.max(0, maxShardCount - 2));
+const selectedDomainShards = domainSlotLimit > 0
+  ? chooseShards({
+      shards: domainShardCandidates,
+      maxShards: domainSlotLimit,
+      previousShardIds,
+      pinnedDomains: budgetPolicy.pins.domains
+    })
+  : [];
+const remainingCoreSlots = Math.max(0, maxShardCount - 1 - selectedDomainShards.length);
+const selectedCoreShards = remainingCoreSlots > 0
+  ? chooseShards({
+      shards: coreShardCandidates,
+      maxShards: remainingCoreSlots,
+      previousShardIds,
+      pinnedDomains: budgetPolicy.pins.domains
+    })
+  : [];
+const selectedShards = actualIndexingLevel >= 2 ? [rootShard, ...selectedCoreShards, ...selectedDomainShards] : [];
+const coreSelectionCount = Math.max(1, 1 + selectedCoreShards.length);
+const domainSelectionCount = Math.max(1, selectedDomainShards.length);
+// Reserve fixed Markdown headings/rules so entry selection does not consume the entire artifact budget.
+const estimatedShardOverheadBytes = 850;
+const perCoreBudget = Math.min(
+  budgetPolicy.limits.maxShardBytes,
+  Math.max(500, Math.floor(budgetPolicy.limits.poolBytes.core / coreSelectionCount) - estimatedShardOverheadBytes)
+);
+const perDomainBudget = Math.min(
+  budgetPolicy.limits.maxShardBytes,
+  Math.max(500, Math.floor(budgetPolicy.limits.poolBytes.domains / domainSelectionCount) - estimatedShardOverheadBytes)
+);
+
+const shardSelections = selectedShards.map((shard) => selectEntriesWithinBudget({
+  entries: shard.entries,
+  shardId: shard.id,
+  byteBudget: shard.domain ? perDomainBudget : perCoreBudget,
+  maxEntries: maxFilesPerMap,
+  previousEntries: previousEntriesForShard(previousPriorityState, shard.id),
+  policy: budgetPolicy,
+  minEntries: shard.required || (shard.domain && budgetPolicy.policy.preserveOnePerSelectedDomain) ? 1 : 0
+}));
+const selectionById = new Map(shardSelections.map((selection) => [selection.shardId, selection]));
+const selectedPaths = (shardId) => (selectionById.get(shardId)?.selected ?? []).map((entry) => entry.path);
+
+const entryCandidates = selectedPaths("root");
+const routeCandidates = selectedPaths("routes");
+const behaviorCandidates = selectedPaths("behavior");
+const apiCandidates = selectedPaths("api");
+const stateCandidates = selectedPaths("state");
+const packageCandidates = selectedPaths("packages");
+const selectedShardIds = new Set(selectedShards.map((shard) => shard.id));
+const domainSummaries = selectedDomainShards.map((shard) => ({
+  domain: shard.domain,
+  files: selectedPaths(shard.id),
+  count: shard.count,
+  priority: shard.utility
+}));
+const fileHintCandidates = [...new Set([
+  ...entryCandidates,
+  ...routeCandidates,
+  ...behaviorCandidates,
+  ...apiCandidates,
+  ...stateCandidates,
+  ...packageCandidates,
+  ...domainSummaries.flatMap((item) => item.files)
+])].sort();
+const sourceHeaderExceptionCandidates = allowSourceHeaders ? fileHintCandidates : [];
+const selectedPriorityByPath = new Map();
+for (const entry of shardSelections.flatMap((selection) => selection.selected)) {
+  const previous = selectedPriorityByPath.get(entry.path);
+  if (!previous || entry.priority > previous.priority) selectedPriorityByPath.set(entry.path, entry);
+}
 
 const generatedAt = new Date().toISOString();
 const baseMapMeta = {
@@ -541,13 +818,13 @@ const baseMapMeta = {
   lastVerified: null,
   source: "path-heuristic",
 };
-const maps = [
+const mapDefinitions = [
   {
     id: "root",
     path: ".ai/indexing/maps/root.md",
     scope: ["top-level", "ambiguous", "vague-product"],
     keywords: ["전체", "어디", "기능", "화면", "흐름", "모름", "ambiguous"],
-    tokenBudget: 1200,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   },
   {
@@ -555,7 +832,7 @@ const maps = [
     path: ".ai/indexing/maps/routes.md",
     scope: ["routes", "pages", "screens"],
     keywords: ["route", "router", "page", "screen", "url", "라우트", "페이지", "화면"],
-    tokenBudget: 1600,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   },
   {
@@ -563,7 +840,7 @@ const maps = [
     path: ".ai/indexing/maps/behavior.md",
     scope: ["behavior", "labels", "formatters", "validation", "ui-actions"],
     keywords: ["label", "badge", "format", "mapping", "button", "field", "toggle", "validation", "라벨", "포맷", "검증"],
-    tokenBudget: 1400,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   },
   {
@@ -571,7 +848,7 @@ const maps = [
     path: ".ai/indexing/maps/api.md",
     scope: ["api", "query", "client", "openapi", "backend"],
     keywords: ["api", "query", "mutation", "endpoint", "backend", "swagger", "openapi"],
-    tokenBudget: 1600,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   },
   {
@@ -579,7 +856,7 @@ const maps = [
     path: ".ai/indexing/maps/state.md",
     scope: ["state", "store", "cache", "session"],
     keywords: ["state", "store", "cache", "session", "zustand", "redux", "jotai", "recoil"],
-    tokenBudget: 1400,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   },
   {
@@ -587,7 +864,7 @@ const maps = [
     path: ".ai/indexing/maps/packages.md",
     scope: ["packages", "workspace", "build", "config"],
     keywords: ["package", "workspace", "build", "config", "lint", "test", "설정"],
-    tokenBudget: 1400,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   },
   ...domainSummaries.map(({ domain }) => ({
@@ -595,10 +872,58 @@ const maps = [
     path: `.ai/indexing/maps/domains/${domain}.md`,
     scope: ["domain", domain],
     keywords: [domain],
-    tokenBudget: 1400,
+    tokenBudget: maxMapTokens,
     ...baseMapMeta,
   })),
 ];
+const maps = mapDefinitions.filter((map) => selectedShardIds.has(map.id));
+const priorityState = createPriorityState({
+  policy: budgetPolicy,
+  shardSelections,
+  previousState: previousPriorityState,
+  now: generatedAt
+});
+const priorityReport = {
+  schemaVersion: 1,
+  generatedAt,
+  profile: budgetPolicy.resolvedProfile,
+  requestedProfile: budgetPolicy.requestedProfile,
+  totalBudgetBytes: effectiveBudgetBytes,
+  pools: budgetPolicy.limits.poolBytes,
+  roi: budgetPolicy.roi,
+  limits: {
+    maxShards: budgetPolicy.limits.maxShards,
+    maxDomainShards: budgetPolicy.limits.maxDomainShards,
+    maxEntriesPerShard: budgetPolicy.limits.maxEntriesPerShard,
+    maxShardBytes: budgetPolicy.limits.maxShardBytes,
+    minAddPriority: budgetPolicy.limits.minAddPriority,
+    removeBelowPriority: budgetPolicy.limits.removeBelowPriority,
+    minResidenceDays: budgetPolicy.limits.minResidenceDays,
+    errorProtectionDays: budgetPolicy.limits.errorProtectionDays,
+    maxReplacementRatioPerRun: budgetPolicy.limits.maxReplacementRatioPerRun
+  },
+  shards: shardSelections.map((selection) => ({
+    id: selection.shardId,
+    selected: selection.selected.length,
+    dropped: selection.dropped.length,
+    usedBytes: selection.usedBytes,
+    budgetBytes: selection.byteBudget,
+    retained: selection.retainedCount,
+    previous: selection.previousCount,
+    minimumRepresentativesRequested: selection.minimumRepresentativesRequested,
+    minimumRepresentativesKept: selection.minimumRepresentativesKept,
+    topSelected: selection.selected.slice(0, 5).map((entry) => ({
+      path: entry.path,
+      priority: entry.priority,
+      density: Number(entry.density.toFixed(6)),
+      pinned: entry.pinned,
+      protected: entry.protected
+    })),
+    lowestDropped: selection.dropped
+      .sort((a, b) => a.priority - b.priority || a.path.localeCompare(b.path))
+      .slice(0, 3)
+  }))
+};
 
 const report = {
   target,
@@ -607,6 +932,16 @@ const report = {
   packageName: packageJson?.name ?? null,
   scan: {
     mode: candidateOnly ? "candidate-only" : changedSince ? "changed-since" : "default",
+    indexingMode,
+    recommendedAutoLevel: assessment.recommendedLevel,
+    actualIndexingLevel,
+    forced: indexingDecision.forced,
+    budgetProfile: budgetPolicy.resolvedProfile,
+    requestedBudgetProfile: budgetPolicy.requestedProfile,
+    totalBudgetBytes: effectiveBudgetBytes,
+    selectedShardCount: maps.length,
+    selectedDomainShardCount: domainSummaries.length,
+    roiStatus: budgetPolicy.roi.status,
     respectGitignore,
     respectAiIgnore,
     denySensitivePaths,
@@ -639,6 +974,10 @@ const report = {
   pageDirs: uniquePageDirs,
   domainSummaries,
   maps,
+  assessment,
+  indexingDecision,
+  budgetPolicy,
+  priority: priorityReport
 };
 
 fs.mkdirSync(outDir, { recursive: true });
@@ -647,123 +986,70 @@ const scanWarningBlock = scanWarnings.length
   ? scanWarnings.map((warning) => `- ${warning}`).join("\n")
   : "- none";
 
-const aiIndexCandidate = `# AI_INDEX.candidate.md
+const aiIndexCandidate = `# AI Navigation Index Candidate
 
-Generated by \`joo-indexing-scan.mjs\`.
-
-Use this as input for an AI agent. Do not copy blindly.
+Generated by \`joo-indexing-scan.mjs\`. Disposable routing hints only; source/imports/tests are authoritative.
 
 ## Project
 
 - name: ${report.packageName ?? "TODO"}
 - package manager: ${report.packageManager}
-- top-level dirs: ${report.topLevelDirs.map((d) => `\`${d}\``).join(", ") || "TODO"}
+- indexing level: ${report.scan.actualIndexingLevel}
+- budget profile: ${report.scan.budgetProfile}
+- navigation budget: ${report.scan.totalBudgetBytes} bytes
+- ROI evidence: ${report.scan.roiStatus}
 
-## Scan Metadata
+## Runtime Rule
 
-- mode: ${report.scan.mode}
-- confidence: generated-only
-- files seen: ${report.scan.filesSeen}
-- files indexed: ${report.scan.filesIndexed}
-- generated-looking files excluded: ${report.scan.generatedFilesExcluded}
-- source headers: ${report.scan.allowSourceHeaders ? "explicitly enabled" : "disabled by default"}
-- max map tokens: ${report.scan.maxMapTokens}
-- truncated: ${report.scan.truncated ? "yes" : "no"}
+1. Exact paths, changed files, errors, and failing tests beat this index.
+2. Otherwise read at most one matching map below.
+3. Open source immediately, then follow only imports needed for unresolved concerns.
+4. Do not read maintenance files such as \`priority-report.json\`, \`priority-state.json\`, or \`assessment-report.json\`.
 
-## Scan Warnings
+## Available Shards
 
-${scanWarningBlock}
-
-## Existing Navigation Files
-
-${importantFiles
-  .filter((f) => /AGENTS\.md|CLAUDE\.md|AI_INDEX\.md/.test(f))
-  .map((f) => `- \`${f}\``)
-  .join("\n") || "- none detected"}
-
-## Suggested Router
-
-Keep \`AI_INDEX.md\` short. It should route tasks to one shard, then source files/imports.
-
-- route/page/screen work: \`.ai/indexing/maps/routes.md\`
-- vague product wording: \`.ai/indexing/maps/root.md\`
-- concrete labels/formatters/validation/UI actions: \`.ai/indexing/maps/behavior.md\`
-- API/backend/query work: \`.ai/indexing/maps/api.md\`
-- state/store/cache work: \`.ai/indexing/maps/state.md\`
-- package/build/config work: \`.ai/indexing/maps/packages.md\`
-- domain work: \`.ai/indexing/maps/domains/<domain>.md\` when present
+${maps.length
+  ? maps.map((map) => "- " + map.scope.join(", ") + ": `" + map.path + "`").join("\n")
+  : "- none at this level; use targeted filename/symbol search"}
 
 ## Trust Rule
 
-This candidate and all sidecar maps are disposable navigation hints. Source/imports/tests beat generated metadata.
-
-File-level hints live in map shards and \`.ai/indexing/file-map.candidate.json\`, not in source headers by default.
-
-If source contradicts this candidate, report stale metadata instead of forcing the index to fit.
-
-## Map Shards Generated
-
-${maps.map((m) => `- \`${m.path}\`: ${m.scope.join(", ")}; confidence: ${m.confidence}; last_verified: ${m.lastVerified ?? "unknown"}`).join("\n")}
-
-## Workspace / Config Candidates
-
-${asList(workspaceFiles)}
-
-## Entry Candidates
-
-${asList(entryCandidates)}
-
-## Route Candidates
-
-${asList(routeCandidates)}
-
-## Behavior Candidates
-
-${asList(behaviorCandidates)}
-
-## API / Query Candidates
-
-${asList(apiCandidates)}
-
-## State Candidates
-
-${asList(stateCandidates)}
-
-## Page / App Area Candidates
-
-${asList(uniquePageDirs)}
-
-## Suggested Next AI Step
-
-Create or update \`AI_INDEX.md\` as a router, then keep detailed maps in \`.ai/indexing/maps/*\`.
-
-Do not full-scan the repo. Do not paste full inventories into \`AI_INDEX.md\`.
+Generated metadata is a hint, not truth. Report stale entries and continue from source.
 `;
 
+const compactFileMapEntries = [];
+let compactFileMapBytes = 300;
+if (emitFileMapAllowed) {
+  const ranked = [...selectedPriorityByPath.values()].sort((a, b) => b.density - a.density || b.priority - a.priority || a.path.localeCompare(b.path));
+  for (const entry of ranked) {
+    const compact = {
+      path: entry.path,
+      role: entry.role,
+      concern: entry.concern,
+      domain: entry.domain || undefined,
+      anchors: entry.anchors?.slice(0, 6) ?? [],
+      confidence: entry.confidence
+    };
+    const bytes = Buffer.byteLength(JSON.stringify(compact), "utf8") + 2;
+    if (compactFileMapBytes + bytes > budgetPolicy.limits.poolBytes.fileMap) continue;
+    compactFileMapEntries.push(compact);
+    compactFileMapBytes += bytes;
+  }
+}
+const emitFileMap = emitFileMapAllowed && compactFileMapEntries.length > 0;
 const fileMapCandidate = {
-  schemaVersion: 1,
-  kind: "file-map-candidate",
+  schemaVersion: 2,
+  kind: "budgeted-file-map-candidate",
   generatedAt,
   source: "joo-indexing-scan.mjs",
   policy: {
-    sourceHeadersDefault: false,
-    sidecarMapsDefault: true,
+    profile: budgetPolicy.resolvedProfile,
+    byteBudget: budgetPolicy.limits.poolBytes.fileMap,
+    selectedEntries: compactFileMapEntries.length,
     metadataIsHintNotTruth: true,
-    exactPathLookupBeforeBroadMapRead: true,
-    maxMapTokens,
+    exactPathLookupBeforeBroadMapRead: true
   },
-  maps: {
-    root: entryCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "entry")),
-    routes: routeCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "route/page")),
-    behavior: behaviorCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "behavior")),
-    api: apiCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "API/query")),
-    state: stateCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "state")),
-    packages: packageCandidates.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "package/config")),
-    domains: Object.fromEntries(domainSummaries.map(({ domain, files: domainFiles }) => [
-      domain,
-      domainFiles.slice(0, maxFilesPerMap).map((f) => toFileHint(f, "domain")),
-    ])),
-  },
+  entries: compactFileMapEntries
 };
 
 const fileHintsCandidateMd = `# File Hints Candidate
@@ -798,6 +1084,26 @@ ${fileHintCandidates
   .join("\n") || "- none detected"}
 `;
 
+const compactReport = {
+  target: report.target,
+  generatedAt: report.generatedAt,
+  packageManager: report.packageManager,
+  packageName: report.packageName,
+  scan: report.scan,
+  topLevelDirs: report.topLevelDirs,
+  domainSummaries: report.domainSummaries.map(({ domain, count }) => ({ domain, count })),
+  maps: report.maps,
+  assessment: report.assessment,
+  indexingDecision: report.indexingDecision,
+  budget: {
+    profile: budgetPolicy.resolvedProfile,
+    totalBytes: effectiveBudgetBytes,
+    roiStatus: budgetPolicy.roi.status,
+    selectedShards: maps.length,
+    selectedEntries: shardSelections.reduce((sum, selection) => sum + selection.selected.length, 0)
+  }
+};
+
 const sourceHeaderExceptionsMd = `# Source Header Exceptions
 
 Generated by \`joo-indexing-scan.mjs\`.
@@ -826,11 +1132,34 @@ ${sourceHeaderExceptionCandidates
   .join("\n") || "- none; run with --source-headers only if the project explicitly allows source headers"}
 `;
 
-writeFile("indexing-report.json", JSON.stringify(report, null, 2));
-writeFile("file-map.candidate.json", JSON.stringify(fileMapCandidate, null, 2));
-writeFile("AI_INDEX.candidate.md", aiIndexCandidate);
-writeFile("file-hints.candidate.md", fileHintsCandidateMd);
-writeFile("source-header-exceptions.md", sourceHeaderExceptionsMd);
+writeFile("assessment-report.json", JSON.stringify({
+  ...assessment,
+  decision: indexingDecision,
+  budgetPolicy
+}, null, 2));
+writeFile("assessment-state.json", JSON.stringify({
+  assessedAt: assessment.assessedAt,
+  score: assessment.score,
+  recommendedLevel: assessment.recommendedLevel,
+  actualLevel: actualIndexingLevel,
+  mode: indexingMode,
+  budgetProfile: budgetPolicy.resolvedProfile,
+  roiStatus: budgetPolicy.roi.status
+}, null, 2));
+writeFile("priority-state.json", JSON.stringify(priorityState, null, 2));
+if (budgetPolicy.policy.recordPriorityDetails) writeFile("priority-report.json", JSON.stringify(priorityReport, null, 2));
+
+if (actualIndexingLevel >= 1) {
+  writeFile("indexing-report.json", JSON.stringify(compactReport, null, 2));
+  writeFile("AI_INDEX.candidate.md", aiIndexCandidate);
+}
+if (emitFileMap) writeFile("file-map.candidate.json", JSON.stringify(fileMapCandidate, null, 2));
+if (emitDetailedHints) writeFile("file-hints.candidate.md", fileHintsCandidateMd);
+if (emitDetailedHints && allowSourceHeaders) writeFile("source-header-exceptions.md", sourceHeaderExceptionsMd);
+
+function companionHint(shardId, availableText, fallbackText) {
+  return selectedShardIds.has(shardId) ? availableText : fallbackText;
+}
 
 function mapHeader(title) {
   return `# ${title}
@@ -848,29 +1177,24 @@ Generated by \`joo-indexing-scan.mjs\`.
 
 if (emitMaps) {
   const manifest = {
-    version: 2,
+    version: 3,
     generatedAt,
-    project: {
-      name: report.packageName ?? null,
-      packageManager,
+    project: { name: report.packageName ?? null },
+    indexing: {
+      mode: indexingMode,
+      level: actualIndexingLevel,
+      profile: budgetPolicy.resolvedProfile,
+      navigationBudgetBytes: effectiveBudgetBytes,
+      roiStatus: budgetPolicy.roi.status
     },
-    scan: report.scan,
     policy: {
-      aiIndexRole: "router-only",
-      defaultMapReadLimit: 1,
-      companionMapReadLimitWhenCoupled: 1,
-      maxMapReadLimitBeforeEdit: 2,
-      defaultSourceReadLimitBeforeDecision: 3,
-      maxSourceReadLimitBeforeDecision: 5,
-      preferImportsAfterFirstSource: true,
-      broadSearchOnlyWhenBlocked: true,
+      mapReadLimit: 1,
+      companionMapLimit: 1,
+      sourceBeforeDecision: 3,
       metadataIsHintNotTruth: true,
-      sourceHeadersDefault: false,
-      sidecarMapsDefault: true,
-      exactPathLookupBeforeBroadMapRead: true,
-      maxMapTokens,
+      exactAnchorsBeatIndex: true
     },
-    maps,
+    maps: maps.map(({ id, path: mapPath, scope, keywords }) => ({ id, path: mapPath, scope, keywords }))
   };
 
   writeFile("manifest.json", JSON.stringify(manifest, null, 2));
@@ -908,27 +1232,19 @@ If a likely source file is found, follow only imports that can cover unresolved 
 Use one companion shard only when a coupling signal exists.
 `);
 
-  writeFile("maps/routes.md", `${mapHeader("Routes / Pages Map")}
+  if (selectedShardIds.has("routes")) writeFile("maps/routes.md", `${mapHeader("Routes / Pages Map")}
 ## Scope
 
 Routes, pages, screens, navigation, layouts, route guards.
 
 ## First Read
 
-${asFileMap(routeCandidates.slice(0, 20), "route/page", 20)}
-
-## Page / App Area Candidates
-
-${asList(uniquePageDirs)}
-
-## File Map
-
 ${asFileMap(routeCandidates, "route/page")}
 
 ## Cheap Escalation
 
-- route/page + data issue -> also read \`maps/api.md\`
-- route/page + session/permission issue -> also read \`maps/state.md\`
+${companionHint("api", "- route/page + data issue -> also read `maps/api.md`", "- API shard omitted by budget; use one targeted API/query search if data remains unresolved")}
+${companionHint("state", "- route/page + session/permission issue -> also read `maps/state.md`", "- State shard omitted by budget; use one targeted store/session search if state remains unresolved")}
 
 ## Do Not Start Here
 
@@ -944,16 +1260,12 @@ ${asFileMap(routeCandidates, "route/page")}
 - route-to-page mapping changed
 `);
 
-  writeFile("maps/behavior.md", `${mapHeader("Behavior Owners Map")}
+  if (selectedShardIds.has("behavior")) writeFile("maps/behavior.md", `${mapHeader("Behavior Owners Map")}
 ## Scope
 
 Concrete labels, badges, formatters, mappers, validation, buttons, fields, toggles, and UI action handlers.
 
 ## First Read
-
-${asFileMap(behaviorCandidates.slice(0, 20), "behavior", 20)}
-
-## File Map
 
 ${asFileMap(behaviorCandidates, "behavior")}
 
@@ -973,16 +1285,12 @@ Concrete behavior anchors beat generic route/page entries. Follow related import
 - UI action handler moved to a hook or state boundary
 `);
 
-  writeFile("maps/api.md", `${mapHeader("API / Query Map")}
+  if (selectedShardIds.has("api")) writeFile("maps/api.md", `${mapHeader("API / Query Map")}
 ## Scope
 
 API clients, query/mutation hooks, OpenAPI/Swagger integration, backend endpoint mapping.
 
 ## First Read
-
-${asFileMap(apiCandidates.slice(0, 20), "API/query", 20)}
-
-## File Map
 
 ${asFileMap(apiCandidates, "API/query")}
 
@@ -994,8 +1302,8 @@ Inspect generated clients only at the exact operation/type boundary.
 
 ## Cheap Escalation
 
-- API task + visible page behavior -> also read \`maps/routes.md\`
-- API task + session/auth behavior -> also read \`maps/state.md\`
+${companionHint("routes", "- API task + visible page behavior -> also read `maps/routes.md`", "- Routes shard omitted by budget; use one targeted page/route search if surface context remains unresolved")}
+${companionHint("state", "- API task + session/auth behavior -> also read `maps/state.md`", "- State shard omitted by budget; use one targeted session/state search if state remains unresolved")}
 
 ## Do Not Start Here
 
@@ -1010,16 +1318,12 @@ Inspect generated clients only at the exact operation/type boundary.
 - generated client path changed
 `);
 
-  writeFile("maps/state.md", `${mapHeader("State / Store Map")}
+  if (selectedShardIds.has("state")) writeFile("maps/state.md", `${mapHeader("State / Store Map")}
 ## Scope
 
 Global state, stores, atoms, cache, session state, client-side persistence.
 
 ## First Read
-
-${asFileMap(stateCandidates.slice(0, 20), "state", 20)}
-
-## File Map
 
 ${asFileMap(stateCandidates, "state")}
 
@@ -1029,8 +1333,8 @@ After finding the state entry, follow imports to selectors, actions, persistence
 
 ## Cheap Escalation
 
-- state/session + route guard issue -> also read \`maps/routes.md\`
-- cache/query ownership issue -> also read \`maps/api.md\`
+${companionHint("routes", "- state/session + route guard issue -> also read `maps/routes.md`", "- Routes shard omitted by budget; use one targeted route/guard search if navigation remains unresolved")}
+${companionHint("api", "- cache/query ownership issue -> also read `maps/api.md`", "- API shard omitted by budget; use one targeted query/cache search if data ownership remains unresolved")}
 
 ## Do Not Start Here
 
@@ -1045,16 +1349,12 @@ After finding the state entry, follow imports to selectors, actions, persistence
 - state entry files renamed
 `);
 
-  writeFile("maps/packages.md", `${mapHeader("Packages / Config Map")}
+  if (selectedShardIds.has("packages")) writeFile("maps/packages.md", `${mapHeader("Packages / Config Map")}
 ## Scope
 
 Package manager, workspace layout, build/test/lint config, monorepo package boundaries.
 
 ## First Read
-
-${asFileMap(packageCandidates.slice(0, 20), "package/config", 20)}
-
-## File Map
 
 ${asFileMap(packageCandidates, "package/config")}
 
@@ -1077,9 +1377,6 @@ For runtime failures, read the exact failing package/config file before broad pa
 `);
 
   for (const { domain, files: domainFiles, count } of domainSummaries) {
-    const domainRoutes = domainFiles.filter((f) => routeCandidates.includes(f));
-    const domainApis = domainFiles.filter((f) => apiCandidates.includes(f));
-    const domainState = domainFiles.filter((f) => stateCandidates.includes(f));
     writeFile(`maps/domains/${domain}.md`, `${mapHeader(`Domain Map: ${domain}`)}
 ## Scope
 
@@ -1088,22 +1385,6 @@ Domain-like area inferred from paths containing \`${domain}\`.
 Detected files: ${count}
 
 ## First Read
-
-${asFileMap(domainFiles.slice(0, 20), "domain", 20)}
-
-## Route / Page Candidates
-
-${asFileMap(domainRoutes, "route/page", 40)}
-
-## API Candidates
-
-${asFileMap(domainApis, "API/query", 40)}
-
-## State Candidates
-
-${asFileMap(domainState, "state", 40)}
-
-## File Map
 
 ${asFileMap(domainFiles, "domain")}
 
@@ -1124,20 +1405,93 @@ Use one companion shard only when a route/API/state coupling signal exists.
   }
 }
 
-console.log(`Wrote indexing candidates to ${outDir}`);
-console.log(`- AI_INDEX.candidate.md`);
-console.log(`- file-map.candidate.json`);
-console.log(`- file-hints.candidate.md`);
-console.log(`- source-header-exceptions.md`);
-console.log(`- indexing-report.json`);
+function outputDirectoryBytes(dir, predicate = () => true, base = dir) {
+  let total = 0;
+  if (!fs.existsSync(dir)) return total;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const absolute = path.join(dir, entry.name);
+    if (entry.isDirectory()) total += outputDirectoryBytes(absolute, predicate, base);
+    else if (entry.isFile()) {
+      const relative = path.relative(base, absolute).replaceAll(path.sep, "/");
+      if (predicate(relative)) total += fs.statSync(absolute).size;
+    }
+  }
+  return total;
+}
+
+function isNavigationArtifact(relative) {
+  return relative === "AI_INDEX.candidate.md"
+    || relative === "manifest.json"
+    || relative === "file-map.candidate.json"
+    || relative === "file-hints.candidate.md"
+    || relative === "source-header-exceptions.md"
+    || relative.startsWith("maps/");
+}
+
+let totalArtifactBytes = outputDirectoryBytes(outDir);
+let actualArtifactBytes = outputDirectoryBytes(outDir, isNavigationArtifact);
+let maintenanceArtifactBytes = Math.max(0, totalArtifactBytes - actualArtifactBytes);
+let artifactBudgetExceeded = actualArtifactBytes > effectiveBudgetBytes;
+function persistAssessmentWithArtifactSize() {
+  writeFile("assessment-report.json", JSON.stringify({
+    ...assessment,
+    decision: indexingDecision,
+    budgetPolicy,
+    artifacts: {
+      actualBytes: actualArtifactBytes,
+      navigationBytes: actualArtifactBytes,
+      maintenanceBytes: maintenanceArtifactBytes,
+      totalBytes: totalArtifactBytes,
+      budgetBytes: effectiveBudgetBytes,
+      budgetExceeded: artifactBudgetExceeded
+    }
+  }, null, 2));
+  writeFile("assessment-state.json", JSON.stringify({
+    assessedAt: assessment.assessedAt,
+    score: assessment.score,
+    recommendedLevel: assessment.recommendedLevel,
+    actualLevel: actualIndexingLevel,
+    mode: indexingMode,
+    budgetProfile: budgetPolicy.resolvedProfile,
+    roiStatus: budgetPolicy.roi.status,
+    actualArtifactBytes,
+    maintenanceArtifactBytes,
+    artifactBudgetBytes: effectiveBudgetBytes
+  }, null, 2));
+}
+persistAssessmentWithArtifactSize();
+totalArtifactBytes = outputDirectoryBytes(outDir);
+actualArtifactBytes = outputDirectoryBytes(outDir, isNavigationArtifact);
+maintenanceArtifactBytes = Math.max(0, totalArtifactBytes - actualArtifactBytes);
+artifactBudgetExceeded = actualArtifactBytes > effectiveBudgetBytes;
+persistAssessmentWithArtifactSize();
+if (artifactBudgetExceeded) {
+  scanWarnings.push(`Navigation index output is ${actualArtifactBytes} bytes, above the ${effectiveBudgetBytes}-byte ${budgetPolicy.resolvedProfile} budget. Pinned/protected entries or fixed map overhead may require a larger profile.`);
+}
+
+console.log(`Indexing assessment for ${target}`);
+console.log(`- mode: ${indexingMode}`);
+console.log(`- recommended auto level: ${assessment.recommendedLevel}`);
+console.log(`- actual level: ${actualIndexingLevel} (${indexingDecision.reason})`);
+console.log(`- budget profile: ${budgetPolicy.resolvedProfile}`);
+console.log(`- navigation budget: ${effectiveBudgetBytes} bytes`);
+console.log(`- ROI evidence: ${budgetPolicy.roi.status}`);
+console.log(`- assessment-report.json`);
+console.log(`- assessment-state.json`);
+if (actualIndexingLevel === 0) {
+  console.log("- no index generated; direct navigation is currently cheaper");
+} else {
+  console.log(`Wrote indexing candidates to ${outDir}`);
+  console.log(`- AI_INDEX.candidate.md`);
+  console.log(`- indexing-report.json`);
+  if (budgetPolicy.policy.recordPriorityDetails) console.log(`- priority-report.json (maintenance only)`);
+  if (emitFileMap) console.log(`- file-map.candidate.json`);
+  if (emitDetailedHints) console.log(`- file-hints.candidate.md`);
+  if (emitDetailedHints && allowSourceHeaders) console.log(`- source-header-exceptions.md`);
+}
 if (emitMaps) {
   console.log(`- manifest.json`);
-  console.log(`- maps/root.md`);
-  console.log(`- maps/routes.md`);
-  console.log(`- maps/behavior.md`);
-  console.log(`- maps/api.md`);
-  console.log(`- maps/state.md`);
-  console.log(`- maps/packages.md`);
+  for (const map of maps.filter((item) => !item.id.startsWith("domain:"))) console.log(`- ${map.path.replace(/^\.ai\/indexing\//, "")}`);
   if (domainSummaries.length) console.log(`- maps/domains/*.md (${domainSummaries.length})`);
 }
 if (scanWarnings.length) {

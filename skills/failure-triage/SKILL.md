@@ -235,3 +235,8 @@ or include a metadata maintenance summary if stale metadata was updated.
 - Triage cards are temporary by default.
 - Promote repeated patterns by root cause, not error code.
 - Fix the failure first; update only affected metadata afterward.
+
+
+## Feedback Compound Interaction
+
+Use `failure-triage` for the technical cause of tests, build, runtime, type, lint, or CI failures. Use `feedback-compound` separately when the agent also violated an explicit instruction, file boundary, required abstraction, or user preference. Do not turn a technical error into a user-feedback lesson unless the expectation mismatch is independently verified.

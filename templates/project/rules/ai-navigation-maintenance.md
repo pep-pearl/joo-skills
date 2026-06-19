@@ -22,6 +22,12 @@ AI navigation metadata includes:
 
 Do not use this rule for normal feature work, bug fixes, styling, or refactors unless repo navigation is affected.
 
+## Capacity and Priority Rule
+
+Treat navigation metadata as a bounded cache. Respect the active `tight`, `balanced`, or `retentive` byte/shard/entry budget. Adding a new entry must not silently grow the index: preserve pinned/recent-error/minimum-residence entries when capacity permits, then evict the lowest unprotected priority-per-byte item.
+
+Priority is computed by scripts from cheap signals. Do not read the whole repository or every map with an LLM to rank importance. Do not link assessment, priority, or local-usage files from `AI_INDEX.md`; runtime agents must not read them during normal work.
+
 Temporary `[FAILURE_TRIAGE]` cards are not metadata. Persist only repeated or expensive root-cause patterns.
 
 ## Update Targets

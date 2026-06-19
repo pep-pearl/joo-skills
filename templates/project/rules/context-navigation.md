@@ -7,7 +7,7 @@ These rules are intentionally short for weak agents. Follow them before any long
 1. If the user names exact files, open those files first and do not read maps yet.
 2. If code is already changed, run `npm run diff:impact` first. If it fails, inspect the changed files directly. Do not start from `AI_INDEX.md`.
 3. If an error log, failing test, stack trace, CI/build/type/lint/runtime failure exists, use the file/line/test/userland stack anchor first. Do not start with keyword search.
-4. Read `AI_INDEX.md` before broad search only when there is no stronger exact/diff/error anchor.
+4. Read `AI_INDEX.md` before broad search only when it exists and there is no stronger exact/diff/error anchor.
 5. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
 6. Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
 7. After a likely source file is found, follow only imports/callers/tests that can cover an unresolved concern; stop when required concerns are covered.
@@ -20,6 +20,7 @@ These rules are intentionally short for weak agents. Follow them before any long
 14. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
 15. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
 16. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
+17. Never read `.ai/indexing/assessment-report.json`, `assessment-state.json`, `priority-report.json`, `priority-state.json`, or `local-usage.json` during normal navigation.
 
 ## Purpose
 
@@ -57,6 +58,17 @@ Trust source/imports/tests over metadata.
 If metadata confidence is `low`, `generated-only`, or absent, verify with one source file before editing.
 
 If source/imports contradict metadata, source wins. Report stale metadata instead of forcing the index to fit.
+
+## Adaptive Index Use
+
+Use the lowest active indexing level:
+
+- Level 0: exact path, targeted filename/symbol search, then imports
+- Level 1: short router only
+- Level 2: one relevant map shard
+- Level 3: narrow lookup first; never read the complete file map
+
+Do not create metadata merely because the repository has source files. Promote only when static ambiguity or repeated observed navigation cost exceeds direct navigation cost. Benchmark code must pass `force`, `auto`, or `off` explicitly instead of detecting benchmark folders.
 
 ## Intent Classification
 

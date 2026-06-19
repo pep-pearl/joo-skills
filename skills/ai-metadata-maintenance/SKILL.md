@@ -205,6 +205,10 @@ Examples:
 
 Do not regenerate every shard for a local change.
 
+Respect the active byte and shard budget. When adding a new entry or shard, compare it with current candidates and evict the lowest unprotected priority-per-byte item rather than expanding indefinitely. Manual pins, recent-error protection, minimum residence, and replacement limits are capacity preferences, but a hard budget still wins unless explicit pinned overflow is enabled.
+
+Priority scoring belongs in deterministic maintenance scripts. Do not ask the runtime agent to read every map or source file just to recompute importance. Maintenance state and priority reports must not be linked from `AI_INDEX.md` as task context.
+
 Each maintained shard should include compact metadata when practical:
 
 - `Confidence`: generated-only | manual-reviewed | low | medium | high
@@ -293,3 +297,26 @@ Skipped:
 Uncertain:
 - ...
 ```
+
+
+## Known Agent Lesson Maintenance
+
+General agent-behavior lessons are not navigation metadata. Maintain them only when the project explicitly uses a compact file such as `rules/known-agent-lessons.md`.
+
+Revalidate an approved advisory lesson when:
+
+- an anchored file or symbol is missing or renamed;
+- the framework, data layer, architecture version, branch family, or deployment environment changed;
+- a newer lesson supersedes it;
+- repeated retrieval was rejected or irrelevant;
+- a shared ownership or contract boundary changed.
+
+Actions:
+
+- `rebind`: update path/symbol when behavior moved;
+- `generalize`: keep a higher-level principle after file-specific implementation disappeared;
+- `archive`: remove from normal retrieval when the environment no longer applies;
+- `supersede`: point to the approved replacement;
+- preserve legacy branch applicability when old releases remain supported.
+
+Do not scan every lesson after every change. Validate affected anchors on retrieval or after a clear migration event. Source/imports/tests and current project rules remain truth.

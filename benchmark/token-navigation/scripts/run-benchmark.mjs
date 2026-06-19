@@ -15,6 +15,7 @@ import {
   writeJson
 } from "./lib.mjs";
 import { scoreAnswer } from "./scoring.mjs";
+import { assessRepositoryPath } from "../../../scripts/lib/joo-indexing-assessment.mjs";
 
 const args = parseArgs();
 const invocationCwd = process.env.INIT_CWD || process.cwd();
@@ -36,6 +37,11 @@ const caseFilter = args.case ? new Set(String(args.case).split(",").map((value) 
 const maxCases = args["max-cases"] ? Number(args["max-cases"]) : null;
 const dryRun = Boolean(args["dry-run"]);
 const keepWork = Boolean(args["keep-work"]);
+const indexingMode = String(args["indexing-mode"] ?? process.env.BENCHMARK_INDEXING_MODE ?? "force").trim().toLowerCase();
+if (!["force", "auto", "off"].includes(indexingMode)) {
+  console.error(`BENCHMARK_NOT_RUN: Unsupported --indexing-mode "${indexingMode}". Use force, auto, or off.`);
+  process.exit(1);
+}
 const skipCliCheck = Boolean(args["skip-cli-check"]);
 const resumeArg = args.resume ?? process.env.BENCHMARK_RESUME ?? null;
 const baselineTemplate = path.resolve(String(args["baseline-workspace"] ?? path.join(ROOT, "fixture")));
@@ -50,6 +56,17 @@ function fail(message) {
 
 function requireFile(file, label = file) {
   if (!fs.existsSync(file)) fail(`Missing ${label}: ${file}`);
+}
+
+function directoryBytes(dir) {
+  let total = 0;
+  if (!fs.existsSync(dir)) return total;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const absolute = path.join(dir, entry.name);
+    if (entry.isDirectory()) total += directoryBytes(absolute);
+    else if (entry.isFile()) total += fs.statSync(absolute).size;
+  }
+  return total;
 }
 
 function quoteCmd(value) {
@@ -224,6 +241,28 @@ function preflight() {
 
 preflight();
 
+const autoIndexAssessment = assessRepositoryPath({ target: baselineTemplate });
+const indexedOverlayLevel = 2;
+const applyIndexedOverlay = indexingMode === "force"
+  || (indexingMode === "auto" && autoIndexAssessment.recommendedLevel > 0);
+const indexingPolicy = {
+  benchmarkKind: indexingMode === "force" ? "index-efficacy" : indexingMode === "auto" ? "activation-e2e" : "no-index-control",
+  requestedMode: indexingMode,
+  recommendedAutoLevel: autoIndexAssessment.recommendedLevel,
+  assessmentScore: autoIndexAssessment.score,
+  actualIndexedLevel: applyIndexedOverlay ? indexedOverlayLevel : 0,
+  indexedArtifactBytes: applyIndexedOverlay ? directoryBytes(indexedTemplate) : 0,
+  budgetProfile: applyIndexedOverlay ? "curated-fixed-overlay" : "none",
+  budgetExceeded: null,
+  forcedForBenchmark: indexingMode === "force",
+  overlayApplied: applyIndexedOverlay,
+  note: indexingMode === "force"
+    ? "Small benchmark fixtures intentionally force the curated Level 2 overlay so index efficacy is measured independently from activation policy."
+    : indexingMode === "auto"
+      ? "The indexed variant follows the auto activation decision; use the activation-policy self-check for threshold quality."
+      : "Indexing is disabled for both variants."
+};
+
 let cases = readJson(casesFile).cases;
 if (caseFilter) cases = cases.filter((item) => caseFilter.has(item.id));
 if (Number.isFinite(maxCases)) cases = cases.slice(0, maxCases);
@@ -254,6 +293,9 @@ function loadResumeResults(dir) {
   if ((data.reasoningSetting ?? null) !== reasoningSetting) {
     fail(`Resume reasoning mismatch: expected ${reasoningSetting ?? "n/a"}, found ${data.reasoningSetting ?? "n/a"}`);
   }
+  if ((data.indexingPolicy?.requestedMode ?? "force") !== indexingMode) {
+    fail(`Resume indexing mode mismatch: expected ${indexingMode}, found ${data.indexingPolicy?.requestedMode ?? "force"}`);
+  }
   return Array.isArray(data.results) ? data.results : [];
 }
 
@@ -271,16 +313,17 @@ ensureDir(workRoot);
 function materialize(variant, target) {
   resetDir(target);
   copyTree(baselineTemplate, target);
-  if (variant === "indexed") copyTree(indexedTemplate, target);
+  if (variant === "indexed" && applyIndexedOverlay) copyTree(indexedTemplate, target);
 }
 
 function validateMaterializedWorkspace(variant, workspace) {
   const aiIndex = path.join(workspace, "AI_INDEX.md");
   const agents = path.join(workspace, "AGENTS.md");
   const maps = path.join(workspace, ".ai", "indexing", "maps");
-  if (variant === "baseline") {
+  const shouldContainIndex = variant === "indexed" && applyIndexedOverlay;
+  if (!shouldContainIndex) {
     const leaked = [aiIndex, agents, maps].filter(fs.existsSync);
-    if (leaked.length) throw new Error(`Baseline contains indexed metadata: ${leaked.join(", ")}`);
+    if (leaked.length) throw new Error(`${variant} workspace unexpectedly contains indexed metadata: ${leaked.join(", ")}`);
   } else {
     const missing = [aiIndex, agents, maps].filter((file) => !fs.existsSync(file));
     if (missing.length) throw new Error(`Indexed workspace is incomplete: ${missing.join(", ")}`);
@@ -524,7 +567,7 @@ function runOne(variant, testCase, repetition) {
 
   if (dryRun) {
     if (!keepWork) fs.rmSync(workspace, { recursive: true, force: true });
-    return { id, variant, caseId: testCase.id, repetition, dryRun: true, runner: runnerName, ...run };
+    return { id, variant, caseId: testCase.id, repetition, dryRun: true, runner: runnerName, indexingLevel: variant === "indexed" ? indexingPolicy.actualIndexedLevel : 0, ...run };
   }
 
   const policyValid = (run.sideEffectPaths ?? []).length === 0;
@@ -536,6 +579,7 @@ function runOne(variant, testCase, repetition) {
     caseId: testCase.id,
     repetition,
     runner: runnerName,
+    indexingLevel: variant === "indexed" ? indexingPolicy.actualIndexedLevel : 0,
     ...run,
     scoring
   };
@@ -550,6 +594,7 @@ function writeProgress(results, status = "RUNNING") {
     requestedModel: model,
     actualModel: runner.actualModel ?? null,
     reasoningSetting,
+    indexingPolicy,
     repeat,
     cases: cases.map((item) => item.id),
     results
@@ -565,6 +610,7 @@ function finish(results, status) {
     requestedModel: model,
     actualModel: runner.actualModel ?? null,
     reasoningSetting,
+    indexingPolicy,
     repeat,
     plannedRuns: repeat * cases.length * 2,
     cases: cases.map((item) => item.id),

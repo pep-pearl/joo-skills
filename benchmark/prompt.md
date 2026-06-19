@@ -28,6 +28,7 @@ Antigravity가 요청을 받았는데 Codex CLI를 검색하거나 실행하면 
 6. 모델 실행이 불가능한 환경에서는 벤치마크를 했다고 말하지 않는다.
 7. 정확한 token usage가 없으면 `null`/`n/a`로 남긴다.
 8. 벤치마크 코드나 fixture를 실행 중 임의 수정하지 않는다.
+9. 작은 fixture라는 이유로 efficacy 벤치의 indexed overlay를 auto-disable하지 않는다. index efficacy는 `force`, activation/budget 정책은 별도 deterministic test로 측정한다.
 
 ## Antigravity 실행 절차
 
@@ -37,8 +38,8 @@ Antigravity가 요청을 받았는데 Codex CLI를 검색하거나 실행하면 
 node -v
 npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner agy --model "<model>"
-npm run benchmark -- --runner agy --model "<model>"
+npm run benchmark:dry-run -- --runner agy --model "<model>" --indexing-mode force
+npm run benchmark -- --runner agy --model "<model>" --indexing-mode force
 ```
 
 - `benchmark:doctor`는 `PATH`, `AGY_BIN`, `%LOCALAPPDATA%\agy\bin\agy.exe` 순으로 AGY를 확인한다.
@@ -52,20 +53,20 @@ npm run benchmark -- --runner agy --model "<model>"
 node -v
 npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner codex --model "<model>"
-npm run benchmark -- --runner codex --model "<model>"
+npm run benchmark:dry-run -- --runner codex --model "<model>" --indexing-mode force
+npm run benchmark -- --runner codex --model "<model>" --indexing-mode force
 ```
 
 Codex에서만 reasoning 기본값 `medium`을 사용한다. 사용자가 값을 지정하면 다음처럼 전달한다.
 
 ```bash
-npm run benchmark -- --runner codex --model "<model>" --reasoning "<setting>" --repeat <count>
+npm run benchmark -- --runner codex --model "<model>" --indexing-mode force --reasoning "<setting>" --repeat <count>
 ```
 
 If a Codex run is interrupted by the host timeout, resume the latest compatible result directory instead of starting over:
 
 ```bash
-npm run benchmark -- --runner codex --model "<model>" --reasoning "<setting>" --repeat <count> --resume latest
+npm run benchmark -- --runner codex --model "<model>" --indexing-mode force --reasoning "<setting>" --repeat <count> --resume latest
 ```
 
 If it cannot be continued, finalize the partial report:
@@ -104,6 +105,16 @@ benchmark/token-navigation/results/<timestamp>/
 - AGY: `*.stdout.txt`
 - `*.answer.json`: 모델의 최종 반환값
 
-최종 답변에는 실행 여부, runner, 요청 모델, 상태, 유효/실패 실행 수, 정확도 비교, 사용 가능한 경우에만 token 비교, 결과 폴더 경로만 간단히 적는다.
+최종 답변에는 실행 여부, runner, 요청 모델, 상태, 유효/실패 실행 수, 정확도 비교, 사용 가능한 경우에만 token 비교, indexing mode, forced 여부, indexed artifact byte size, 결과 폴더 경로를 간단히 적는다.
 
 `PARTIAL` 또는 `FAILED`인 결과로 성능 향상을 주장하지 않는다.
+
+
+## 별도 budget/activation 검증
+
+모델 A/B와 별개로 다음 deterministic 검증을 실행할 수 있다. 이 결과를 모델 성능 결과와 합쳐서 하나의 pass/fail로 만들지 않는다.
+
+```bash
+npm run test:assessment
+npm run test:budget
+```

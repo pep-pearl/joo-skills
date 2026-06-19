@@ -106,3 +106,24 @@ Local adaptation:
 - sidecar file hints are looked up by exact path before broader map reads
 - generated/sensitive paths are excluded from map generation by default scripts
 - map shards are treated as context providers, not source of truth
+
+
+## Compound / Reflexion-style Verified Feedback Learning
+
+Useful idea:
+
+- failures can become reusable language-level lessons without retraining the model;
+- repeated solved problems can compound into future workflow improvements.
+
+Local adaptation:
+
+- dissatisfaction and profanity are only triage signals;
+- exact instructions, diff, tests, tools, source, and runtime behavior are evidence;
+- root cause is a hypothesis unless independently verified;
+- current task is corrected before learning;
+- new lessons apply only from the next task;
+- incidents are temporary by default;
+- lessons remain advisory until explicitly reviewed;
+- no graph database or autonomous policy mutation;
+- stale lessons are rebound, generalized, archived, or superseded by environment;
+- benchmark uses negative controls and deterministic scoring without an LLM judge.

@@ -1,0 +1,27 @@
+{
+  "$schema": "../../schemas/feedback-compound-policy.schema.json",
+  "schemaVersion": 1,
+  "mode": "advisory",
+  "profile": "collaborative-rough",
+  "budget": {
+    "maxRelatedLessons": 3,
+    "maxAnalysisPasses": 1,
+    "maxLessonCandidates": 1,
+    "maxFollowUpSkills": 1
+  },
+  "promotion": {
+    "sameRootCauseWithin30Days": 3,
+    "sameRootCauseWithinSprint": 2,
+    "explicitMustNotCandidate": true,
+    "highSeverityCandidate": true,
+    "humanApprovalRequired": true
+  },
+  "immutableControls": [
+    "destructive-actions",
+    "credentials-and-secrets",
+    "production-side-effects",
+    "data-protection",
+    "permissions",
+    "explicit-prohibitions"
+  ]
+}

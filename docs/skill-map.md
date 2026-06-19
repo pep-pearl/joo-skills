@@ -8,6 +8,7 @@
 | `repo-navigation` | 작업 시작 전 최소 파일을 고를 때 | intent classification, read plan, one-shard read list, uncertainty |
 | `pr-diff-impact` | 이미 변경된 코드/PR/staged diff를 리뷰하거나 수정 계획을 세울 때 | `[DIFF_IMPACT]`, read-next/skip, affected shard candidates |
 | `failure-triage` | 에러 로그, failing test, CI/build/type/lint/runtime failure에서 시작할 때 | temporary failure routing card, anchor-first read plan, known-pattern promotion decision |
+| `feedback-compound` | 사용자가 prior result의 지시·범위·선호 위반을 명시적으로 정정했을 때 | verified feedback incident, immediate correction, future-task advisory lesson candidate |
 | `ai-metadata-maintenance` | route/domain/API/state/package 변경 후 metadata 갱신 판단 | maintenance summary for router/maps/file hints |
 | `agent-operating-loop` | 큰 작업을 계획→실행→검증 loop로 진행할 때 | task ledger, verification gates |
 | `navigation-benchmark` | “벤치마킹 해줘. 모델: …”처럼 navigation A/B 실벤치를 요청할 때 | Codex CLI 실행, 결정론적 report, 실패 시 NOT_RUN |
@@ -32,6 +33,9 @@
 /navigation plan
 /navigation trace
 /failure triage
+/feedback review
+/feedback promote
+/feedback audit
 /metadata audit
 /metadata refresh
 /lookup path
@@ -40,6 +44,7 @@
 /diff fix-plan
 /diff-check
 /benchmark navigation
+/benchmark feedback
 /benchmark model:<model>
 ```
 
@@ -60,3 +65,19 @@ error log or failing command
 ```
 
 Known failure patterns should be promoted by root cause, not error code. Default promotion threshold: same root cause 3+ times within 30 days, 2+ times in the same sprint, one high-navigation-cost occurrence, or one high-severity occurrence.
+
+
+## Feedback / Learning Flow
+
+```txt
+explicit user correction or verifiable instruction mismatch
+-> feedback-compound
+-> compare expected vs actual
+-> correct current task
+-> temporary incident by default
+-> candidate only for repeated / expensive / high-severity root cause
+-> new lesson applies from next task only
+-> ai-metadata-maintenance only when approved lesson/navigation anchors are stale
+```
+
+`feedback-compound` does not replace `failure-triage`. Technical errors go to failure triage; instruction and expectation mismatches go to feedback compound. Natural-language lessons remain advisory and cannot weaken safety or permission controls.

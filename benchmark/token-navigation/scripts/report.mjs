@@ -130,6 +130,9 @@ else if (validRuns.length > 0) status = "PARTIAL";
 let verdict = "NOT_EVALUATED";
 let qualityVerdict = "NOT_EVALUATED";
 let efficiencyVerdict = "NOT_EVALUATED";
+let tokenCostVerdict = "NOT_EVALUATED";
+let efficiencyBalance = null;
+let efficiencySignals = [];
 if (status === "VALID") {
   const baselinePass = summary.baseline.passRate;
   const indexedPass = summary.indexed.passRate;
@@ -141,13 +144,47 @@ if (status === "VALID") {
 
   const inputComparable = paired.input_tokens.pairs === pairs.length && pairs.length > 0;
   const inputReduction = paired.input_tokens.aggregateMedianReductionPct;
-  if (!inputComparable) efficiencyVerdict = "EFFICIENCY_UNAVAILABLE";
-  else if (inputReduction > 0) efficiencyVerdict = "EFFICIENCY_GAIN";
-  else if (inputReduction < 0) efficiencyVerdict = "EFFICIENCY_REGRESSION";
-  else efficiencyVerdict = "EFFICIENCY_NEUTRAL";
+  if (!inputComparable) tokenCostVerdict = "TOTAL_INPUT_UNAVAILABLE";
+  else if (inputReduction > 0) tokenCostVerdict = "TOTAL_INPUT_GAIN";
+  else if (inputReduction < 0) tokenCostVerdict = "TOTAL_INPUT_REGRESSION";
+  else tokenCostVerdict = "TOTAL_INPUT_NEUTRAL";
+
+  const operationalMetrics = [
+    "command_count",
+    "tool_output_chars",
+    "uncached_input_tokens",
+    "output_tokens",
+    "reasoning_output_tokens",
+    "duration_ms"
+  ];
+  efficiencySignals = operationalMetrics
+    .map((metric) => {
+      const item = paired[metric];
+      if (!item || item.pairs !== pairs.length || pairs.length === 0) return null;
+      const reduction = item.aggregateMedianReductionPct;
+      if (!Number.isFinite(reduction)) return null;
+      return {
+        metric,
+        reductionPct: reduction,
+        direction: reduction > 0 ? "gain" : reduction < 0 ? "regression" : "neutral"
+      };
+    })
+    .filter(Boolean);
+  if (!efficiencySignals.length) {
+    efficiencyVerdict = "EFFICIENCY_UNAVAILABLE";
+  } else {
+    efficiencyBalance = efficiencySignals.reduce((sum, signal) => {
+      if (signal.direction === "gain") return sum + 1;
+      if (signal.direction === "regression") return sum - 1;
+      return sum;
+    }, 0);
+    if (efficiencyBalance >= 2) efficiencyVerdict = "EFFICIENCY_GAIN";
+    else if (efficiencyBalance <= -2) efficiencyVerdict = "EFFICIENCY_REGRESSION";
+    else efficiencyVerdict = "EFFICIENCY_MIXED";
+  }
 
   if (qualityVerdict === "QUALITY_REGRESSION") verdict = "REGRESSION";
-  else if (efficiencyVerdict === "EFFICIENCY_GAIN") verdict = "IMPROVED";
+  else if (efficiencyVerdict === "EFFICIENCY_GAIN" && tokenCostVerdict !== "TOTAL_INPUT_REGRESSION") verdict = "IMPROVED";
   else if (efficiencyVerdict === "EFFICIENCY_UNAVAILABLE") verdict = "ACCURACY_ONLY";
   else verdict = "NO_CONFIRMED_IMPROVEMENT";
 }
@@ -158,11 +195,15 @@ const result = {
   verdict,
   qualityVerdict,
   efficiencyVerdict,
+  tokenCostVerdict,
+  efficiencyBalance,
+  efficiencySignals,
   pairedPass,
   runner: data.runner ?? "unverified",
   requestedModel: data.requestedModel ?? null,
   actualModel: data.actualModel ?? null,
   reasoningSetting: data.reasoningSetting ?? null,
+  indexingPolicy: data.indexingPolicy ?? null,
   repeat: data.repeat,
   expectedRuns: expectedRunCount,
   validRuns: validRuns.length,
@@ -195,10 +236,19 @@ const lines = [
   `- Verdict: ${verdict}`,
   `- Quality verdict: ${qualityVerdict}`,
   `- Efficiency verdict: ${efficiencyVerdict}`,
+  `- Token cost verdict: ${tokenCostVerdict}`,
+  `- Efficiency signal balance: ${efficiencyBalance ?? "n/a"}`,
   `- Runner: \`${data.runner ?? "unverified"}\``,
   `- Requested model: \`${data.requestedModel ?? "unverified"}\``,
   `- Actual model: \`${data.actualModel ?? "unverified"}\``,
   `- Reasoning setting: \`${data.reasoningSetting ?? "n/a"}\``,
+  `- Benchmark kind: \`${data.indexingPolicy?.benchmarkKind ?? "legacy/unrecorded"}\``,
+  `- Indexing mode: \`${data.indexingPolicy?.requestedMode ?? "legacy/unrecorded"}\``,
+  `- Recommended auto level: ${data.indexingPolicy?.recommendedAutoLevel ?? "n/a"}`,
+  `- Actual indexed level: ${data.indexingPolicy?.actualIndexedLevel ?? "n/a"}`,
+  `- Indexed artifact bytes: ${num(data.indexingPolicy?.indexedArtifactBytes)}`,
+  `- Budget profile: \`${data.indexingPolicy?.budgetProfile ?? "legacy/unrecorded"}\``,
+  `- Forced for benchmark: ${data.indexingPolicy?.forcedForBenchmark ? "yes" : "no"}`,
   `- Runs: ${validRuns.length}/${expectedRunCount} valid; ${failedRuns.length} failed`,
   `- Paired runs: ${pairs.length}`,
   `- Token metadata: ${tokenCoverageComplete ? "complete" : "incomplete or unavailable"}`, "",
@@ -224,6 +274,7 @@ const lines = [
   "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
   ...byCase.map((row) => `| ${row.caseId} | ${pct(ratioPct(row.baselinePassRate))} | ${pct(ratioPct(row.indexedPassRate))} | ${num(row.baselineScore)} | ${num(row.indexedScore)} | ${num(row.baselineInputMedian)} | ${num(row.indexedInputMedian)} | ${pct(row.inputReductionPct)} |`),
   "", "## Method", "",
+  data.indexingPolicy?.note ?? "Indexing activation metadata was not recorded for this legacy run.", "",
   "The requested model performs the repository-navigation task through the selected native CLI. Scoring is deterministic: required concern groups, optional context groups, forbidden prefixes, path validity, duplicate paths, returned-set precision, and unauthorized workspace changes are checked by code. Optional context can improve the score but is never required to pass. No LLM judge, token estimate, mock result, or previous report is used.",
   "",
   "A performance conclusion is emitted only for a fully valid run. Missing token metadata is left as `n/a`; it is never replaced with zero or an estimate.", ""

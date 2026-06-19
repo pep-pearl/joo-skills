@@ -9,17 +9,18 @@ Initialize AI navigation metadata for the current repository.
 Expected behavior:
 
 1. Read existing project instructions.
-2. Detect project shape.
-3. Generate or update:
+2. Run adaptive assessment and choose Level 0-3.
+3. If Level 0, stop after reporting that direct navigation is cheaper.
+4. Generate or update only the artifacts allowed by the selected level:
    - `AI_INDEX.md` router
    - `.ai/indexing/manifest.json`
    - `.ai/indexing/maps/*` compact map shards
    - `rules/context-navigation.md`
    - `rules/ai-navigation-maintenance.md`
    - `AGENTS.md` fragment
-4. Propose sidecar file hint candidates.
-5. Do not change runtime logic.
-6. Do not create a giant file tree.
+5. Propose sidecar file hint candidates only at Level 3.
+6. Do not change runtime logic.
+7. Do not create a giant file tree or exceed the adaptive artifact budget without warning.
 
 ## `/indexing annotate`
 

@@ -5,11 +5,11 @@
   "description": "Personal AI workflow, repo indexing, and agent skill archive.",
   "type": "module",
   "scripts": {
-    "scan": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --max-map-tokens 1600",
+    "scan": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode auto --max-map-tokens 1600",
     "install:target": "node scripts/joo-indexing-install.mjs",
     "validate:index": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps --warn-only",
     "validate:index:strict": "node scripts/joo-indexing-validate.mjs --target . --index AI_INDEX.md --maps .ai/indexing/maps",
-    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --changed-since main --max-map-tokens 1600",
+    "refresh:changed": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode auto --changed-since main --max-map-tokens 1600",
     "lookup": "node scripts/joo-indexing-lookup.mjs --target .",
     "diff:impact": "node scripts/joo-diff-impact.mjs --target . --base main",
     "diff:impact:staged": "node scripts/joo-diff-impact.mjs --target . --staged",
@@ -26,7 +26,22 @@
     "benchmark:doctor": "npm --prefix benchmark/token-navigation run doctor --",
     "setup:agy:git-bash": "bash scripts/setup-agy-git-bash.sh",
     "test:lookup": "node scripts/joo-indexing-lookup-self-check.mjs",
-    "test": "npm run benchmark:check && npm run test:lookup"
+    "test": "npm run benchmark:check && npm run benchmark:feedback:check && npm run test:lookup && npm run test:assessment && npm run test:budget",
+    "assess:index": "node scripts/joo-indexing-assess.mjs --target . --persist",
+    "scan:force": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode force --max-map-tokens 1600",
+    "scan:off": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode off",
+    "observe:navigation": "node scripts/joo-indexing-observe.mjs --target .",
+    "test:assessment": "node scripts/joo-indexing-assess-self-check.mjs",
+    "benchmark:activation": "node scripts/joo-indexing-assess-self-check.mjs",
+    "scan:tight": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode auto --profile tight",
+    "scan:balanced": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode auto --profile balanced",
+    "scan:retentive": "node scripts/joo-indexing-scan.mjs --target . --out .ai/indexing --mode auto --profile retentive",
+    "test:budget": "node scripts/joo-indexing-budget-self-check.mjs",
+    "benchmark:feedback": "npm --prefix benchmark/feedback-compound run benchmark --",
+    "benchmark:feedback:check": "npm --prefix benchmark/feedback-compound run check",
+    "benchmark:feedback:dry-run": "npm --prefix benchmark/feedback-compound run benchmark:dry-run --",
+    "benchmark:feedback:doctor": "npm --prefix benchmark/feedback-compound run doctor --",
+    "benchmark:feedback:finalize": "npm --prefix benchmark/feedback-compound run finalize --"
   },
   "keywords": [
     "ai-skills",
@@ -38,7 +53,10 @@
     "next-app-router",
     "benchmark",
     "diff-impact",
-    "pr-review"
+    "pr-review",
+    "feedback-compound",
+    "agent-learning",
+    "reflection"
   ],
   "license": "MIT"
 }

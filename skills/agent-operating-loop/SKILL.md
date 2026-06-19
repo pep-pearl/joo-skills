@@ -23,8 +23,9 @@ Give coding agents a durable loop for non-trivial tasks.
 6. Execute in slices.
 7. Verify each slice.
 8. Review changed files.
-9. Decide AI metadata maintenance.
-10. Summarize changed/skipped/uncertain.
+9. If the user explicitly corrects a verifiable instruction/scope mismatch, correct it now and optionally use `feedback-compound`; any lesson starts from the next task.
+10. Decide AI metadata maintenance.
+11. Summarize changed/skipped/uncertain.
 
 ## Diff-Aware Review
 
@@ -77,3 +78,8 @@ Next:
 - Do not edit generated, lock, snapshot, build, env, secret, credential, or private config files unless explicitly requested.
 - Do not hide uncertainty.
 - Prefer partial useful completion over waiting for perfect information.
+
+
+## Feedback Correction Boundary
+
+`agent-operating-loop` owns planning, execution, and verification. `feedback-compound` is optional after an explicit, verifiable correction. It may produce a future-task advisory lesson candidate, but it must not change the current task policy snapshot or replace deterministic verification.

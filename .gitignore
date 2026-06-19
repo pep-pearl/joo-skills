@@ -8,3 +8,8 @@ coverage/
 benchmark/token-navigation/.work/
 benchmark/token-navigation/results/*
 !benchmark/token-navigation/results/.gitkeep
+
+# Local adaptive-indexing observations
+.ai/indexing/local-usage.json
+.ai/indexing/priority-state.json
+.ai/indexing/assessment-state.json

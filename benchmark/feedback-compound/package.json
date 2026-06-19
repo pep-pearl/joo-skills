@@ -1,0 +1,17 @@
+{
+  "name": "joo-feedback-compound-benchmark",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node scripts/self-check.mjs && node scripts/report-self-check.mjs",
+    "benchmark": "node scripts/run-benchmark.mjs",
+    "benchmark:dry-run": "node scripts/run-benchmark.mjs --dry-run",
+    "doctor": "node scripts/doctor.mjs",
+    "finalize": "node scripts/finalize.mjs",
+    "report": "node scripts/report.mjs"
+  }
+}

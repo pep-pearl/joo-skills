@@ -7,13 +7,31 @@
 
 별도 LLM judge는 없습니다. 지정 모델은 파일을 찾고, 정답 여부는 스크립트가 결정론적으로 채점합니다. `requiredGroups`는 통과에 필수이고 `optionalGroups`는 문맥 보너스만 주며 누락돼도 실패하지 않습니다.
 
+## Indexing mode와 작은 fixture 예외
+
+이 벤치마크의 기본 목적은 **index efficacy**입니다. fixture가 작아도 curated index를 강제로 적용해 baseline과 비교하므로 기본값은 `--indexing-mode force`입니다.
+
+- `force`: indexed variant에 Level 2 overlay를 명시적으로 적용
+- `auto`: repository assessment가 활성화할 때만 overlay 적용
+- `off`: 두 variant 모두 index 없이 실행하는 제어 모드
+
+보고서에는 recommended auto level, actual indexed level, forced 여부가 기록됩니다. 경로에 `benchmark`가 포함됐다는 이유로 자동 강제하지 않습니다.
+
+Activation threshold 자체는 모델 A/B와 섞지 않고 다음 결정론적 테스트로 확인합니다.
+
+```bash
+npm run activation:check
+```
+
+이 테스트는 tiny-clean, small-ambiguous, medium-monorepo, large-ambiguous fixture를 생성해 Level 0~3 선택을 검증합니다.
+
 ## Antigravity에서 실행
 
 ```bash
 npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner agy --model "EXACT_MODEL_NAME"
-npm run benchmark -- --runner agy --model "EXACT_MODEL_NAME"
+npm run benchmark:dry-run -- --runner agy --model "EXACT_MODEL_NAME" --indexing-mode force
+npm run benchmark -- --runner agy --model "EXACT_MODEL_NAME" --indexing-mode force
 ```
 
 사용 가능한 모델 이름:
@@ -37,8 +55,8 @@ source scripts/setup-agy-git-bash.sh
 ```bash
 npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner codex --model "EXACT_MODEL_NAME"
-npm run benchmark -- --runner codex --model "EXACT_MODEL_NAME"
+npm run benchmark:dry-run -- --runner codex --model "EXACT_MODEL_NAME" --indexing-mode force
+npm run benchmark -- --runner codex --model "EXACT_MODEL_NAME" --indexing-mode force
 ```
 
 Codex 전용 옵션:
@@ -56,7 +74,7 @@ npm run benchmark -- \
 중립적인 일반 터미널에서만 `--runner auto`를 사용할 수 있습니다.
 
 ```bash
-npm run benchmark -- --runner auto --model "EXACT_MODEL_NAME"
+npm run benchmark -- --runner auto --model "EXACT_MODEL_NAME" --indexing-mode force
 ```
 
 `auto`는 요청 모델이 `agy models`에 정확히 있으면 AGY를 사용하고, 그렇지 않으면 설치된 Codex를 확인합니다. Agent 환경에서는 모호성을 피하기 위해 native runner를 명시해야 합니다.

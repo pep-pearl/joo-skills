@@ -1,37 +1,5 @@
 # Improvements Applied
 
-## 2026-06-18 — Concern-aware navigation and benchmark rubric
-
-### Navigation behavior
-
-- Added task-concern decomposition: concrete behavior anchors, surface/page context, state, data, route, config, and exact-file concerns are selected separately.
-- Behavior-owner files now outrank generic route/page files when the request names a label, status value, URL parameter, cache key, endpoint, or other concrete anchor.
-- Import/caller/test traversal now happens only for unresolved concerns and stops once all required concerns are covered.
-- Structured map hints now support `role`, `concern`/`concerns`, `anchors`, `related`, `domain`, and `confidence`.
-- Fixed state detection so paths such as `apps/storefront/...` are not misclassified merely because they contain the substring `store`.
-
-### Lookup and indexing
-
-- Reworked `scripts/joo-indexing-lookup.mjs` to preserve full phrases alongside tokens, normalize Korean particles, detect exact paths embedded in prompts, and select a minimal concern-covering file set.
-- Added `scripts/joo-indexing-lookup-self-check.mjs`, covering every token-navigation benchmark case.
-- Added a generated `behavior.md` shard for badges, labels, formatters, validators, buttons, fields, toggles, mappers, and other direct behavior owners.
-
-### Benchmark correctness
-
-- Split benchmark expectations into `requiredGroups` and `optionalGroups` while keeping backward compatibility with `expectedGroups`.
-- Corrected `storefront-shipping-status`: `ShippingStatusBadge.tsx` is required; `OrderDetailPage.tsx` is optional context.
-- Separated quality and efficiency verdicts and added an exact paired McNemar check so a quality gate is not presented as statistical significance.
-- Historical result directories remain immutable snapshots of the rubric used when they were generated.
-
-### Validation
-
-- `npm test` passes: benchmark self-check plus all 10 concern-aware lookup cases.
-- All JavaScript module files pass `node --check`.
-- Scanner smoke test generates and queries the new behavior shard successfully.
-- Historical 60-run data was temporarily re-scored under the corrected rubric for verification only; no historical report was overwritten and no fresh Codex benchmark was run as part of this patch.
-
----
-
 This archive includes the practical improvements requested for `joo-skills`.
 
 ## Added scripts
@@ -204,3 +172,50 @@ Known failure patterns should be promoted by root cause, not error code, when an
 - Added a separate isolated baseline/indexed model benchmark under `benchmark/token-navigation`.
 - Added native-runner benchmark routing: Antigravity uses `--runner agy`, Codex uses `--runner codex`, and neutral shells may use `--runner auto`.
 - Removed mock results, manual LLM judging, historical reports, and checked-in runtime artifacts. Added Windows AGY path discovery and a Git Bash PATH repair helper.
+
+## Adaptive progressive indexing added
+
+- Added `joo-indexing-assess.mjs` and shared assessment logic.
+- Added Level 0-3 activation based on static ambiguity and optional observed navigation cost.
+- Added hysteresis so index levels do not oscillate at thresholds.
+- `joo-indexing-scan.mjs` now defaults to `--mode auto`, emits only artifacts allowed by the selected level, and supports `force`, `off`, and explicit `--level`.
+- Added local-only navigation observation recording.
+- Added activation-policy self-check fixtures.
+- Navigation A/B benchmark now records explicit indexing mode, recommended auto level, actual level, and forced status.
+- Fixed sensitive-path matching so `token-navigation` is not mistaken for a credential path.
+
+## Budgeted priority indexing revision
+
+- Added `tight`, `balanced`, `retentive`, and conservative `auto` budget profiles.
+- Added deterministic priority scoring using usage decay, recency, duplicate basenames, cheap file complexity, recent errors, changed files, boundary roles, and manual pins.
+- Added strong penalties for legacy/archive/example/playground/generated/test/story candidates.
+- Added shard-count, domain-shard, entry-count, per-shard byte, file-map byte, and total navigation-byte limits.
+- Added priority-density eviction when new candidates exceed capacity.
+- Added minimum residence, recent-error protection, and maximum replacement ratio to prevent index churn.
+- Added optional path/domain/concern pinning with pinned overflow disabled by default.
+- Added ROI observations and conservative auto-profile selection: missing evidence does not promote to retentive, repeatedly poor evidence selects tight.
+- Added compact schema/config example and deterministic budget self-check.
+- Changed file-map output to a flat, byte-capped format compatible with lookup.
+- Removed duplicate “first read” and “full map” entry inventories.
+- Made detailed file-hint Markdown and priority diagnostics opt-in.
+- Separated navigation artifact bytes from maintenance-state bytes.
+- Updated runtime contracts so agents never read assessment, priority, or local-usage files during normal tasks.
+
+## Budget cache follow-up hardening
+
+- Wired `preserveOnePerSelectedDomain` into entry selection so a selected domain shard requests at least one representative entry.
+- Wired `hardBudget` and `autoShrinkOnPoorRoi` configuration flags into actual selection/profile behavior.
+- Added Storybook/stories/fixture path penalties so non-production examples do not consume scarce behavior-map capacity.
+- Added an integration self-check proving that repeated usage and a recent error promote `ShippingStatusBadge.tsx` into a `tight` profile without exceeding the byte budget.
+- Navigation A/B reports now include the curated indexed-overlay byte size and identify its fixed-overlay budget profile.
+
+
+## Verified Feedback Compound revision
+
+- Added `skills/feedback-compound/SKILL.md`.
+- Added optional `templates/project/rules/feedback-compound.md`; installer flag: `--with-feedback-compound`.
+- Added compact lesson example and feedback policy/incident schemas.
+- Added `docs/feedback-compound-design.md` with accepted/mitigated/deferred/skipped risk decisions.
+- Added native-CLI, deterministic `benchmark/feedback-compound` baseline/skilled A/B harness.
+- Updated adapters, skill map, design principles, install docs, operating loop, failure triage, and metadata lifecycle guidance.
+- Kept natural-language learning advisory-only, future-task-only, environment-bound, and outside immutable safety controls.

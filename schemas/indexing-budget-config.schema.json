@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/joo-skills/indexing-budget-config.schema.json",
+  "title": "Joo Skills budgeted priority indexing configuration",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "profile": { "enum": ["auto", "tight", "balanced", "retentive"] },
+    "pins": {
+      "type": "object",
+      "properties": {
+        "paths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "domains": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "concerns": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "budgetOverrides": { "$ref": "#/$defs/profile" },
+    "profiles": {
+      "type": "object",
+      "properties": {
+        "tight": { "$ref": "#/$defs/profile" },
+        "balanced": { "$ref": "#/$defs/profile" },
+        "retentive": { "$ref": "#/$defs/profile" }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "hardBudget": { "type": "boolean" },
+        "preserveOnePerSelectedDomain": { "type": "boolean" },
+        "allowPinnedBudgetOverflow": { "type": "boolean" },
+        "autoShrinkOnPoorRoi": { "type": "boolean" },
+        "recordPriorityDetails": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "properties": {
+        "minTotalBytes": { "type": "integer", "minimum": 0 },
+        "maxTotalBytes": { "type": "integer", "minimum": 1 },
+        "maxSourceRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maxShards": { "type": "integer", "minimum": 1 },
+        "maxDomainShards": { "type": "integer", "minimum": 0 },
+        "maxEntriesPerShard": { "type": "integer", "minimum": 1 },
+        "maxShardBytes": { "type": "integer", "minimum": 100 },
+        "maxMapTokens": { "type": "integer", "minimum": 50 },
+        "maxAnalyzedFiles": { "type": "integer", "minimum": 0 },
+        "minAddPriority": { "type": "number", "minimum": 0 },
+        "removeBelowPriority": { "type": "number", "minimum": 0 },
+        "minResidenceDays": { "type": "number", "minimum": 0 },
+        "errorProtectionDays": { "type": "number", "minimum": 0 },
+        "maxReplacementRatioPerRun": { "type": "number", "minimum": 0, "maximum": 1 },
+        "pools": {
+          "type": "object",
+          "properties": {
+            "router": { "type": "number", "minimum": 0, "maximum": 1 },
+            "core": { "type": "number", "minimum": 0, "maximum": 1 },
+            "domains": { "type": "number", "minimum": 0, "maximum": 1 },
+            "fileMap": { "type": "number", "minimum": 0, "maximum": 1 },
+            "reports": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

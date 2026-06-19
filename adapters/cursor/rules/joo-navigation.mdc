@@ -16,7 +16,7 @@ Read order:
 3. project/team safety rules
 4. error log/failing command anchors when present; create a temporary `[FAILURE_TRIAGE]` card before source reads
 5. `rules/context-navigation.md`
-6. `AI_INDEX.md`
+6. adaptive indexing state, then `AI_INDEX.md` only when Level 1+ is active
 7. at most one relevant `.ai/indexing/maps/*` shard
 8. sidecar file hints
 9. source owners for the required `surface`, `behavior`, `state`, `data`, `route`, or `failure` concerns

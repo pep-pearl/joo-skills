@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/joo-skills/indexing-assessment.schema.json",
+  "title": "Joo Skills adaptive indexing assessment",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "score",
+    "recommendedLevel",
+    "metrics",
+    "budget"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "assessedAt": {
+      "type": "string"
+    },
+    "target": {
+      "type": "string"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rawRecommendedLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "recommendedLevel": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "previousLevel": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 3
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "filesSeen",
+        "sourceFiles",
+        "sourceLines",
+        "sourceBytes",
+        "workspaceCount",
+        "appCount",
+        "domainCount",
+        "duplicateBasenameRatio",
+        "productionDistractorRatio",
+        "maxDepth"
+      ],
+      "properties": {
+        "filesSeen": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceFiles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceLines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "workspaceCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "appCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "domainCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duplicateBasenameRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "productionDistractorRatio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "runtimeUsage": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "reasons": {
+      "type": "array"
+    },
+    "budget": {
+      "type": "object",
+      "required": [
+        "maxIndexBytes",
+        "maxIndexToSourceRatio",
+        "absoluteMaxIndexBytes"
+      ],
+      "properties": {
+        "maxIndexBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxIndexToSourceRatio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "absoluteMaxIndexBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "auto",
+            "force",
+            "off"
+          ]
+        },
+        "actualLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "forced": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "actualBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "budgetBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "budgetExceeded": {
+          "type": "boolean"
+        },
+        "navigationBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maintenanceBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalBytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "budgetPolicy": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

@@ -12,8 +12,8 @@ Default order:
 2. If changed code already exists, run `npm run diff:impact`; if unavailable, inspect changed files directly before normal `AI_INDEX.md` routing.
 3. If an error log/failing test/CI/build/type/lint/runtime failure is present, use `rules/failure-triage.md` when present and create a temporary failure card.
 4. Read `rules/context-navigation.md` if present.
-5. Read `AI_INDEX.md` if present.
-6. Read at most one relevant `.ai/indexing/maps/*` shard if needed.
+5. Read `AI_INDEX.md` only when it exists and no stronger exact/diff/error anchor applies. Never read assessment, priority, or local-usage files during normal navigation.
+6. Use the lowest active level: Level 1 router only, Level 2 one shard, Level 3 narrow lookup. Read at most one relevant shard if needed.
 7. Follow imports/callers/tests only for unresolved concerns; stop when all required concerns are covered.
 8. Read one companion shard only when a coupling signal exists.
 9. Search broadly only when targeted navigation fails.
@@ -23,6 +23,7 @@ Conditional skills:
 - Use repo indexing when asked to create, audit, refresh, or maintain AI navigation metadata.
 - Use pr-diff-impact when reviewing or planning fixes for already-changed code, PR files, staged files, or `git diff`.
 - Use failure triage when work starts from an error log, failing test, CI/build/type/lint/runtime failure, or stack trace. Error anchors beat keyword search.
+- Use feedback-compound only after an explicit user correction or a verifiable instruction/scope mismatch. Correct the task first; emotion is not evidence; new lessons apply from the next task and remain advisory.
 - Use metadata maintenance after changes that affect routes, page structure, domain ownership, API/data flow, state, map/GIS, packages, first-read files, map shards, stale metadata, or promoted known failure patterns.
 - Use screen-spec alignment when official screen specs, PDFs, prototypes, or screenshots are referenced.
 - Use API integration planning when connecting frontend UI to Swagger/OpenAPI/backend endpoints.

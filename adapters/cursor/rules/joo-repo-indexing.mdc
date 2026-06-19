@@ -13,14 +13,14 @@ alwaysApply: false
 
 Use sparse, factual AI navigation metadata.
 
-`AI_INDEX.md` is a small router. Put inventories and file maps in `.ai/indexing/maps/*`.
+Run adaptive assessment first. Level 0 creates no index, Level 1 creates only a small `AI_INDEX.md` router, Level 2 adds bounded shards, and Level 3 adds lookup metadata. Put inventories and file maps in `.ai/indexing/maps/*` only when the selected level allows them. Apply the active `tight`, `balanced`, or `retentive` budget and evict the lowest unprotected priority-per-byte entries instead of growing the index.
 
 Do not add source-level @ai-* headers by default.
 
 When indexing:
 
 1. Read existing AGENTS/rules.
-2. Read or create AI_INDEX router.
+2. Select Level 0-3. Read or create the AI_INDEX router only at Level 1+.
 3. Identify entry points.
 4. Generate compact map shards when useful.
 5. Follow imports only for unresolved task concerns; stop when coverage is complete.
@@ -28,6 +28,7 @@ When indexing:
 7. Update metadata only when future agents need it.
 8. If metadata is stale, update only affected router/shard/hint entries.
 9. Promote known failure patterns only by repeated or expensive root cause, not error code.
+10. Never use an LLM to rank the whole repository. Priority state, assessment state, and local usage are maintenance-only and must not be loaded during normal navigation.
 
 Sidecar file hint shape:
 

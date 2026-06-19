@@ -13,8 +13,8 @@
 ```bash
 npm run benchmark:doctor -- --runner agy
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner agy --model "YOUR_MODEL"
-npm run benchmark -- --runner agy --model "YOUR_MODEL"
+npm run benchmark:dry-run -- --runner agy --model "YOUR_MODEL" --indexing-mode force
+npm run benchmark -- --runner agy --model "YOUR_MODEL" --indexing-mode force
 ```
 
 Antigravity agent는 Codex 설치 여부를 확인하거나 `codex`를 실행하면 안 됩니다. 요청 모델은 `agy models`에 출력되는 정확한 이름이어야 합니다.
@@ -34,8 +34,8 @@ agy models
 ```bash
 npm run benchmark:doctor -- --runner codex
 npm run benchmark:check
-npm run benchmark:dry-run -- --runner codex --model "YOUR_MODEL"
-npm run benchmark -- --runner codex --model "YOUR_MODEL"
+npm run benchmark:dry-run -- --runner codex --model "YOUR_MODEL" --indexing-mode force
+npm run benchmark -- --runner codex --model "YOUR_MODEL" --indexing-mode force
 ```
 
 Codex에서만 `--reasoning`을 사용할 수 있습니다.
@@ -85,3 +85,7 @@ benchmark/token-navigation/results/<timestamp>/report.md
 ```
 
 `PARTIAL` 또는 `FAILED` 결과로 개선을 주장하지 않습니다. `REGRESSION`은 품질 게이트 판정이며 곧바로 통계적 유의성을 뜻하지 않습니다. 보고서의 paired exact McNemar p-value를 별도로 확인합니다. 저장소에는 과거 실벤치 결과나 예시 성능 수치를 포함하지 않습니다.
+
+## Adaptive indexing experiment separation
+
+Use `--indexing-mode force` for the normal A/B benchmark so a small fixture does not disable the indexed condition. Use `--indexing-mode auto` only when specifically evaluating the end-to-end activation decision. Run `npm run activation:check` for deterministic activation-policy coverage. Every report records the requested mode, recommended auto level, actual indexed level, and whether the overlay was forced.

@@ -4,6 +4,7 @@
 
 - Exact files, changed files, and error anchors beat `AI_INDEX.md`.
 - Run `npm run diff:impact` for existing changes; if unavailable, inspect changed files directly.
+- Skip AI metadata when direct navigation is cheaper or the assessment recommends Level 0.
 - Read at most one map shard before source; use a second shard only for coupling.
 - Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
 - After source is found, follow only imports/callers/tests that can cover an unresolved task concern; stop when required concerns are covered.
@@ -58,6 +59,21 @@ If source/imports contradict metadata, source wins.
 If metadata confidence is `low`, `generated-only`, or absent, verify with one source file before editing.
 
 Report stale metadata instead of forcing the index to fit.
+
+## Index Activation Rule
+
+Before reading `AI_INDEX.md`, prefer stronger exact/diff/error anchors. When no stronger anchor exists, use the current assessment level if available:
+
+- Level 0: do not read or create an index; use one targeted search and imports
+- Level 1: read only the short router
+- Level 2: read at most one relevant shard
+- Level 3: use lookup for narrow queries; do not read the whole file map
+
+If direct navigation repeatedly exceeds the read budget, produces large tool output, or opens wrong candidates, record a local observation and reassess. Do not promote indexing after a single noisy task unless ambiguity is severe.
+
+The presence of maintenance files does not make them navigation context. Never read `priority-state.json`, `priority-report.json`, `assessment-state.json`, `assessment-report.json`, or `local-usage.json` during a normal task. Read only the compact router, one selected shard, or a narrow lookup result.
+
+Budget profiles affect what exists, not the read budget: even `retentive` does not permit reading multiple shards by default.
 
 ## Intent Classification
 

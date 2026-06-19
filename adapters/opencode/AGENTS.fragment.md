@@ -1,6 +1,6 @@
 ## Joo Skills For OpenCode / Generic CLI Agents
 
-Use `AI_INDEX.md` as a small project router, not a full architecture document.
+Use only navigation metadata that exists: `AI_INDEX.md`, one selected shard, or narrow lookup. Never read assessment/priority/local-usage maintenance files. `AI_INDEX.md` remains a small router, not a full architecture document.
 
 Supported commands:
 
@@ -11,10 +11,13 @@ Supported commands:
 /indexing refresh
 /indexing explain
 /failure triage
+/feedback review
+/feedback promote
 /diff impact
 /diff review
 /diff fix-plan
 /benchmark model:<model>
+/benchmark feedback model:<model>
 ```
 
 Project safety rules beat AI navigation rules. Treat AI metadata as hints, not truth.
@@ -27,6 +30,7 @@ General behavior:
 - targeted reads
 - when code is already changed, run `npm run diff:impact`; if unavailable, inspect changed files directly before normal `AI_INDEX.md` routing
 - when failure output is present, create a temporary failure card and use file/line/test/userland stack anchors before maps or keyword search
+- when the user explicitly corrects a verifiable instruction/scope mismatch, correct the task first, then create at most one future-task advisory lesson candidate
 - read at most one `.ai/indexing/maps/*` shard before source files; use one companion shard only for coupling signals
 - follow imports only for unresolved task concerns; stop when all required concerns are covered
 - no full scan by default

@@ -10,6 +10,8 @@ AGENTS.md
 rules/context-navigation.md
 rules/ai-navigation-maintenance.md
 rules/failure-triage.md
+# optional with --with-feedback-compound:
+rules/feedback-compound.md
 .ai/indexing/README.md
 .github/pull_request_template.md
 .ai/indexing/benchmarks/navigation-cases.example.json
@@ -118,3 +120,16 @@ Use:
 adapters/opencode/AGENTS.fragment.md
 adapters/common/AGENTS.fragment.md
 ```
+
+
+## Optional Feedback Compound
+
+Install only when the target project wants verified user-correction learning:
+
+```bash
+node /path/to/joo-skills/scripts/joo-indexing-install.mjs \
+  --target . \
+  --with-feedback-compound
+```
+
+Do not create `rules/known-agent-lessons.md` during bootstrap. Create it only after the first candidate has been explicitly reviewed and approved. Start from `templates/project/rules/known-agent-lessons.example.md`.

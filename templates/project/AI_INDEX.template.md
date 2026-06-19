@@ -9,7 +9,8 @@
 5. After source is found, follow imports/callers/tests only for unresolved concerns; stop when all required concerns are covered.
 6. Metadata is a hint. Source/imports/tests are truth.
 7. Never edit runtime code to match stale metadata.
-8. Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
+8. Never read assessment, priority, or local-usage maintenance files during normal navigation.
+9. Full repo scans are forbidden by default; if unavoidable, scan filenames before contents.
 
 ## Purpose
 
@@ -114,6 +115,8 @@ For vague natural-language requests:
 Generated or candidate map shards may live under `.ai/indexing/maps/`.
 
 They are optional navigation aids. They should be compact, path-first, and disposable. `AI_INDEX.md` remains the stable router. Prefer `confidence`, `last_verified`, and `source` metadata over long explanations.
+
+Do not link or read `.ai/indexing/assessment-report.json`, `assessment-state.json`, `priority-report.json`, `priority-state.json`, or `local-usage.json` during normal work. Those files exist only for deterministic maintenance scripts.
 
 ## Lookup / Benchmark
 

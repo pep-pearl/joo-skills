@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/feedback-compound-policy.schema.json",
+  "title": "Feedback Compound Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mode", "profile", "budget", "immutableControls"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": 1 },
+    "mode": { "enum": ["observe", "advisory", "promotion-review"] },
+    "profile": { "enum": ["strict-stable", "balanced", "exploratory", "collaborative-rough"] },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxRelatedLessons", "maxAnalysisPasses", "maxLessonCandidates", "maxFollowUpSkills"],
+      "properties": {
+        "maxRelatedLessons": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "maxAnalysisPasses": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "maxLessonCandidates": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "maxFollowUpSkills": { "type": "integer", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sameRootCauseWithin30Days": { "type": "integer", "minimum": 2, "maximum": 10 },
+        "sameRootCauseWithinSprint": { "type": "integer", "minimum": 2, "maximum": 10 },
+        "explicitMustNotCandidate": { "type": "boolean" },
+        "highSeverityCandidate": { "type": "boolean" },
+        "humanApprovalRequired": { "const": true }
+      }
+    },
+    "immutableControls": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "destructive-actions",
+          "credentials-and-secrets",
+          "production-side-effects",
+          "data-protection",
+          "permissions",
+          "explicit-prohibitions"
+        ]
+      }
+    }
+  }
+}

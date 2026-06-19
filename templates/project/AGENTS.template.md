@@ -7,8 +7,8 @@ These rules are intentionally short for weak agents. Follow them before any long
 1. If the user names exact files, open those files first and do not read maps yet.
 2. If code is already changed, run `npm run diff:impact` first. If it fails, inspect the changed files directly. Do not start from `AI_INDEX.md`.
 3. If an error log, failing test, stack trace, CI/build/type/lint/runtime failure exists, use the file/line/test/userland stack anchor first. Do not start with keyword search.
-4. Read `AI_INDEX.md` before broad search only when there is no stronger exact/diff/error anchor.
-5. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
+4. Read `AI_INDEX.md` before broad search only when it exists and there is no stronger exact/diff/error anchor.
+5. Use the lowest active index level: Level 0 direct search, Level 1 router only, Level 2 one shard, Level 3 narrow lookup. Read at most one map shard before source files. Use a second shard only for an explicit coupling signal.
 6. Concrete labels, symbols, enum/status values, URL parameters, cache keys, endpoints, and error text beat generic route/page roles.
 7. Decompose the task into required concerns (`surface`, `behavior`, `state`, `data`, `route`, `failure`) and select source owners for each.
 8. Follow imports/callers/tests only for unresolved concerns. Stop when every required concern is covered.
@@ -21,6 +21,7 @@ These rules are intentionally short for weak agents. Follow them before any long
 15. Full repo scans are forbidden by default. If truly needed, scan filenames first, not file contents.
 16. Do not read all map shards, full Swagger/OpenAPI dumps, generated clients, or full route trees unless the user explicitly asks.
 17. When blocked, run targeted lookup/search by exact path, symbol, route, endpoint, or domain alias.
+18. Never read `.ai/indexing/assessment-report.json`, `assessment-state.json`, `priority-report.json`, `priority-state.json`, or `local-usage.json` during normal navigation.
 
 ## Core
 
@@ -62,6 +63,9 @@ Read only when relevant:
 
 - `rules/failure-triage.md`
   - Use when an error log, failing test, CI/build/type/lint/runtime failure, or stack trace is present. Error anchors beat keyword search.
+- `rules/feedback-compound.md`
+  - Use only after an explicit user correction or a verified instruction/scope mismatch.
+  - Correct the current task first; emotion is not evidence; new lessons apply from the next task only and remain advisory.
 - `rules/ai-navigation-maintenance.md`
   - Use for creating, updating, auditing, or maintaining `AI_INDEX.md`, `.ai/indexing/maps/*`, `manifest.json`, sidecar file hints / optional `@ai-*` metadata, stale metadata, or promoted known failure patterns.
   - Also use after code changes that affect routes, page structure, feature boundaries, API/data flow, state, map/GIS, packages, first-read files, or map shards future agents rely on.
@@ -74,6 +78,8 @@ Read only when relevant:
 - `/indexing refresh`: update changed metadata sections only.
 - `/indexing explain`: explain how future agents should navigate this repo.
 - `/failure triage`: create a temporary failure routing card from error output.
+- `/feedback review`: verify correction evidence, correct the current task, and create at most one advisory future-task candidate.
+- `/feedback promote`: review repeated candidates and stale applicability; never mutate blocking policy automatically.
 - `/diff impact` / `npm run diff:impact`: classify changed files and choose read-next/skip/metadata targets.
 - `/diff review`: review changed files, direct imports, and matching tests only.
 - `/diff fix-plan`: plan the smallest fix path for an existing diff.

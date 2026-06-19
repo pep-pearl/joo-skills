@@ -1,0 +1,20 @@
+---
+description: Use only after explicit user correction or a verifiable instruction/scope mismatch. Correct first; lessons are advisory and future-task only.
+globs:
+  - "**/*"
+alwaysApply: false
+---
+
+# Joo Feedback Compound
+
+Use `rules/feedback-compound.md` when present.
+
+- Emotion is not evidence.
+- Compare exact expected requirement with diff/tests/tools/source.
+- Correct the current task before reflection.
+- Technical errors route to failure-triage.
+- Root cause remains a hypothesis without independent evidence.
+- Persist only repeated, expensive, high-severity, or explicit MUST NOT violations.
+- New lessons apply from the next task and remain advisory.
+- Skip stale lessons whose environment or anchors no longer match.
+- Load at most three related lesson cards.

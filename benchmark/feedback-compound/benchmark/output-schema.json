@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "mode",
+    "action",
+    "confirmed",
+    "incidentType",
+    "evidenceIds",
+    "immediateCorrectionIds",
+    "rootCauseStatus",
+    "promotion",
+    "lessonApplicableNow",
+    "followUpSkill",
+    "memoryAction",
+    "proposedAuthority",
+    "briefReason"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "mode": { "enum": ["observe", "advisory", "promotion-review"] },
+    "action": {
+      "enum": [
+        "ignore",
+        "correct-only",
+        "create-incident",
+        "create-lesson-candidate",
+        "route-to-failure-triage",
+        "request-revalidation"
+      ]
+    },
+    "confirmed": { "type": "boolean" },
+    "incidentType": {
+      "type": ["string", "null"],
+      "enum": [null, "instruction-violation", "scope-violation", "preference-violation", "technical-failure", "stale-lesson", "unverified"]
+    },
+    "evidenceIds": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "type": "string" }
+    },
+    "immediateCorrectionIds": {
+      "type": "array",
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": { "type": "string" }
+    },
+    "rootCauseStatus": { "enum": ["none", "hypothesis", "verified"] },
+    "promotion": { "enum": ["no", "candidate", "review"] },
+    "lessonApplicableNow": { "type": "boolean" },
+    "followUpSkill": { "type": ["string", "null"], "enum": [null, "failure-triage", "ai-metadata-maintenance"] },
+    "memoryAction": { "enum": ["none", "keep", "rebind", "generalize", "archive", "supersede", "revalidate"] },
+    "proposedAuthority": { "enum": ["none", "advisory"] },
+    "briefReason": { "type": "string", "maxLength": 500 }
+  }
+}

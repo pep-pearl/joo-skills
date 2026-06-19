@@ -31,6 +31,49 @@ Map shards hold optional detail:
 
 Do not create a giant file tree. Shards should be compact, path-first, and disposable.
 
+## Adaptive Indexing Policy
+
+Do not assume every repository should be indexed. Start with the lowest-cost navigation mode and promote only when repository complexity or observed navigation cost justifies the maintenance overhead.
+
+Levels:
+
+- Level 0: no index; use exact paths, targeted filename/symbol search, and imports
+- Level 1: short `AI_INDEX.md` router only
+- Level 2: router plus compact core maps and selected domain shards
+- Level 3: Level 2 plus file-map lookup support for very large or highly ambiguous repositories
+
+Use `node scripts/joo-indexing-assess.mjs --target .` before creating metadata. The assessor considers source size, app/workspace/domain count, duplicate basenames, legacy/archive/generated distractors, directory depth, and optional local navigation observations.
+
+Repository size is only one signal. A small ambiguous repository can activate indexing; a large clean repository may remain at a lower level.
+
+Modes:
+
+- `--mode auto`: apply the assessment and hysteresis; this is the default
+- `--mode force`: generate Level 3 artifacts for experiments or explicit user requests
+- `--mode off`: generate only assessment state and no index
+- `--level 0|1|2|3`: explicit override
+
+Never infer benchmark mode from a directory name. Benchmark runners must pass the mode explicitly and record whether indexing was forced.
+
+## Budgeted Priority Cache
+
+Treat generated navigation metadata as a bounded cache, not permanent documentation.
+
+Profiles:
+
+- `tight`: few shards and entries; fastest eviction
+- `balanced`: default capacity for normal repositories
+- `retentive`: larger capacity only for long-lived large repositories with measured value
+- `auto`: choose conservatively from the active level and measured ROI
+
+Priority must be calculated by deterministic scripts, not by asking an agent to reread and rank the repository. Cheap signals may include decayed usage, recent errors, duplicate names, file bytes/import count, changed files, boundary roles, and manual pins. Penalize legacy/archive/example/generated/test/story candidates.
+
+When capacity is full, preserve pinned and protected entries when the hard budget permits, retain enough previous entries to avoid churn, then remove the lowest priority-per-byte entries. Limit total bytes, shard count, domain shard count, entries per shard, and replacement ratio.
+
+Do not let runtime agents read `.ai/indexing/priority-state.json`, `priority-report.json`, `assessment-state.json`, or `assessment-report.json`. These are maintenance inputs, not task context. Detailed priority reports are opt-in.
+
+Use `--profile auto|tight|balanced|retentive` or `joo-indexing.config.json` for overrides. Missing ROI evidence must not automatically promote to `retentive`.
+
 ## Trigger Phrases
 
 Use this skill when the user says:

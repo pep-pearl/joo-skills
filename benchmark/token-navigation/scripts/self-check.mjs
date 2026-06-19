@@ -139,6 +139,12 @@ function walkFiles(dir) {
 const sourceFiles = walkFiles(fixtureRoot);
 const metadataFiles = walkFiles(overlayRoot);
 const bytes = (files) => files.reduce((sum, file) => sum + fs.statSync(file).size, 0);
+const metadataBytes = bytes(metadataFiles);
+const metadataByteBudget = 10_000;
+if (metadataBytes > metadataByteBudget) {
+  console.error(`- Indexed metadata exceeds byte budget: ${metadataBytes} > ${metadataByteBudget}`);
+  process.exit(1);
+}
 console.log(`OK: ${cases.length} cases`);
 console.log(`Fixture: ${sourceFiles.length} files, ${bytes(sourceFiles)} bytes`);
-console.log(`Indexed metadata: ${metadataFiles.length} files, ${bytes(metadataFiles)} bytes`);
+console.log(`Indexed metadata: ${metadataFiles.length} files, ${metadataBytes} bytes (budget ${metadataByteBudget})`);

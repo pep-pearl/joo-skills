@@ -1,0 +1,26 @@
+{
+  "$schema": "../../schemas/indexing-budget-config.schema.json",
+  "schemaVersion": 1,
+  "profile": "auto",
+  "pins": {
+    "domains": ["auth", "checkout", "payment"],
+    "paths": ["packages/session/src/logout.ts"],
+    "concerns": ["security", "session"]
+  },
+  "profiles": {
+    "balanced": {
+      "maxTotalBytes": 100000,
+      "maxShards": 8,
+      "maxDomainShards": 3,
+      "maxEntriesPerShard": 28,
+      "minResidenceDays": 14,
+      "maxReplacementRatioPerRun": 0.15
+    }
+  },
+  "policy": {
+    "hardBudget": true,
+    "allowPinnedBudgetOverflow": false,
+    "autoShrinkOnPoorRoi": true,
+    "recordPriorityDetails": false
+  }
+}
